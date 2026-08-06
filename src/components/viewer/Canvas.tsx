@@ -2,6 +2,7 @@ import { Canvas as R3FCanvas, useFrame, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useRef } from 'react'
 import { Vector3 } from 'three'
 import { StationModel } from './StationModel'
+import { AdvertisingPointsLayer } from './AdvertisingPointsLayer'
 import { proceduralAdapter } from '@/adapters/station-model/proceduralAdapter'
 
 function ConstrainedCameraController() {
@@ -118,6 +119,9 @@ export function Canvas() {
 
         {/* Stazione (via StationModelAdapter, mai generata/caricata direttamente qui) */}
         <StationModel adapter={proceduralAdapter} />
+
+        {/* Punti pubblicitari (banner) */}
+        <AdvertisingPointsLayer />
 
         {/* Background - cielo realistico */}
         <color attach="background" args={['#a8c5dd']} />

@@ -26,7 +26,7 @@ export function Canvas() {
         {/* Camera principale - vista overview leggermente angolata */}
         <PerspectiveCamera
           makeDefault
-          position={[35, 25, 35]}
+          position={[28, 14, 42]}
           fov={60}
           near={0.1}
           far={200}

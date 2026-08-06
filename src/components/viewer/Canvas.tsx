@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef } from 'react'
 import { Vector3 } from 'three'
 import { StationModel } from './StationModel'
 import { AdvertisingPointsLayer } from './AdvertisingPointsLayer'
+import { AdvertisingPointEditor } from './AdvertisingPointEditor'
 import { proceduralAdapter } from '@/adapters/station-model/proceduralAdapter'
 
 function ConstrainedCameraController() {
@@ -122,6 +123,9 @@ export function Canvas() {
 
         {/* Punti pubblicitari (banner) */}
         <AdvertisingPointsLayer />
+
+        {/* Editor per il banner selezionato */}
+        <AdvertisingPointEditor />
 
         {/* Background - cielo realistico */}
         <color attach="background" args={['#a8c5dd']} />

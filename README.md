@@ -20,9 +20,10 @@ Il progetto è in fase di sviluppo iniziale. Le fasi sono descritte in `docs/IMP
 **Completate**: 
 - Fase 0 (documentazione)
 - Fase 1 (fondamenta — progetto avviabile, layout applicativo con barra superiore/viewport/pannello laterale, i 4 store Zustand, design system Tailwind/shadcn-style, lint/test/build configurati e verificati)
-- Fase 2 (viewer 3D con stazione dimostrativa procedurale, telecamera vincolata dall'alto, controlli tastiera per la navigazione)
+- Fase 2 (viewer 3D con stazione dimostrativa procedurale, telecamera vincolata dall'alto, controlli tastiera per la navigazione, illuminazione migliorata)
+- Fase 3 (gestione asset con drag&drop, banner pubblicitari digitali/cartacei, selezione e modifica con TransformControls, pannelli Asset e Banner funzionanti)
 
-**In corso/da fare**: Fase 3 (gestione asset e banner pubblicitari) in poi — vedi `docs/IMPLEMENTATION_PLAN.md` per il dettaglio.
+**In corso/da fare**: Fase 4 (hotspot) in poi — vedi `docs/IMPLEMENTATION_PLAN.md` per il dettaglio.
 
 ## Requisiti
 
@@ -50,6 +51,35 @@ La vista principale offre una telecamera vincolata dall'alto (isometrica) per un
 - **E** — zoom in (diminuisce l'altezza di visualizzazione)
 
 La telecamera non può andare sotto il livello del pavimento ed è sempre orientata verso il centro della scena.
+
+### Gestione asset e banner (Fase 3)
+
+#### Asset (Immagini e Video)
+
+Nel pannello **Asset** puoi:
+1. **Trascinare file** direttamente nella zona di drag-drop (JPEG, PNG, WebP, MP4, WebM)
+2. **Cliccare per selezionare** file dal tuo sistema
+3. **Visualizzare** tutti gli asset caricati con dimensioni e peso
+4. **Rimuovere** asset non più necessari
+
+Limitazioni: massimo 50 MB per file.
+
+#### Banner (Punti Pubblicitari)
+
+Nel pannello **Banner** puoi:
+1. **Creare** nuovi banner digitali (🟢) o cartacei (🟠)
+2. **Selezionare** un banner per modificarlo
+3. **Assegnare** un asset (immagine o video) al banner
+4. **Modificare** nome, dimensioni (larghezza/altezza in metri)
+5. **Eliminare** banner quando non più necessari
+
+Nella vista 3D (Overview):
+1. **Cliccare** un banner per selezionarlo (evidenziato)
+2. **Usare i pulsanti** Sposta/Ruota/Scala nella barra superiore
+3. **Trascinare il gizmo** per trasformare il banner:
+   - **Sposta** — traslazione XYZ
+   - **Ruota** — rotazione intorno agli assi
+   - **Scala** — ridimensionamento proporzionale
 
 Altri comandi disponibili:
 

@@ -111,6 +111,21 @@ function buildStation(): THREE.Group {
     receiveShadow: true,
   })
 
+  const roadMat = new THREE.MeshStandardMaterial({
+    color: '#2f2f2f',
+    roughness: 0.9,
+  })
+  const roadGeo = new THREE.PlaneGeometry(10, 30)
+  roadGeo.rotateX(-Math.PI / 2)
+  addMesh(root, roadGeo, roadMat, [0, 0.01, 25], { receiveShadow: true })
+
+  const roadLineMat = new THREE.MeshStandardMaterial({ color: '#e8e8a0' })
+  const roadLineGeo = new THREE.PlaneGeometry(0.3, 3)
+  roadLineGeo.rotateX(-Math.PI / 2)
+  for (let z = 12; z < 40; z += 6) {
+    addMesh(root, roadLineGeo.clone(), roadLineMat, [0, 0.02, z])
+  }
+
   const signGroup = new THREE.Group()
   signGroup.position.set(-20, 0, -15)
   const poleMat = new THREE.MeshStandardMaterial({ color: '#333333' })

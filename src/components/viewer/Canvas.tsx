@@ -1,7 +1,8 @@
 import { Canvas as R3FCanvas } from '@react-three/fiber'
 import { PerspectiveCamera, OrbitControls } from '@react-three/drei'
 import { Suspense } from 'react'
-import { ProceduralStation } from './ProceduralStation'
+import { StationModel } from './StationModel'
+import { proceduralAdapter } from '@/adapters/station-model/proceduralAdapter'
 
 export function Canvas() {
   return (
@@ -41,8 +42,8 @@ export function Canvas() {
           maxDistance={150}
         />
 
-        {/* Stazione procedurale */}
-        <ProceduralStation />
+        {/* Stazione (via StationModelAdapter, mai generata/caricata direttamente qui) */}
+        <StationModel adapter={proceduralAdapter} />
 
         {/* Background */}
         <color attach="background" args={['#87ceeb']} />

@@ -94,18 +94,23 @@ export function Canvas() {
     <R3FCanvas shadows="basic" camera={{ position: [40, 35, 40], fov: 60, near: 0.1, far: 200 }}>
       <Suspense fallback={null}>
         {/* Illuminazione */}
-        <ambientLight intensity={0.6} />
+        <ambientLight intensity={0.7} />
         <directionalLight
-          position={[20, 30, 15]}
-          intensity={1}
+          position={[25, 35, 20]}
+          intensity={1.2}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
-          shadow-camera-far={100}
-          shadow-camera-left={-50}
-          shadow-camera-right={50}
-          shadow-camera-top={50}
-          shadow-camera-bottom={-50}
+          shadow-camera-far={120}
+          shadow-camera-left={-60}
+          shadow-camera-right={60}
+          shadow-camera-top={60}
+          shadow-camera-bottom={-60}
+        />
+        {/* Fill light per ridurre ombre troppo forti */}
+        <directionalLight
+          position={[-15, 20, -25]}
+          intensity={0.4}
         />
 
         {/* Constrained top-down camera controller */}
@@ -114,8 +119,8 @@ export function Canvas() {
         {/* Stazione (via StationModelAdapter, mai generata/caricata direttamente qui) */}
         <StationModel adapter={proceduralAdapter} />
 
-        {/* Background */}
-        <color attach="background" args={['#87ceeb']} />
+        {/* Background - cielo realistico */}
+        <color attach="background" args={['#a8c5dd']} />
       </Suspense>
     </R3FCanvas>
   )

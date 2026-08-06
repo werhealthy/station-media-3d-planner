@@ -1,4 +1,4 @@
-import { Redo2, Download, Upload, Pause, Play } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { useUiStore, type ViewMode } from '@/stores/uiStore'
 import { useProjectStore } from '@/stores/projectStore'
@@ -27,14 +27,6 @@ export function TopBar() {
         </span>
       </div>
 
-      <select
-        aria-label="Seleziona stazione"
-        className="h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700"
-        disabled
-      >
-        <option>Stazione dimostrativa (Fase 2)</option>
-      </select>
-
       <nav
         aria-label="Modalita' di visualizzazione"
         className="ml-auto flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-1"
@@ -57,45 +49,20 @@ export function TopBar() {
         ))}
       </nav>
 
-      <div className="flex items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={isPlaying ? 'Pausa' : 'Riproduci'}
-          title={isPlaying ? 'Pausa' : 'Riproduci'}
-          onClick={() => (isPlaying ? pause() : play())}
-        >
-          {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Reset camera"
-          title="Reset camera"
-        >
-          <Redo2 size={16} />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          title="Importa progetto (disponibile dalla Fase 7)"
-          disabled
-        >
-          <Upload size={14} /> Importa
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          title="Esporta progetto (disponibile dalla Fase 7)"
-          disabled
-        >
-          <Download size={14} /> Esporta
-        </Button>
-      </div>
+      {viewMode === 'walkthrough' && (
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={isPlaying ? 'Pausa' : 'Riproduci'}
+            title={isPlaying ? 'Pausa' : 'Riproduci'}
+            onClick={() => (isPlaying ? pause() : play())}
+          >
+            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+          </Button>
+        </div>
+      )}
     </header>
   )
 }

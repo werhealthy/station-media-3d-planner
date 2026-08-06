@@ -17,8 +17,12 @@ Piattaforma web desktop-first per visualizzare in 3D una stazione di servizio, c
 
 Il progetto è in fase di sviluppo iniziale. Le fasi sono descritte in `docs/IMPLEMENTATION_PLAN.md` e vengono implementate una alla volta, con verifica (build, type-check, lint, test) dopo ciascuna.
 
-**Completate**: Fase 0 (documentazione), Fase 1 (fondamenta — progetto avviabile, layout applicativo con barra superiore/viewport/pannello laterale, i 4 store Zustand, design system Tailwind/shadcn-style, lint/test/build configurati e verificati).
-**In corso/da fare**: Fase 2 (viewer 3D e stazione dimostrativa) in poi — vedi `docs/IMPLEMENTATION_PLAN.md` per il dettaglio. La viewport centrale e le sezioni del pannello laterale mostrano per ora un placeholder che indica in quale fase diventeranno funzionanti.
+**Completate**: 
+- Fase 0 (documentazione)
+- Fase 1 (fondamenta — progetto avviabile, layout applicativo con barra superiore/viewport/pannello laterale, i 4 store Zustand, design system Tailwind/shadcn-style, lint/test/build configurati e verificati)
+- Fase 2 (viewer 3D con stazione dimostrativa procedurale, telecamera vincolata dall'alto, controlli tastiera per la navigazione)
+
+**In corso/da fare**: Fase 3 (gestione asset e banner pubblicitari) in poi — vedi `docs/IMPLEMENTATION_PLAN.md` per il dettaglio.
 
 ## Requisiti
 
@@ -33,6 +37,19 @@ npm run dev
 ```
 
 L'app sarà disponibile su `http://localhost:5173` (porta di default di Vite).
+
+### Controlli della telecamera 3D
+
+La vista principale offre una telecamera vincolata dall'alto (isometrica) per una migliore navigazione dello spazio pubblicitario:
+
+- **W** — sposta la telecamera in avanti (allontanamento dal centro)
+- **S** — sposta la telecamera indietro (avvicinamento al centro)
+- **A** — sposta la telecamera a sinistra
+- **D** — sposta la telecamera a destra
+- **Q** — zoom out (aumenta l'altezza di visualizzazione)
+- **E** — zoom in (diminuisce l'altezza di visualizzazione)
+
+La telecamera non può andare sotto il livello del pavimento ed è sempre orientata verso il centro della scena.
 
 Altri comandi disponibili:
 

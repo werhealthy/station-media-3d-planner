@@ -12,6 +12,12 @@ export interface FbxSource {
   resourcePath?: string
 }
 
+export function resolveTextureUrl(requested: string, basePath: string): string {
+  const normalized = requested.replaceAll('\\', '/')
+  const filename = normalized.split('/').pop() || normalized
+  return `${basePath.endsWith('/') ? basePath : `${basePath}/`}${filename}`
+}
+
 const semanticPatterns = {
   pump: /pump|dispenser|fuel|erogator/i,
   shop: /shop|store|building|market|negozio/i,
@@ -21,9 +27,11 @@ const semanticPatterns = {
 } as const
 
 function semanticHint(name: string): StationHierarchyNode['semanticHint'] {
-  return (Object.entries(semanticPatterns) as Array<
-    [NonNullable<StationHierarchyNode['semanticHint']>, RegExp]
-  >).find(([, pattern]) => pattern.test(name))?.[0]
+  return (
+    Object.entries(semanticPatterns) as Array<
+      [NonNullable<StationHierarchyNode['semanticHint']>, RegExp]
+    >
+  ).find(([, pattern]) => pattern.test(name))?.[0]
 }
 
 function collectHierarchy(root: THREE.Object3D): StationHierarchyNode[] {
@@ -62,7 +70,10 @@ function textureNames(material: THREE.Material): string[] {
     .map((texture) => {
       const data: unknown = texture.source.data
       const sourceUrl =
-        typeof data === 'object' && data !== null && 'src' in data && typeof data.src === 'string'
+        typeof data === 'object' &&
+        data !== null &&
+        'src' in data &&
+        typeof data.src === 'string'
           ? data.src
           : null
       return texture.name || sourceUrl || '(embedded texture)'
@@ -86,7 +97,8 @@ export function inferMeterScale(size: THREE.Vector3): number {
 
 function normalize(root: THREE.Object3D) {
   const rawBox = new THREE.Box3().setFromObject(root)
-  if (rawBox.isEmpty()) throw new Error('Il file FBX non contiene geometrie visibili.')
+  if (rawBox.isEmpty())
+    throw new Error('Il file FBX non contiene geometrie visibili.')
   const rawSize = rawBox.getSize(new THREE.Vector3())
   const scale = inferMeterScale(rawSize)
   root.scale.multiplyScalar(scale)
@@ -106,9 +118,31 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
     load(): Promise<StationModelHandle> {
       const missingTextures = new Set<string>()
       const manager = new THREE.LoadingManager()
+      if (source.resourcePath) {
+        manager.setURLModifier((requested) => {
+          if (requested === source.url || /\.fbx(?:\?|$)/i.test(requested))
+            return requested
+          const resolved = resolveTextureUrl(requested, source.resourcePath!)
+          if (import.meta.env.DEV) {
+            void fetch(resolved, { method: 'HEAD' })
+              .then((response) =>
+                console.info(
+                  `[ExternalStationAdapter] Texture richiesta: ${requested} → ${resolved} — ${response.ok ? 'FOUND' : 'MISSING'}`,
+                ),
+              )
+              .catch(() =>
+                console.info(
+                  `[ExternalStationAdapter] Texture richiesta: ${requested} → ${resolved} — MISSING`,
+                ),
+              )
+          }
+          return resolved
+        })
+      }
       manager.onError = (url) => {
         missingTextures.add(url)
-        console.warn(`[ExternalStationAdapter] Texture non trovata: ${url}`)
+        if (import.meta.env.DEV)
+          console.warn(`[ExternalStationAdapter] Texture non trovata: ${url}`)
       }
       const loader = new FBXLoader(manager)
       if (source.resourcePath) loader.setResourcePath(source.resourcePath)
@@ -125,7 +159,8 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
               for (const mesh of meshes) {
                 mesh.castShadow = true
                 mesh.receiveShadow = true
-                for (const material of materialList(mesh)) materials.add(material)
+                for (const material of materialList(mesh))
+                  materials.add(material)
               }
               const textures = new Set(
                 [...materials].flatMap((material) => textureNames(material)),
@@ -144,14 +179,23 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
                 scaleApplied: scale,
                 hierarchy: collectHierarchy(root),
               }
-              console.info('[ExternalStationAdapter] FBX diagnostics', diagnostics)
-              if (diagnostics.missingTextures.length) {
+              if (import.meta.env.DEV)
+                console.info(
+                  '[ExternalStationAdapter] FBX diagnostics',
+                  diagnostics,
+                )
+              if (import.meta.env.DEV && diagnostics.missingTextures.length) {
                 console.warn(
                   '[ExternalStationAdapter] Texture non trovate; la geometria resta disponibile:',
                   diagnostics.missingTextures,
                 )
               }
-              resolve({ root, occlusionMeshes: meshes, boundingBox, diagnostics })
+              resolve({
+                root,
+                occlusionMeshes: meshes,
+                boundingBox,
+                diagnostics,
+              })
             } catch (error) {
               reject(error)
             }
@@ -174,8 +218,3 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
     },
   }
 }
-
-export const externalStationAdapter = createFbxAdapter({
-  url: '/models/q8-station/4002336.FBX',
-  resourcePath: '/models/q8-station/Maps/',
-})

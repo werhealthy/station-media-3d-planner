@@ -5,17 +5,23 @@ import {
   MapPin,
   Telescope,
   Route,
+  ChevronDown,
 } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { BRAND_ASSETS } from '@/config/brandAssets'
 import { usePlaybackStore } from '@/stores/playbackStore'
+import { STATIONS, type StationId } from '@/domain/stations'
+import { useStationStore } from '@/stores/stationStore'
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
   const mode = useViewerStore((s) => s.navigationMode)
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const play = usePlaybackStore((s) => s.play)
+  const stationId = useStationStore((s) => s.selectedStationId)
+  const selectStation = useStationStore((s) => s.selectStation)
+  const station = STATIONS.find((item) => item.id === stationId) ?? STATIONS[0]
   const modes = [
     ['overview', 'Overview', Grid2X2],
     ['hotspot', 'Hotspot', Telescope],
@@ -54,11 +60,26 @@ export function TopBar() {
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-3 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700">
+      <label className="relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 hover:bg-slate-50">
         <MapPin size={17} className="text-[#1954c6]" />
-        Q8 Milano Est
-        <span className="text-xs font-semibold text-emerald-700">Demo</span>
-      </div>
+        <span className="sr-only">Stazione</span>
+        <select
+          aria-label="Stazione"
+          value={stationId}
+          onChange={(event) => selectStation(event.target.value as StationId)}
+          className="max-w-[230px] cursor-pointer appearance-none bg-transparent pr-14 font-semibold outline-none"
+        >
+          {STATIONS.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-8 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+          {station.badge}
+        </span>
+        <ChevronDown size={15} className="pointer-events-none text-slate-400" />
+      </label>
       <button
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
         aria-label="Guida"

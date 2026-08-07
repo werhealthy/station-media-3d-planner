@@ -4,32 +4,36 @@ import { Suspense, useCallback, useMemo } from 'react'
 import * as THREE from 'three'
 import { StationModel } from './StationModel'
 import { MediaPointsLayer } from './MediaPointsLayer'
-import { proceduralAdapter } from '@/adapters/station-model/proceduralAdapter'
 import { NavigationRig } from './NavigationRig'
-import { externalStationAdapter } from '@/adapters/station-model/fbxAdapter'
 import type { StationModelHandle } from '@/adapters/station-model/types'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
+import { useStationStore } from '@/stores/stationStore'
+import { getStation } from '@/domain/stations'
+import { selectStationAdapter } from '@/adapters/station-model/stationAdapter'
 export function Canvas() {
-  const external = useMemo(
-    () => new URLSearchParams(window.location.search).get('stationModel') === 'external',
-    [],
-  )
+  const stationId = useStationStore((state) => state.selectedStationId)
+  const station = getStation(stationId)
+  const selection = useMemo(() => selectStationAdapter(station), [station])
   const setLoadedModel = useStationRuntimeStore((state) => state.setLoadedModel)
   const setLoadWarning = useStationRuntimeStore((state) => state.setLoadWarning)
   const loadWarning = useStationRuntimeStore((state) => state.loadWarning)
-  const handleLoaded = useCallback((handle: StationModelHandle) => {
-    const size = handle.boundingBox.getSize(new THREE.Vector3())
-    const center = handle.boundingBox.getCenter(new THREE.Vector3())
-    setLoadedModel(
-      {
-        min: handle.boundingBox.min.toArray(),
-        max: handle.boundingBox.max.toArray(),
-        center: center.toArray(),
-        size: size.toArray(),
-      },
-      handle.diagnostics ?? null,
-    )
-  }, [setLoadedModel])
+  const diagnostics = useStationRuntimeStore((state) => state.diagnostics)
+  const handleLoaded = useCallback(
+    (handle: StationModelHandle) => {
+      const size = handle.boundingBox.getSize(new THREE.Vector3())
+      const center = handle.boundingBox.getCenter(new THREE.Vector3())
+      setLoadedModel(
+        {
+          min: handle.boundingBox.min.toArray(),
+          max: handle.boundingBox.max.toArray(),
+          center: center.toArray(),
+          size: size.toArray(),
+        },
+        handle.diagnostics ?? null,
+      )
+    },
+    [setLoadedModel],
+  )
   return (
     <R3FCanvas
       shadows
@@ -57,12 +61,13 @@ export function Canvas() {
         />
         <Environment preset="city" environmentIntensity={0.42} />
         <StationModel
-          adapter={external ? externalStationAdapter : proceduralAdapter}
-          fallbackAdapter={external ? proceduralAdapter : undefined}
+          key={station.id}
+          adapter={selection.adapter}
+          fallbackAdapter={selection.fallbackAdapter}
           onLoaded={handleLoaded}
           onError={setLoadWarning}
         />
-        {!external && <MediaPointsLayer />}
+        {station.mediaPointsConfigured && <MediaPointsLayer />}
         <ContactShadows
           position={[0, 0.05, 0]}
           opacity={0.28}
@@ -76,6 +81,16 @@ export function Canvas() {
             <div className="ml-auto max-w-md rounded-lg bg-amber-950/90 px-4 py-3 text-sm text-white shadow-xl">
               <strong className="block">Modello FBX non disponibile</strong>
               {loadWarning}
+            </div>
+          </Html>
+        )}
+        {import.meta.env.DEV && (
+          <Html fullscreen className="pointer-events-none p-3">
+            <div className="w-fit rounded bg-slate-950/65 px-2 py-1 text-[11px] font-semibold text-white">
+              Model:{' '}
+              {diagnostics?.source === 'external-fbx'
+                ? 'External FBX'
+                : 'Procedural'}
             </div>
           </Html>
         )}

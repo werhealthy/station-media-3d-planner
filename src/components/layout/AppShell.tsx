@@ -5,6 +5,10 @@ import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
 import { Lock, Rotate3D } from 'lucide-react'
 import { AutoWalkthroughPanel } from './AutoWalkthroughPanel'
+import { useEffect } from 'react'
+import { useStationStore } from '@/stores/stationStore'
+import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
+import { getStation } from '@/domain/stations'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
@@ -12,6 +16,14 @@ export function AppShell() {
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
   const setOverviewUnlocked = useViewerStore((s) => s.setOverviewUnlocked)
+  const stationId = useStationStore((s) => s.selectedStationId)
+  const resetViewer = useViewerStore((s) => s.resetForStation)
+  const resetRuntime = useStationRuntimeStore((s) => s.reset)
+  const station = getStation(stationId)
+  useEffect(() => {
+    resetViewer()
+    resetRuntime()
+  }, [resetRuntime, resetViewer, stationId])
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
       <TopBar />
@@ -76,7 +88,7 @@ export function AppShell() {
             )
           )}
         </section>
-        <MediaPointPanel />
+        <MediaPointPanel configured={station.mediaPointsConfigured} />
       </main>
     </div>
   )

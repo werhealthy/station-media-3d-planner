@@ -10,6 +10,7 @@ interface ViewerState {
   setNavigationMode: (mode: ViewerState['navigationMode']) => void
   setActiveHotspot: (id: string | null) => void
   setOverviewUnlocked: (unlocked: boolean) => void
+  resetForStation: () => void
 }
 export const useViewerStore = create<ViewerState>((set) => ({
   navigationMode: 'overview',
@@ -28,4 +29,12 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setActiveHotspot: (activeHotspotId) =>
     set({ activeHotspotId, navigationMode: 'hotspot' }),
   setOverviewUnlocked: (overviewUnlocked) => set({ overviewUnlocked }),
+  resetForStation: () =>
+    set({
+      navigationMode: 'overview',
+      activeHotspotId: null,
+      selectedMediaPointId: null,
+      hoveredMediaPointId: null,
+      overviewUnlocked: false,
+    }),
 }))

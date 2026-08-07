@@ -72,9 +72,6 @@ export function NavigationRig() {
   const pause = usePlaybackStore((s) => s.pause)
   const seekToken = usePlaybackStore((s) => s.seekToken)
   const runtimeBounds = useStationRuntimeStore((s) => s.bounds)
-  const isExternal = useStationRuntimeStore(
-    (s) => s.diagnostics?.source === 'external-fbx',
-  )
   const modelFrame = useMemo(() => {
     if (!runtimeBounds) return null
     const center = new THREE.Vector3(...runtimeBounds.center)
@@ -104,14 +101,21 @@ export function NavigationRig() {
 
   useEffect(() => {
     if (mode === 'walkthrough') {
-      if (isExternal && runtimeBounds) {
-        const padding = Math.max(2, Math.min(runtimeBounds.size[0], runtimeBounds.size[2]) * 0.08)
+      if (runtimeBounds) {
+        const padding = Math.max(
+          2,
+          Math.min(runtimeBounds.size[0], runtimeBounds.size[2]) * 0.08,
+        )
         camera.position.set(
           runtimeBounds.min[0] - padding,
           runtimeBounds.min[1] + EYE_HEIGHT,
           runtimeBounds.max[2] + padding,
         )
-        camera.lookAt(runtimeBounds.center[0], camera.position.y, runtimeBounds.center[2])
+        camera.lookAt(
+          runtimeBounds.center[0],
+          camera.position.y,
+          runtimeBounds.center[2],
+        )
       } else {
         camera.position.set(-15, EYE_HEIGHT, 13)
         camera.lookAt(0, EYE_HEIGHT, 0)
@@ -122,7 +126,7 @@ export function NavigationRig() {
       verticalVelocity.current = 0
       walkTime.current = 0
     }
-  }, [camera, isExternal, mode, perspectiveCamera, runtimeBounds])
+  }, [camera, mode, perspectiveCamera, runtimeBounds])
 
   useEffect(() => {
     if (mode !== 'auto') return
@@ -168,10 +172,10 @@ export function NavigationRig() {
         const next = camera.position
           .clone()
           .addScaledVector(velocity.current, delta)
-        const walkMinX = isExternal && runtimeBounds ? runtimeBounds.min[0] - 4 : -29
-        const walkMaxX = isExternal && runtimeBounds ? runtimeBounds.max[0] + 4 : 29
-        const walkMinZ = isExternal && runtimeBounds ? runtimeBounds.min[2] - 4 : -20
-        const walkMaxZ = isExternal && runtimeBounds ? runtimeBounds.max[2] + 4 : 20
+        const walkMinX = runtimeBounds ? runtimeBounds.min[0] - 4 : -29
+        const walkMaxX = runtimeBounds ? runtimeBounds.max[0] + 4 : 29
+        const walkMinZ = runtimeBounds ? runtimeBounds.min[2] - 4 : -20
+        const walkMaxZ = runtimeBounds ? runtimeBounds.max[2] + 4 : 20
         next.x = THREE.MathUtils.clamp(next.x, walkMinX, walkMaxX)
         next.z = THREE.MathUtils.clamp(next.z, walkMinZ, walkMaxZ)
         // Resolve the capsule independently on each horizontal axis so the
@@ -180,14 +184,25 @@ export function NavigationRig() {
         nextX.x = next.x
         const nextZ = camera.position.clone()
         nextZ.z = next.z
-        if (isExternal || canWalkTo(nextX)) camera.position.x = nextX.x
+        if (
+          useStationRuntimeStore.getState().diagnostics?.source ===
+            'external-fbx' ||
+          canWalkTo(nextX)
+        )
+          camera.position.x = nextX.x
         else velocity.current.x = 0
-        if (isExternal || canWalkTo(nextZ)) camera.position.z = nextZ.z
+        if (
+          useStationRuntimeStore.getState().diagnostics?.source ===
+            'external-fbx' ||
+          canWalkTo(nextZ)
+        )
+          camera.position.z = nextZ.z
         else velocity.current.z = 0
         walkTime.current += delta * velocity.current.length() * 2.2
       }
       verticalVelocity.current -= GRAVITY * delta
-      const groundedHeight = (isExternal && runtimeBounds ? runtimeBounds.min[1] : 0) + EYE_HEIGHT
+      const groundedHeight =
+        (runtimeBounds ? runtimeBounds.min[1] : 0) + EYE_HEIGHT
       camera.position.y = Math.max(
         groundedHeight,
         camera.position.y + verticalVelocity.current * delta,
@@ -249,8 +264,8 @@ export function NavigationRig() {
       destination.set(...hotspot.position)
       target.set(...hotspot.target)
     } else {
-      destination.copy(isExternal && modelFrame ? modelFrame.position : OVERVIEW_POSITION)
-      target.copy(isExternal && modelFrame ? modelFrame.target : OVERVIEW_TARGET)
+      destination.copy(modelFrame ? modelFrame.position : OVERVIEW_POSITION)
+      target.copy(modelFrame ? modelFrame.target : OVERVIEW_TARGET)
     }
     camera.position.lerp(destination, 1 - Math.exp(-delta * 3.8))
     if (orbit.current)
@@ -278,8 +293,8 @@ export function NavigationRig() {
       rotateSpeed={0.55}
       zoomSpeed={0.7}
       enabled={mode === 'overview' && overviewUnlocked}
-      maxDistance={isExternal && modelFrame ? modelFrame.radius * 3 : 52}
-      minDistance={isExternal && modelFrame ? Math.max(2, modelFrame.radius * 0.18) : 20}
+      maxDistance={modelFrame ? modelFrame.radius * 3 : 52}
+      minDistance={modelFrame ? Math.max(2, modelFrame.radius * 0.18) : 20}
       minPolarAngle={Math.PI * 0.19}
       maxPolarAngle={Math.PI * 0.455}
     />

@@ -98,6 +98,7 @@ export function Canvas() {
   }, [config.ground?.y, config.mediaPoints.length, config.walkPath.length, setSelectedMesh, setTool, setWarning, setupEnabled, tool, updateConfig])
   return (
     <R3FCanvas
+      style={{ cursor: setupEnabled && tool ? 'crosshair' : 'grab' }}
       shadows
       dpr={[1, 1.75]}
       camera={{ position: [31, 19, 34], fov: 42, near: 0.1, far: 180 }}
@@ -155,6 +156,7 @@ export function Canvas() {
               {diagnostics?.source === 'external-fbx'
                 ? 'External FBX'
                 : 'Procedural'}
+              {setupEnabled && <span className="ml-2 text-amber-300">Setup: ON</span>}
             </div>
           </Html>
         )}

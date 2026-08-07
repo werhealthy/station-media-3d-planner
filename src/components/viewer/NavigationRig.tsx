@@ -75,6 +75,8 @@ export function NavigationRig() {
   const config = useStationSetupStore((s) => s.config)
   const setupEnabled = useStationSetupStore((s) => s.enabled)
   const setCurrentView = useStationSetupStore((s) => s.setCurrentView)
+  const requestedView = useStationSetupStore((s) => s.requestedView)
+  const viewRequestId = useStationSetupStore((s) => s.viewRequestId)
   const modelFrame = useMemo(() => {
     if (!runtimeBounds) return null
     const center = new THREE.Vector3(...runtimeBounds.center)
@@ -87,6 +89,18 @@ export function NavigationRig() {
       .add(new THREE.Vector3(radius * 0.9, radius * 0.58, radius * 1.05))
     return { center, size, radius, target, position }
   }, [runtimeBounds])
+
+  useEffect(() => {
+    if (!requestedView || !viewRequestId) return
+    camera.position.set(...requestedView.position)
+    perspectiveCamera.fov = requestedView.fov
+    perspectiveCamera.zoom = requestedView.zoom ?? 1
+    perspectiveCamera.updateProjectionMatrix()
+    if (orbit.current) {
+      orbit.current.target.set(...requestedView.target)
+      orbit.current.update()
+    } else camera.lookAt(...requestedView.target)
+  }, [camera, perspectiveCamera, requestedView, viewRequestId])
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {

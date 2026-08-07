@@ -1,7 +1,8 @@
 import { useRef } from 'react'
 import { StationConfigSchema, parseStationConfig, serializeStationConfig } from '@/domain/stationConfig'
 import { useStationSetupStore, type SetupTool } from '@/stores/stationSetupStore'
-import { meshPath } from '@/three/stationBounds'
+import { useStationStore } from '@/stores/stationStore'
+import { getStation } from '@/domain/stations'
 
 const tools: Array<[SetupTool, string]> = [
   ['inspect', 'Inspect Mesh'],
@@ -18,6 +19,7 @@ export function StationSetupPanel() {
   const config = useStationSetupStore((s) => s.config)
   const loaded = useStationSetupStore((s) => s.configLoaded)
   const selected = useStationSetupStore((s) => s.selectedMesh)
+  const setSelectedMesh = useStationSetupStore((s) => s.setSelectedMesh)
   const currentView = useStationSetupStore((s) => s.currentView)
   const update = useStationSetupStore((s) => s.updateConfig)
   const initialize = useStationSetupStore((s) => s.initialize)
@@ -25,12 +27,19 @@ export function StationSetupPanel() {
   const setWarning = useStationSetupStore((s) => s.setWarning)
   const debug = useStationSetupStore((s) => s.debug)
   const toggleDebug = useStationSetupStore((s) => s.toggleDebug)
+  const exitSetup = useStationSetupStore((s) => s.exitSetup)
+  const previewView = useStationSetupStore((s) => s.previewView)
+  const stationName = getStation(useStationStore((s) => s.selectedStationId)).name
   const importRef = useRef<HTMLInputElement>(null)
 
   function hideSelected() {
     if (!selected) return
-    const reference = meshPath(selected.object)
+    const reference = selected.path
     update((value) => ({ ...value, hiddenMeshes: [...new Set([...value.hiddenMeshes, reference])] }))
+  }
+  function restoreMesh(reference: string) {
+    update((value) => ({ ...value, hiddenMeshes: value.hiddenMeshes.filter((item) => item !== reference) }))
+    setSelectedMesh(null)
   }
   function saveOverview() {
     if (currentView) update((value) => ({ ...value, overviewCamera: currentView }))
@@ -70,11 +79,12 @@ export function StationSetupPanel() {
 
   return (
     <aside className="absolute right-3 top-3 z-30 max-h-[calc(100%-1.5rem)] w-80 overflow-y-auto rounded-xl border border-amber-400 bg-slate-950/95 p-4 text-xs text-white shadow-2xl">
-      <p className="font-mono text-[10px] font-bold tracking-[.22em] text-amber-300">DEV / CALIBRATION</p>
       <h2 className="mt-1 text-lg font-black">STATION SETUP</h2>
+      <p className="mt-0.5 font-semibold text-amber-300">{stationName}</p>
       {!loaded && <p className="mt-2 rounded bg-amber-400/15 p-2 text-amber-200">Station not calibrated — configurazione locale vuota.</p>}
       <div className="mt-3 grid grid-cols-2 gap-2">
         {tools.map(([id, label]) => <button key={label} onClick={() => setTool(tool === id ? null : id)} className={`rounded px-2 py-2 font-semibold ${tool === id ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 hover:bg-slate-700'}`}>{label}</button>)}
+        <button onClick={() => selected ? hideSelected() : setTool('inspect')} className="rounded bg-slate-800 px-2 py-2 font-semibold hover:bg-slate-700">Hide Mesh</button>
         <button onClick={saveOverview} className="rounded bg-slate-800 px-2 py-2 font-semibold hover:bg-slate-700">Save Overview</button>
         <button onClick={addHotspot} className="rounded bg-slate-800 px-2 py-2 font-semibold hover:bg-slate-700">Add Hotspot</button>
       </div>
@@ -87,19 +97,25 @@ export function StationSetupPanel() {
         <span className="block">World: {fmt(selected.position)}</span>
         <span className="block">Bounds: {fmt(selected.min)} → {fmt(selected.max)}</span>
         <span className="block">Size: {fmt(selected.size)} m · visible: {String(selected.visible)}</span>
-        <button onClick={hideSelected} className="mt-2 w-full rounded bg-red-600 px-2 py-2 font-sans font-bold">Hide / Ignore Mesh</button>
+        <button onClick={hideSelected} className="mt-2 w-full rounded bg-red-600 px-2 py-2 font-sans font-bold">Hide selected mesh</button>
       </section>}
       <section className="mt-3 rounded bg-slate-900 p-3">
-        <b>Ground:</b> {config.ground?.y?.toFixed(3) ?? 'not set'} m<br />
-        <b>Overview:</b> {config.overviewCamera ? 'saved' : 'not set'}<br />
+        <b>Hidden meshes ({config.hiddenMeshes.length})</b>
+        {config.hiddenMeshes.map((reference) => <div key={reference} className="mt-1 flex items-center justify-between gap-2"><span className="truncate" title={reference}>{reference.split('/').at(-1)}</span><button className="text-cyan-300" onClick={() => restoreMesh(reference)}>restore</button></div>)}
+      </section>
+      <section className="mt-3 rounded bg-slate-900 p-3">
+        <b>Ground</b><br />Y: {config.ground?.y?.toFixed(2) ?? 'not set'} m<br />Mesh: {config.ground?.meshName ?? '—'}<br />
+        <b>Overview:</b> {config.overviewCamera ? 'Configured ✓' : 'not set'}<br />
         <b>Hotspots:</b> {config.hotspots.length} · <b>Media:</b> {config.mediaPoints.length} · <b>Walk:</b> {config.walkPath.length}
       </section>
-      {config.hotspots.length > 0 && <section className="mt-3 space-y-1"><b>Hotspots</b>{config.hotspots.map((item) => <div key={item.id} className="flex justify-between rounded bg-slate-900 p-2"><span>{item.name}</span><button onClick={() => update((c) => ({ ...c, hotspots: c.hotspots.filter((h) => h.id !== item.id) }))} className="text-red-300">Delete</button></div>)}</section>}
+      <div className="mt-3 grid gap-2"><button onClick={saveOverview} className="rounded bg-blue-600 px-2 py-2 font-bold">Save current view as Overview</button><button disabled={!config.overviewCamera} onClick={() => config.overviewCamera && previewView(config.overviewCamera)} className="rounded bg-slate-700 px-2 py-2 font-bold disabled:opacity-40">Preview Overview</button><button onClick={addHotspot} className="rounded bg-purple-600 px-2 py-2 font-bold">Save current view as Hotspot</button></div>
+      {config.hotspots.length > 0 && <section className="mt-3 space-y-1"><b>Hotspots</b>{config.hotspots.map((item, index) => <div key={item.id} className="flex justify-between rounded bg-slate-900 p-2"><span>{index + 1}. {item.name}</span><span><button onClick={() => previewView(item)} className="mr-2 text-cyan-300">Go</button><button onClick={() => update((c) => ({ ...c, hotspots: c.hotspots.filter((h) => h.id !== item.id) }))} className="text-red-300">Delete</button></span></div>)}</section>}
       {config.mediaPoints.length > 0 && <section className="mt-3 space-y-1"><b>Media points</b>{config.mediaPoints.map((item) => <div key={item.id} className="rounded bg-slate-900 p-2"><div className="flex justify-between"><span>{item.number}. {item.name}</span><button onClick={() => update((c) => ({ ...c, mediaPoints: c.mediaPoints.filter((m) => m.id !== item.id) }))} className="text-red-300">Delete</button></div><div className="mt-1 grid grid-cols-2 gap-1">{(['width', 'height'] as const).map((key) => <label key={key}>{key}<input type="number" min="0.05" step="0.05" value={item[key]} onChange={(e) => update((c) => ({ ...c, mediaPoints: c.mediaPoints.map((m) => m.id === item.id ? { ...m, [key]: Number(e.target.value) } : m) }))} className="ml-1 w-14 bg-slate-700 px-1" /></label>)}</div>{(['position', 'rotation'] as const).map((vectorKey) => <div key={vectorKey} className="mt-1"><span>{vectorKey}</span><div className="grid grid-cols-3 gap-1">{item[vectorKey].map((value, axis) => <input key={axis} aria-label={`${vectorKey} ${axis}`} type="number" step={vectorKey === 'position' ? 0.01 : 1} value={Number(value.toFixed(3))} onChange={(event) => update((c) => ({ ...c, mediaPoints: c.mediaPoints.map((m) => { if (m.id !== item.id) return m; const vector = [...m[vectorKey]] as [number, number, number]; vector[axis] = Number(event.target.value); return { ...m, [vectorKey]: vector } }) }))} className="w-full bg-slate-700 px-1" />)}</div></div>)}</div>)}</section>}
       {config.walkPath.length > 0 && <section className="mt-3 space-y-1"><b>Walk path</b>{config.walkPath.map((item, index) => <div key={item.id} className="flex justify-between rounded bg-slate-900 p-2"><span>{item.id}</span><span><button disabled={!index} onClick={() => update((c) => { const points = [...c.walkPath]; [points[index - 1], points[index]] = [points[index]!, points[index - 1]!]; return { ...c, walkPath: points } })}>↑</button> <button onClick={() => update((c) => ({ ...c, walkPath: c.walkPath.filter((p) => p.id !== item.id) }))} className="text-red-300">Delete</button></span></div>)}</section>}
-      <section className="mt-3 grid grid-cols-2 gap-1">{(Object.keys(debug) as Array<keyof typeof debug>).map((key) => <label key={key} className="flex gap-1"><input type="checkbox" checked={debug[key]} onChange={() => toggleDebug(key)} />{key}</label>)}</section>
+      <section className="mt-3 grid grid-cols-2 gap-1">{(Object.keys(debug) as Array<keyof typeof debug>).map((key) => <label key={key} className="flex gap-1"><input type="checkbox" checked={debug[key]} onChange={() => toggleDebug(key)} />{key === 'bounds' ? 'Show useful bounds' : key}</label>)}</section>
       {warning && <p role="alert" className="mt-3 rounded bg-amber-300 p-2 text-slate-950">{warning}</p>}
       <div className="mt-3 grid grid-cols-2 gap-2"><button onClick={exportConfig} className="rounded bg-emerald-600 px-2 py-2 font-bold">Export Config</button><button onClick={() => importRef.current?.click()} className="rounded bg-blue-600 px-2 py-2 font-bold">Import Config</button></div>
+      <button onClick={exitSetup} className="mt-3 w-full rounded border border-white/30 px-2 py-2 font-bold hover:bg-white/10">Esci da Setup</button>
       <input ref={importRef} type="file" accept="application/json" className="hidden" onChange={(event) => void importConfig(event.target.files?.[0])} />
     </aside>
   )

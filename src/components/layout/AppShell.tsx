@@ -35,17 +35,19 @@ export function AppShell() {
   useEffect(() => {
     const controller = new AbortController()
     if (station.modelType === 'procedural') {
-      initializeSetup(PROCEDURAL_STATION_CONFIG, true)
+      initializeSetup(PROCEDURAL_STATION_CONFIG, 'valid')
       return () => controller.abort()
     }
     const empty = createEmptyStationConfig(station.id, station.modelType, station.modelPath)
-    initializeSetup(empty, false)
+    initializeSetup(empty, 'loading')
     void loadStationConfig(station, controller.signal)
-      .then((loaded) => initializeSetup(loaded ?? empty, Boolean(loaded)))
+      .then((loaded) =>
+        initializeSetup(loaded ?? empty, loaded ? 'valid' : 'not-configured'),
+      )
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
         if (import.meta.env.DEV) console.error('Station configuration loading failed', error)
-        initializeSetup(empty, false)
+        initializeSetup(empty, 'invalid')
         setSetupWarning('Impossibile caricare la configurazione.')
       })
     return () => controller.abort()

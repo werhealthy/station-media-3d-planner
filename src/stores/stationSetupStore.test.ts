@@ -9,7 +9,7 @@ describe('stationSetupStore', () => {
     useStationSetupStore.getState().exitSetup()
     useStationSetupStore.getState().initialize(
       createEmptyStationConfig('random-textured', 'fbx', '/station.FBX'),
-      false,
+      'not-configured',
     )
   })
 

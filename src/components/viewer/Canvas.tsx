@@ -27,6 +27,7 @@ export function Canvas() {
   const setupEnabled = useStationSetupStore((state) => state.enabled)
   const tool = useStationSetupStore((state) => state.tool)
   const config = useStationSetupStore((state) => state.config)
+  const configStatus = useStationSetupStore((state) => state.configStatus)
   const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
   const setSelectedMediaPoint = useStationSetupStore((state) => state.setSelectedMediaPoint)
   const setTool = useStationSetupStore((state) => state.setTool)
@@ -154,10 +155,21 @@ export function Canvas() {
         {import.meta.env.DEV && (
           <Html fullscreen className="pointer-events-none p-3">
             <div className="w-fit rounded bg-slate-950/65 px-2 py-1 text-[11px] font-semibold text-white">
-              Model:{' '}
+              <div>Model:{' '}
               {diagnostics?.source === 'external-fbx'
-                ? 'External FBX'
-                : 'Procedural'}
+                ? 'External FBX ✓'
+                : diagnostics?.source === 'procedural'
+                  ? 'Procedural ✓'
+                  : 'Loading…'}</div>
+              <div>Config:{' '}
+                {configStatus === 'valid'
+                  ? 'Loaded ✓'
+                  : configStatus === 'not-configured'
+                    ? 'Not configured'
+                    : configStatus === 'invalid'
+                      ? 'Invalid'
+                      : 'Loading…'}
+              </div>
               {setupEnabled && <span className="ml-2 text-amber-300">Setup: ON</span>}
             </div>
           </Html>

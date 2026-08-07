@@ -52,7 +52,7 @@ export function StationSetupPanel() {
   const tool = useStationSetupStore((s) => s.tool)
   const setTool = useStationSetupStore((s) => s.setTool)
   const config = useStationSetupStore((s) => s.config)
-  const loaded = useStationSetupStore((s) => s.configLoaded)
+  const configStatus = useStationSetupStore((s) => s.configStatus)
   const selected = useStationSetupStore((s) => s.selectedMesh)
   const setSelectedMesh = useStationSetupStore((s) => s.setSelectedMesh)
   const selectedMediaPointId = useStationSetupStore((s) => s.selectedMediaPointId)
@@ -110,7 +110,7 @@ export function StationSetupPanel() {
   async function importConfig(file?: File) {
     if (!file) return
     try {
-      initialize(parseStationConfig(JSON.parse(await file.text())), true)
+      initialize(parseStationConfig(JSON.parse(await file.text())), 'valid')
       setWarning(null)
     } catch (error) {
       if (import.meta.env.DEV) console.error('Station configuration import failed', error)
@@ -144,7 +144,8 @@ export function StationSetupPanel() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-        {!loaded && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-900">Configurazione non ancora disponibile. Puoi crearne una nuova.</div>}
+        {configStatus === 'not-configured' && <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900">Questa stazione non è ancora configurata.<br />Segui i passaggi per prepararla.</div>}
+        {configStatus === 'loading' && <div role="status" className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-700">Verifica della configurazione…</div>}
         <div className="mb-5 flex items-center gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#1746a2]"><Icon size={22} /></span><div><h3 className="text-lg font-bold text-slate-950">{currentStep.label}</h3><p className="mt-0.5 text-sm leading-5 text-slate-600">{descriptions[step]}</p></div></div>
 
         {step === 0 && <div className="space-y-3">

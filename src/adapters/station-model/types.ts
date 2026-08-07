@@ -10,6 +10,29 @@ export interface StationModelHandle {
   root: THREE.Object3D
   occlusionMeshes: THREE.Object3D[]
   boundingBox: THREE.Box3
+  /** Runtime-only facts used by cameras and the technical setup workflow. */
+  diagnostics?: StationModelDiagnostics
+}
+
+export interface StationHierarchyNode {
+  name: string
+  type: string
+  depth: number
+  mesh: boolean
+  semanticHint?: 'pump' | 'shop' | 'canopy' | 'totem' | 'ground'
+}
+
+export interface StationModelDiagnostics {
+  source: 'procedural' | 'external-fbx' | 'external-glb'
+  rawSize: [number, number, number]
+  normalizedSize: [number, number, number]
+  center: [number, number, number]
+  meshCount: number
+  materialCount: number
+  textureNames: string[]
+  missingTextures: string[]
+  scaleApplied: number
+  hierarchy: StationHierarchyNode[]
 }
 
 /**

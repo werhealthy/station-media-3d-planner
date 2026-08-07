@@ -7,6 +7,9 @@ import type {
 
 interface StationModelProps {
   adapter: StationModelAdapter
+  fallbackAdapter?: StationModelAdapter
+  onLoaded?: (handle: StationModelHandle) => void
+  onError?: (message: string) => void
 }
 
 type LoadState =
@@ -14,21 +17,35 @@ type LoadState =
   | { status: 'loaded'; handle: StationModelHandle }
   | { status: 'error'; message: string }
 
-export function StationModel({ adapter }: StationModelProps) {
+export function StationModel({ adapter, fallbackAdapter, onLoaded, onError }: StationModelProps) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
     let loadedHandle: StationModelHandle | null = null
 
-    adapter
-      .load()
+    let owner = adapter
+    const loadWithFallback = async () => {
+      try {
+        return await adapter.load()
+      } catch (error) {
+        if (!fallbackAdapter) throw error
+        const message = error instanceof Error ? error.message : String(error)
+        console.error('Modello esterno non disponibile; uso la stazione procedurale:', error)
+        onError?.(`${message} È stato attivato il fallback procedurale.`)
+        owner = fallbackAdapter
+        return fallbackAdapter.load()
+      }
+    }
+
+    loadWithFallback()
       .then((result) => {
         if (cancelled) {
-          adapter.dispose(result)
+          owner.dispose(result)
           return
         }
         loadedHandle = result
+        onLoaded?.(result)
         setState({ status: 'loaded', handle: result })
       })
       .catch((error: unknown) => {
@@ -44,10 +61,10 @@ export function StationModel({ adapter }: StationModelProps) {
     return () => {
       cancelled = true
       if (loadedHandle) {
-        adapter.dispose(loadedHandle)
+        owner.dispose(loadedHandle)
       }
     }
-  }, [adapter])
+  }, [adapter, fallbackAdapter, onError, onLoaded])
 
   if (state.status === 'error') {
     return (

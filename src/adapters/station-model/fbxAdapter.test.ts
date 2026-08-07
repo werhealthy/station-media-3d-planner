@@ -24,4 +24,13 @@ describe('resolveTextureUrl', () => {
       ),
     ).toBe('/models/q8-station/Maps/13_map(4002336).jpg')
   })
+
+  it('normalizza slash, case, query e URL encoding per le 13 mappe note', () => {
+    expect(
+      resolveTextureUrl(
+        '/AUTHOR/Maps/1_MAP%284002336%29.JPG?cache=old',
+        '/models/q8-station/Maps',
+      ),
+    ).toBe('/models/q8-station/Maps/1_map(4002336).jpg')
+  })
 })

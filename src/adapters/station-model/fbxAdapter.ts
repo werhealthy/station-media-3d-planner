@@ -13,10 +13,23 @@ export interface FbxSource {
 }
 
 export function resolveTextureUrl(requested: string, basePath: string): string {
-  const normalized = requested.replaceAll('\\', '/')
+  const normalized = decodeURIComponent(requested)
+    .replaceAll('\\', '/')
+    .split(/[?#]/)[0]!
   const filename = normalized.split('/').pop() || normalized
-  return `${basePath.endsWith('/') ? basePath : `${basePath}/`}${filename}`
+  const canonical =
+    /(?:^|\/)(1[0-3]|[1-9])_map\(4002336\)\.jpg$/i
+      .exec(normalized)?.[0]
+      ?.split('/')
+      .pop()
+      ?.toLowerCase() ?? filename
+  return `${basePath.endsWith('/') ? basePath : `${basePath}/`}${encodeURIComponent(canonical).replaceAll('%28', '(').replaceAll('%29', ')')}`
 }
+
+export const EXPECTED_TEXTURE_FILES = Array.from(
+  { length: 13 },
+  (_, index) => `${index + 1}_map(4002336).jpg`,
+)
 
 const semanticPatterns = {
   pump: /pump|dispenser|fuel|erogator/i,
@@ -87,6 +100,55 @@ function disposeMaterial(material: THREE.Material): void {
   material.dispose()
 }
 
+function sourceOf(texture: THREE.Texture | null | undefined): string | null {
+  if (!texture) return null
+  const data: unknown = texture.source.data
+  return (
+    texture.name ||
+    (typeof data === 'object' &&
+    data !== null &&
+    'src' in data &&
+    typeof data.src === 'string'
+      ? data.src
+      : null)
+  )
+}
+
+function standardizeMappedMaterial(material: THREE.Material): {
+  material: THREE.Material
+  converted: boolean
+} {
+  const source = material as THREE.Material & {
+    map?: THREE.Texture | null
+    alphaMap?: THREE.Texture | null
+    color?: THREE.Color
+    opacity?: number
+    transparent?: boolean
+    roughness?: number
+    shininess?: number
+  }
+  if (!source.map || material instanceof THREE.MeshStandardMaterial) {
+    if (source.map) source.map.colorSpace = THREE.SRGBColorSpace
+    return { material, converted: false }
+  }
+  source.map.colorSpace = THREE.SRGBColorSpace
+  const converted = new THREE.MeshStandardMaterial({
+    name: material.name,
+    map: source.map,
+    alphaMap: source.alphaMap ?? null,
+    color: source.color?.clone() ?? new THREE.Color(0xffffff),
+    opacity: source.opacity ?? 1,
+    transparent: source.transparent ?? (source.opacity ?? 1) < 1,
+    side: material.side,
+    roughness:
+      source.roughness ??
+      (source.shininess == null
+        ? 0.7
+        : THREE.MathUtils.clamp(1 - source.shininess / 100, 0.05, 1)),
+  })
+  return { material: converted, converted: true }
+}
+
 /** Keep metre-sized files unchanged; correct the common centimetre/millimetre exports. */
 export function inferMeterScale(size: THREE.Vector3): number {
   const largest = Math.max(size.x, size.y, size.z)
@@ -115,14 +177,16 @@ function normalize(root: THREE.Object3D) {
 
 export function createFbxAdapter(source: FbxSource): StationModelAdapter {
   return {
-    load(): Promise<StationModelHandle> {
+    async load(): Promise<StationModelHandle> {
       const missingTextures = new Set<string>()
+      const requestedUrls = new Map<string, string>()
       const manager = new THREE.LoadingManager()
       if (source.resourcePath) {
         manager.setURLModifier((requested) => {
           if (requested === source.url || /\.fbx(?:\?|$)/i.test(requested))
             return requested
           const resolved = resolveTextureUrl(requested, source.resourcePath!)
+          requestedUrls.set(requested, resolved)
           if (import.meta.env.DEV) {
             void fetch(resolved, { method: 'HEAD' })
               .then((response) =>
@@ -147,6 +211,17 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
       const loader = new FBXLoader(manager)
       if (source.resourcePath) loader.setResourcePath(source.resourcePath)
 
+      const textureFiles = await Promise.all(
+        EXPECTED_TEXTURE_FILES.map(async (filename) => {
+          const url = resolveTextureUrl(filename, source.resourcePath ?? '')
+          try {
+            const response = await fetch(url, { method: 'HEAD' })
+            return { filename, url, found: response.ok }
+          } catch {
+            return { filename, url, found: false }
+          }
+        }),
+      )
       return new Promise((resolve, reject) => {
         loader.load(
           source.url,
@@ -156,17 +231,78 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
               const { rawSize, scale, boundingBox } = normalize(root)
               const meshes = collectMeshes(root)
               const materials = new Set<THREE.Material>()
+              let materialsConverted = 0
               for (const mesh of meshes) {
                 mesh.castShadow = true
                 mesh.receiveShadow = true
-                for (const material of materialList(mesh))
-                  materials.add(material)
+                const originals = materialList(mesh)
+                const replacements = originals.map((material) => {
+                  const result = standardizeMappedMaterial(material)
+                  if (result.converted) materialsConverted += 1
+                  return result.material
+                })
+                mesh.material = Array.isArray(mesh.material)
+                  ? replacements
+                  : replacements[0]!
+                replacements.forEach((material) => materials.add(material))
               }
               const textures = new Set(
                 [...materials].flatMap((material) => textureNames(material)),
               )
               const size = boundingBox.getSize(new THREE.Vector3())
               const center = boundingBox.getCenter(new THREE.Vector3())
+              const fileFound = new Map(
+                textureFiles.map((file) => [
+                  file.url.toLowerCase(),
+                  file.found,
+                ]),
+              )
+              const textureLinks = meshes.flatMap((mesh) =>
+                materialList(mesh).map((material) => {
+                  const candidate = material as THREE.Material & {
+                    map?: THREE.Texture | null
+                    color?: THREE.Color
+                    roughness?: number
+                    shininess?: number
+                    opacity?: number
+                  }
+                  const mapSource = sourceOf(candidate.map)
+                  const requested = [...requestedUrls.entries()].find(
+                    ([request, resolved]) =>
+                      mapSource?.includes(resolved) ||
+                      mapSource?.includes(request),
+                  )
+                  const resolvedUrl =
+                    requested?.[1] ??
+                    (mapSource
+                      ? resolveTextureUrl(mapSource, source.resourcePath ?? '')
+                      : '')
+                  return {
+                    requested: requested?.[0] ?? mapSource ?? '(none)',
+                    resolvedUrl,
+                    status: (!resolvedUrl
+                      ? 'unknown'
+                      : fileFound.get(resolvedUrl.toLowerCase()) === false
+                        ? 'missing'
+                        : 'found') as 'found' | 'missing' | 'unknown',
+                    mesh: mesh.name || '(unnamed)',
+                    material: material.name || '(unnamed)',
+                    materialType: material.type,
+                    mapPresent: Boolean(candidate.map),
+                    mapSource,
+                    color: candidate.color
+                      ? `#${candidate.color.getHexString()}`
+                      : null,
+                    roughness: candidate.roughness ?? null,
+                    shininess: candidate.shininess ?? null,
+                    opacity: candidate.opacity ?? 1,
+                    side: material.side,
+                    uvAttributes: Object.keys(mesh.geometry.attributes).filter(
+                      (name) => name.startsWith('uv'),
+                    ),
+                  }
+                }),
+              )
               const diagnostics: StationModelDiagnostics = {
                 source: 'external-fbx',
                 rawSize: rawSize.toArray(),
@@ -178,6 +314,9 @@ export function createFbxAdapter(source: FbxSource): StationModelAdapter {
                 missingTextures: [...missingTextures],
                 scaleApplied: scale,
                 hierarchy: collectHierarchy(root),
+                textureFiles,
+                textureLinks,
+                materialsConverted,
               }
               if (import.meta.env.DEV)
                 console.info(

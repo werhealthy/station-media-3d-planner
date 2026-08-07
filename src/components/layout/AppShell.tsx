@@ -12,6 +12,7 @@ import { useStationSetupStore } from '@/stores/stationSetupStore'
 import { createEmptyStationConfig } from '@/domain/stationConfig'
 import { PROCEDURAL_STATION_CONFIG } from '@/domain/stationConfigDefaults'
 import { loadStationConfig } from '@/adapters/station-config/stationConfigLoader'
+import { restoreStationConfig } from '@/adapters/station-config/stationConfigPersistence'
 import { StationSetupPanel } from './StationSetupPanel'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
@@ -38,7 +39,21 @@ export function AppShell() {
       initializeSetup(PROCEDURAL_STATION_CONFIG, 'valid')
       return () => controller.abort()
     }
-    const empty = createEmptyStationConfig(station.id, station.modelType, station.modelPath)
+    const empty = createEmptyStationConfig(
+      station.id,
+      station.modelType,
+      station.modelPath,
+    )
+    try {
+      const local = restoreStationConfig(window.localStorage, station.id)
+      if (local) {
+        initializeSetup(local, 'valid')
+        return () => controller.abort()
+      }
+    } catch (error) {
+      if (import.meta.env.DEV)
+        console.warn('Local station configuration is invalid', error)
+    }
     initializeSetup(empty, 'loading')
     void loadStationConfig(station, controller.signal)
       .then((loaded) =>
@@ -46,7 +61,8 @@ export function AppShell() {
       )
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
-        if (import.meta.env.DEV) console.error('Station configuration loading failed', error)
+        if (import.meta.env.DEV)
+          console.error('Station configuration loading failed', error)
         initializeSetup(empty, 'invalid')
         setSetupWarning('Impossibile caricare la configurazione.')
       })

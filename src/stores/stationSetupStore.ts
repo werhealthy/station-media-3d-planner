@@ -4,9 +4,11 @@ import {
   type CameraView,
   type StationConfig,
 } from '@/domain/stationConfig'
+import { persistStationConfig } from '@/adapters/station-config/stationConfigPersistence'
 
 export type SetupTool = 'inspect' | 'ground' | 'media' | 'walk' | null
-export type StationConfigStatus = 'loading' | 'not-configured' | 'valid' | 'invalid'
+export type StationConfigStatus =
+  'loading' | 'not-configured' | 'valid' | 'invalid'
 export interface MeshInspection {
   name: string
   path: string
@@ -39,6 +41,7 @@ interface SetupState {
   selectedMediaPointId: string | null
   currentView: CameraView | null
   warning: string | null
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error'
   debug: DebugFlags
   requestedView: CameraView | null
   viewRequestId: number
@@ -55,6 +58,26 @@ interface SetupState {
   toggleDebug: (key: keyof DebugFlags) => void
 }
 
+let autosaveTimer: ReturnType<typeof setTimeout> | undefined
+export const STATION_CONFIG_AUTOSAVE_DELAY = 400
+
+function scheduleAutosave(
+  config: StationConfig,
+  set: (partial: Partial<SetupState>) => void,
+) {
+  if (typeof window === 'undefined') return
+  clearTimeout(autosaveTimer)
+  set({ saveStatus: 'saving' })
+  autosaveTimer = setTimeout(() => {
+    try {
+      persistStationConfig(window.localStorage, config)
+      set({ saveStatus: 'saved' })
+    } catch {
+      set({ saveStatus: 'error' })
+    }
+  }, STATION_CONFIG_AUTOSAVE_DELAY)
+}
+
 const enabled =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('setup') === '1'
@@ -68,19 +91,41 @@ export const useStationSetupStore = create<SetupState>((set) => ({
   selectedMediaPointId: null,
   currentView: null,
   warning: null,
-  debug: { bounds: false, ground: true, hotspots: true, media: true, walkPath: true },
+  saveStatus: 'idle',
+  debug: {
+    bounds: false,
+    ground: true,
+    hotspots: true,
+    media: true,
+    walkPath: true,
+  },
   requestedView: null,
   viewRequestId: 0,
   enterSetup: () => set({ enabled: true }),
   exitSetup: () => set({ enabled: false, tool: null, selectedMesh: null }),
-  previewView: (requestedView) => set((state) => ({ requestedView, viewRequestId: state.viewRequestId + 1 })),
+  previewView: (requestedView) =>
+    set((state) => ({ requestedView, viewRequestId: state.viewRequestId + 1 })),
   initialize: (config, configStatus) =>
-    set({ config, configStatus, tool: null, selectedMesh: null, selectedMediaPointId: null, warning: null }),
+    set({
+      config,
+      configStatus,
+      tool: null,
+      selectedMesh: null,
+      selectedMediaPointId: null,
+      warning: null,
+      saveStatus: 'idle',
+    }),
   setTool: (tool) => set({ tool }),
   setSelectedMesh: (selectedMesh) => set({ selectedMesh }),
-  setSelectedMediaPoint: (selectedMediaPointId) => set({ selectedMediaPointId }),
+  setSelectedMediaPoint: (selectedMediaPointId) =>
+    set({ selectedMediaPointId }),
   setCurrentView: (currentView) => set({ currentView }),
-  updateConfig: (update) => set((state) => ({ config: update(state.config) })),
+  updateConfig: (update) =>
+    set((state) => {
+      const config = update(state.config)
+      scheduleAutosave(config, set)
+      return { config }
+    }),
   setWarning: (warning) => set({ warning }),
   toggleDebug: (key) =>
     set((state) => ({ debug: { ...state.debug, [key]: !state.debug[key] } })),

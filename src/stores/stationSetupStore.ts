@@ -67,7 +67,7 @@ export const useStationSetupStore = create<SetupState>((set) => ({
   selectedMediaPointId: null,
   currentView: null,
   warning: null,
-  debug: { bounds: true, ground: true, hotspots: true, media: true, walkPath: true },
+  debug: { bounds: false, ground: true, hotspots: true, media: true, walkPath: true },
   requestedView: null,
   viewRequestId: 0,
   enterSetup: () => set({ enabled: true }),

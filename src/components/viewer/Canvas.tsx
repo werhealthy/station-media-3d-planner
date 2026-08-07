@@ -28,6 +28,7 @@ export function Canvas() {
   const tool = useStationSetupStore((state) => state.tool)
   const config = useStationSetupStore((state) => state.config)
   const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
+  const setSelectedMediaPoint = useStationSetupStore((state) => state.setSelectedMediaPoint)
   const setTool = useStationSetupStore((state) => state.setTool)
   const updateConfig = useStationSetupStore((state) => state.updateConfig)
   const setWarning = useStationSetupStore((state) => state.setWarning)
@@ -89,13 +90,14 @@ export function Canvas() {
           surface: 'Superficie configurata',
         }],
       }))
+      setSelectedMediaPoint(`media-${String(index).padStart(2, '0')}`)
       setTool(null)
     } else if (tool === 'walk') {
       const index = config.walkPath.length + 1
       const y = config.ground?.y ?? inspection.hitPoint[1]
       updateConfig((current) => ({ ...current, walkPath: [...current.walkPath, { id: `WALK_${String(index).padStart(2, '0')}`, position: [inspection.hitPoint[0], y, inspection.hitPoint[2]] }] }))
     }
-  }, [config.ground?.y, config.mediaPoints.length, config.walkPath.length, setSelectedMesh, setTool, setWarning, setupEnabled, tool, updateConfig])
+  }, [config.ground?.y, config.mediaPoints.length, config.walkPath.length, setSelectedMediaPoint, setSelectedMesh, setTool, setWarning, setupEnabled, tool, updateConfig])
   return (
     <R3FCanvas
       style={{ cursor: setupEnabled && tool ? 'crosshair' : 'grab' }}

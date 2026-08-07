@@ -1,11 +1,35 @@
 import { Canvas as R3FCanvas } from '@react-three/fiber'
-import { ContactShadows, Environment } from '@react-three/drei'
-import { Suspense } from 'react'
+import { ContactShadows, Environment, Html } from '@react-three/drei'
+import { Suspense, useCallback, useMemo } from 'react'
+import * as THREE from 'three'
 import { StationModel } from './StationModel'
 import { MediaPointsLayer } from './MediaPointsLayer'
 import { proceduralAdapter } from '@/adapters/station-model/proceduralAdapter'
 import { NavigationRig } from './NavigationRig'
+import { externalStationAdapter } from '@/adapters/station-model/fbxAdapter'
+import type { StationModelHandle } from '@/adapters/station-model/types'
+import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 export function Canvas() {
+  const external = useMemo(
+    () => new URLSearchParams(window.location.search).get('stationModel') === 'external',
+    [],
+  )
+  const setLoadedModel = useStationRuntimeStore((state) => state.setLoadedModel)
+  const setLoadWarning = useStationRuntimeStore((state) => state.setLoadWarning)
+  const loadWarning = useStationRuntimeStore((state) => state.loadWarning)
+  const handleLoaded = useCallback((handle: StationModelHandle) => {
+    const size = handle.boundingBox.getSize(new THREE.Vector3())
+    const center = handle.boundingBox.getCenter(new THREE.Vector3())
+    setLoadedModel(
+      {
+        min: handle.boundingBox.min.toArray(),
+        max: handle.boundingBox.max.toArray(),
+        center: center.toArray(),
+        size: size.toArray(),
+      },
+      handle.diagnostics ?? null,
+    )
+  }, [setLoadedModel])
   return (
     <R3FCanvas
       shadows
@@ -32,8 +56,13 @@ export function Canvas() {
           shadow-radius={3}
         />
         <Environment preset="city" environmentIntensity={0.42} />
-        <StationModel adapter={proceduralAdapter} />
-        <MediaPointsLayer />
+        <StationModel
+          adapter={external ? externalStationAdapter : proceduralAdapter}
+          fallbackAdapter={external ? proceduralAdapter : undefined}
+          onLoaded={handleLoaded}
+          onError={setLoadWarning}
+        />
+        {!external && <MediaPointsLayer />}
         <ContactShadows
           position={[0, 0.05, 0]}
           opacity={0.28}
@@ -42,6 +71,14 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
+        {loadWarning && (
+          <Html fullscreen className="pointer-events-none p-4">
+            <div className="ml-auto max-w-md rounded-lg bg-amber-950/90 px-4 py-3 text-sm text-white shadow-xl">
+              <strong className="block">Modello FBX non disponibile</strong>
+              {loadWarning}
+            </div>
+          </Html>
+        )}
       </Suspense>
     </R3FCanvas>
   )

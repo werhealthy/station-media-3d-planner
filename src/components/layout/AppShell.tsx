@@ -44,8 +44,9 @@ export function AppShell() {
       .then((loaded) => initializeSetup(loaded ?? empty, Boolean(loaded)))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
+        if (import.meta.env.DEV) console.error('Station configuration loading failed', error)
         initializeSetup(empty, false)
-        setSetupWarning(error instanceof Error ? error.message : 'Configurazione non valida.')
+        setSetupWarning('Impossibile caricare la configurazione.')
       })
     return () => controller.abort()
   }, [initializeSetup, setSetupWarning, station])

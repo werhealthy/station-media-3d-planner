@@ -10,17 +10,21 @@ import { useViewerStore } from '@/stores/viewerStore'
 const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
 const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
 const EYE_HEIGHT = 1.7
+const WALK_SPEED = 2.35
 
 export function NavigationRig() {
   const mode = useViewerStore((s) => s.navigationMode)
   const activeHotspotId = useViewerStore((s) => s.activeHotspotId)
   const setMode = useViewerStore((s) => s.setNavigationMode)
+  const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
   const { camera, gl } = useThree()
   const perspectiveCamera = camera as THREE.PerspectiveCamera
   const orbit = useRef<OrbitControlsImpl>(null)
   const keys = useRef(new Set<string>())
   const destination = useMemo(() => new THREE.Vector3(), [])
   const target = useMemo(() => new THREE.Vector3(), [])
+  const velocity = useRef(new THREE.Vector3())
+  const walkTime = useRef(0)
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -42,6 +46,8 @@ export function NavigationRig() {
       camera.lookAt(0, EYE_HEIGHT, 0)
       perspectiveCamera.fov = 58
       perspectiveCamera.updateProjectionMatrix()
+      velocity.current.set(0, 0, 0)
+      walkTime.current = 0
     }
   }, [camera, mode, perspectiveCamera])
 
@@ -64,19 +70,35 @@ export function NavigationRig() {
         move.add(right)
       if (keys.current.has('KeyA') || keys.current.has('ArrowLeft'))
         move.sub(right)
-      if (move.lengthSq()) {
+      const desiredVelocity = move.lengthSq()
+        ? move.normalize().multiplyScalar(WALK_SPEED)
+        : move
+      velocity.current.lerp(
+        desiredVelocity,
+        1 - Math.exp(-delta * (move.lengthSq() ? 7 : 9)),
+      )
+      if (velocity.current.lengthSq() > 0.002) {
         const next = camera.position
           .clone()
-          .add(move.normalize().multiplyScalar(delta * 5.2))
+          .addScaledVector(velocity.current, delta)
         next.x = THREE.MathUtils.clamp(next.x, -29, 29)
         next.z = THREE.MathUtils.clamp(next.z, -20, 20)
         // Conservative rectangular exclusion for the shop volume.
         if (!(next.x > 3.5 && next.x < 22.5 && next.z < -5.5))
           camera.position.copy(next)
+        else velocity.current.multiplyScalar(0.25)
+        walkTime.current += delta * velocity.current.length() * 2.2
       }
-      camera.position.y = EYE_HEIGHT
+      const bob = Math.sin(walkTime.current * Math.PI) * 0.014
+      camera.position.y = THREE.MathUtils.lerp(
+        camera.position.y,
+        EYE_HEIGHT + bob,
+        1 - Math.exp(-delta * 12),
+      )
       return
     }
+
+    if (mode === 'overview' && overviewUnlocked) return
 
     const hotspot = HOTSPOTS.find((item) => item.id === activeHotspotId)
     if (hotspot) {
@@ -107,11 +129,15 @@ export function NavigationRig() {
       ref={orbit}
       makeDefault
       enablePan={false}
-      enabled={mode === 'overview'}
-      minDistance={22}
-      maxDistance={58}
-      minPolarAngle={Math.PI * 0.2}
-      maxPolarAngle={Math.PI * 0.46}
+      enableDamping
+      dampingFactor={0.07}
+      rotateSpeed={0.55}
+      zoomSpeed={0.7}
+      enabled={mode === 'overview' && overviewUnlocked}
+      minDistance={20}
+      maxDistance={52}
+      minPolarAngle={Math.PI * 0.19}
+      maxPolarAngle={Math.PI * 0.455}
     />
   )
 }

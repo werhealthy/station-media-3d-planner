@@ -68,6 +68,13 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
   box(g, [1.5, 2.1, 0.8], mat('#102b67', 0.28, 0.35), [0, 1.32, 0], 'pump-body')
   box(
     g,
+    [1.66, 0.12, 0.96],
+    mat('#dce2e6', 0.24, 0.5),
+    [0, 0.55, 0],
+    'pump-lower-trim',
+  )
+  box(
+    g,
     [1.25, 0.7, 0.08],
     mat('#101820', 0.15, 0.2),
     [0, 1.62, 0.45],
@@ -80,6 +87,21 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
     [0, 2.4, 0],
     'pump-header',
   )
+  box(
+    g,
+    [1.08, 0.08, 0.09],
+    mat('#78c7d0', 0.12, 0.15),
+    [0, 1.76, 0.5],
+    'display-glow',
+  )
+  for (const bx of [-0.38, 0, 0.38])
+    box(
+      g,
+      [0.24, 0.16, 0.08],
+      mat('#e8edf0', 0.35),
+      [bx, 1.35, 0.5],
+      'pump-keypad',
+    )
   for (const side of [-1, 1]) {
     mesh(
       g,
@@ -125,11 +147,42 @@ function buildStation() {
   )
   box(
     root,
+    [L.forecourt.width, 0.1, 1.2],
+    concrete,
+    [0, 0.04, -21.5],
+    'road-curb',
+  )
+  for (let x = -27; x <= 27; x += 9)
+    box(
+      root,
+      [4.5, 0.025, 0.16],
+      mat('#ece7cf', 0.8),
+      [x, 0.025, 18],
+      'road-marking',
+    )
+  box(
+    root,
     [L.canopy.width, 0.55, L.canopy.depth],
     white,
     [0, L.canopy.height, 0],
     'canopy-roof',
   )
+  box(
+    root,
+    [L.canopy.width - 0.7, 0.12, L.canopy.depth - 0.7],
+    mat('#d9dcda', 0.58),
+    [0, L.canopy.height - 0.35, 0],
+    'canopy-undertray',
+  )
+  for (const x of [-9, -3, 3, 9])
+    for (const z of [-4.8, 4.8])
+      box(
+        root,
+        [1.2, 0.035, 0.55],
+        mat('#fff8dc', 0.12),
+        [x, L.canopy.height - 0.44, z],
+        'canopy-light',
+      )
   box(
     root,
     [L.canopy.width + 0.15, L.canopy.fasciaHeight, 0.38],
@@ -161,6 +214,7 @@ function buildStation() {
   for (const x of [-7, 7]) {
     box(root, [1, 5.75, 0.75], steel, [x, 3, 0], 'canopy-column')
     box(root, [1.18, 0.18, 0.95], concrete, [x, 0.12, 0], 'column-foot')
+    box(root, [1.08, 0.06, 0.84], blue, [x, 5.55, 0], 'column-cap')
   }
   const logo = labelTexture('Q8')
   if (logo) {
@@ -200,6 +254,20 @@ function buildStation() {
     [L.shop.x, 4.35, -L.shop.depth / 2 + L.shop.z - 0.16],
     'shop-fascia',
   )
+  const svolta = labelTexture('SVOLTA', '#16877d', '#16877d')
+  if (svolta) {
+    const svoltaMat = new THREE.MeshStandardMaterial({
+      map: svolta,
+      roughness: 0.4,
+    })
+    mesh(
+      root,
+      new THREE.PlaneGeometry(5.2, 1),
+      svoltaMat,
+      [13, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
+      'svolta-brand',
+    )
+  }
   const glass = new THREE.MeshPhysicalMaterial({
     color: '#14313d',
     roughness: 0.12,
@@ -215,6 +283,14 @@ function buildStation() {
       glass,
       [x, 2.25, L.shop.z + L.shop.depth / 2 + 0.07],
       'shop-glazing',
+    )
+  for (let x = 3.6; x <= 22.4; x += 3)
+    box(
+      root,
+      [0.1, 3.35, 0.18],
+      steel,
+      [x, 2.2, L.shop.z + L.shop.depth / 2 + 0.15],
+      'glazing-mullion',
     )
   box(
     root,
@@ -237,6 +313,19 @@ function buildStation() {
     [L.totem.x, 6.65, L.totem.z + 0.4],
     'totem-brand',
   )
+  if (logo) {
+    const totemLogoMat = new THREE.MeshStandardMaterial({
+      map: logo,
+      roughness: 0.35,
+    })
+    mesh(
+      root,
+      new THREE.PlaneGeometry(2.7, 1.25),
+      totemLogoMat,
+      [L.totem.x, 7.05, L.totem.z + 0.46],
+      'totem-logo',
+    )
+  }
   for (let y = 3.2; y <= 5.2; y += 1)
     box(
       root,

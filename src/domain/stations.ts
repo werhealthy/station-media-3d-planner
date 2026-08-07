@@ -1,4 +1,4 @@
-export type StationModelType = 'procedural' | 'fbx'
+export type StationModelType = 'procedural' | 'fbx' | 'glb'
 
 export interface StationDefinition {
   id: string
@@ -7,6 +7,7 @@ export interface StationDefinition {
   modelType: StationModelType
   modelPath?: string
   textureBasePath?: string
+  configPath?: string
   badge?: string
   /** Future station-config.json sections can replace these capability flags. */
   mediaPointsConfigured: boolean
@@ -28,6 +29,7 @@ export const STATIONS = [
     modelType: 'fbx',
     modelPath: '/models/q8-station/4002336.FBX',
     textureBasePath: '/models/q8-station/Maps/',
+    configPath: '/models/q8-station/station-config.json',
     badge: 'FBX',
     mediaPointsConfigured: false,
   },

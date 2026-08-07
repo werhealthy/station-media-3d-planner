@@ -4,7 +4,6 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import {
@@ -12,6 +11,7 @@ import {
   WALKTHROUGH_ROUTE,
 } from '@/domain/walkthroughRoute'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
+import { useStationSetupStore } from '@/stores/stationSetupStore'
 
 const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
 const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
@@ -72,6 +72,9 @@ export function NavigationRig() {
   const pause = usePlaybackStore((s) => s.pause)
   const seekToken = usePlaybackStore((s) => s.seekToken)
   const runtimeBounds = useStationRuntimeStore((s) => s.bounds)
+  const config = useStationSetupStore((s) => s.config)
+  const setupEnabled = useStationSetupStore((s) => s.enabled)
+  const setCurrentView = useStationSetupStore((s) => s.setCurrentView)
   const modelFrame = useMemo(() => {
     if (!runtimeBounds) return null
     const center = new THREE.Vector3(...runtimeBounds.center)
@@ -131,18 +134,37 @@ export function NavigationRig() {
   useEffect(() => {
     if (mode !== 'auto') return
     autoTime.current =
-      usePlaybackStore.getState().progress * WALKTHROUGH_DURATION
+      usePlaybackStore.getState().progress *
+      (config.modelType === 'procedural'
+        ? WALKTHROUGH_DURATION
+        : config.walkPath.length * 4)
     perspectiveCamera.fov = 56
     perspectiveCamera.updateProjectionMatrix()
-  }, [mode, perspectiveCamera])
+  }, [config.modelType, config.walkPath.length, mode, perspectiveCamera])
 
   useEffect(() => {
     if (mode === 'auto')
       autoTime.current =
-        usePlaybackStore.getState().progress * WALKTHROUGH_DURATION
-  }, [mode, seekToken])
+        usePlaybackStore.getState().progress *
+        (config.modelType === 'procedural'
+          ? WALKTHROUGH_DURATION
+          : config.walkPath.length * 4)
+  }, [config.modelType, config.walkPath.length, mode, seekToken])
 
   useFrame((_, delta) => {
+    if (setupEnabled) {
+      const orbitTarget =
+        orbit.current?.target ??
+        new THREE.Vector3(0, 0, -1)
+          .applyQuaternion(camera.quaternion)
+          .add(camera.position)
+      setCurrentView({
+        position: camera.position.toArray(),
+        target: orbitTarget.toArray(),
+        fov: perspectiveCamera.fov,
+        zoom: perspectiveCamera.zoom,
+      })
+    }
     if (mode === 'walkthrough') {
       const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(
         camera.quaternion,
@@ -202,7 +224,8 @@ export function NavigationRig() {
       }
       verticalVelocity.current -= GRAVITY * delta
       const groundedHeight =
-        (runtimeBounds ? runtimeBounds.min[1] : 0) + EYE_HEIGHT
+        (config.ground?.y ?? (runtimeBounds ? runtimeBounds.min[1] : 0)) +
+        EYE_HEIGHT
       camera.position.y = Math.max(
         groundedHeight,
         camera.position.y + verticalVelocity.current * delta,
@@ -218,6 +241,40 @@ export function NavigationRig() {
     }
 
     if (mode === 'auto') {
+      if (config.modelType !== 'procedural') {
+        if (config.walkPath.length < 2) {
+          setProgress(0)
+          pause()
+          return
+        }
+        if (isPlaying)
+          autoTime.current = Math.min(
+            config.walkPath.length * 4,
+            autoTime.current + delta * playbackSpeed,
+          )
+        const duration = config.walkPath.length * 4
+        const progress = THREE.MathUtils.clamp(autoTime.current / duration, 0, 1)
+        const curve = new THREE.CatmullRomCurve3(
+          config.walkPath.map((point) => new THREE.Vector3(...point.position)),
+          false,
+          'centripetal',
+        )
+        destination.copy(curve.getPoint(progress))
+        destination.y += EYE_HEIGHT
+        const pointIndex = Math.min(
+          config.walkPath.length - 1,
+          Math.round(progress * (config.walkPath.length - 1)),
+        )
+        const point = config.walkPath[pointIndex]!
+        if (point.lookAt) target.set(...point.lookAt)
+        else target.copy(curve.getPoint(Math.min(1, progress + 0.02))).setY(destination.y)
+        camera.position.lerp(destination, 1 - Math.exp(-delta * 7))
+        camera.lookAt(target)
+        setProgress(progress)
+        setActiveStep(pointIndex, point.lookAtMediaPointId ?? null)
+        if (progress >= 1 && isPlaying) pause()
+        return
+      }
       if (isPlaying)
         autoTime.current = Math.min(
           WALKTHROUGH_DURATION,
@@ -259,18 +316,30 @@ export function NavigationRig() {
 
     if (mode === 'overview' && overviewUnlocked) return
 
-    const hotspot = HOTSPOTS.find((item) => item.id === activeHotspotId)
+    const hotspot = config.hotspots.find((item) => item.id === activeHotspotId)
     if (hotspot) {
       destination.set(...hotspot.position)
       target.set(...hotspot.target)
     } else {
-      destination.copy(modelFrame ? modelFrame.position : OVERVIEW_POSITION)
-      target.copy(modelFrame ? modelFrame.target : OVERVIEW_TARGET)
+      destination.copy(
+        config.overviewCamera
+          ? new THREE.Vector3(...config.overviewCamera.position)
+          : modelFrame
+            ? modelFrame.position
+            : OVERVIEW_POSITION,
+      )
+      target.copy(
+        config.overviewCamera
+          ? new THREE.Vector3(...config.overviewCamera.target)
+          : modelFrame
+            ? modelFrame.target
+            : OVERVIEW_TARGET,
+      )
     }
     camera.position.lerp(destination, 1 - Math.exp(-delta * 3.8))
     if (orbit.current)
       orbit.current.target.lerp(target, 1 - Math.exp(-delta * 4.5))
-    const desiredFov = hotspot?.fov ?? 42
+    const desiredFov = hotspot?.fov ?? config.overviewCamera?.fov ?? 42
     perspectiveCamera.fov = THREE.MathUtils.lerp(
       perspectiveCamera.fov,
       desiredFov,
@@ -287,12 +356,12 @@ export function NavigationRig() {
     <OrbitControls
       ref={orbit}
       makeDefault
-      enablePan={false}
+      enablePan={setupEnabled}
       enableDamping
       dampingFactor={0.07}
       rotateSpeed={0.55}
       zoomSpeed={0.7}
-      enabled={mode === 'overview' && overviewUnlocked}
+      enabled={mode === 'overview' && (overviewUnlocked || setupEnabled)}
       maxDistance={modelFrame ? modelFrame.radius * 3 : 52}
       minDistance={modelFrame ? Math.max(2, modelFrame.radius * 0.18) : 20}
       minPolarAngle={Math.PI * 0.19}

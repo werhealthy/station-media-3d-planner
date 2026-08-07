@@ -3,17 +3,31 @@ import { MediaPointPanel } from './MediaPointPanel'
 import { Canvas } from '@/components/viewer/Canvas'
 import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
+import { Lock, Rotate3D } from 'lucide-react'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
   const setHotspot = useViewerStore((s) => s.setActiveHotspot)
   const setMode = useViewerStore((s) => s.setNavigationMode)
+  const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
+  const setOverviewUnlocked = useViewerStore((s) => s.setOverviewUnlocked)
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
       <TopBar />
       <main className="flex min-h-0 flex-1">
         <section className="relative min-w-0 flex-1">
           <Canvas />
+          {mode === 'overview' && (
+            <button
+              type="button"
+              aria-pressed={overviewUnlocked}
+              onClick={() => setOverviewUnlocked(!overviewUnlocked)}
+              className="absolute left-5 top-5 flex items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#153276] shadow-lg shadow-slate-900/10 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              {overviewUnlocked ? <Lock size={17} /> : <Rotate3D size={17} />}
+              {overviewUnlocked ? 'Blocca overview' : 'Vista libera'}
+            </button>
+          )}
           {mode === 'hotspot' && (
             <nav
               aria-label="Hotspot stazione"
@@ -52,7 +66,9 @@ export function AppShell() {
               </b>
               {mode === 'hotspot'
                 ? 'Scegli una vista guidata'
-                : 'Trascina per ruotare · scorri per avvicinare'}
+                : overviewUnlocked
+                  ? 'Trascina per ruotare · scorri per avvicinare'
+                  : 'Vista editoriale bloccata · attiva Vista libera per esplorare'}
             </div>
           )}
         </section>

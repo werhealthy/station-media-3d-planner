@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { STATION_LAYOUT as L } from '@/domain/stationLayout'
 import type { StationModelAdapter } from './types'
+import { BRAND_ASSETS } from '@/config/brandAssets'
 const mat = (color: string, roughness = 0.55, metalness = 0) =>
   new THREE.MeshStandardMaterial({ color, roughness, metalness })
 function mesh(
@@ -28,30 +29,6 @@ function box(
   name: string,
 ) {
   return mesh(parent, new THREE.BoxGeometry(...size), material, pos, name)
-}
-function labelTexture(text: string, bg = '#133a88', accent = '#f2aa1b') {
-  if (typeof document === 'undefined') return null
-  const c = document.createElement('canvas')
-  c.width = 512
-  c.height = 160
-  const x = c.getContext('2d')
-  if (!x) return null
-  x.fillStyle = bg
-  x.fillRect(0, 0, c.width, c.height)
-  x.fillStyle = 'white'
-  x.font = 'bold 82px Arial'
-  x.textAlign = 'center'
-  x.textBaseline = 'middle'
-  x.fillText(text, 220, 80)
-  x.fillStyle = accent
-  x.beginPath()
-  x.arc(410, 80, 50, 0, Math.PI * 2)
-  x.fill()
-  x.fillStyle = '#b51d2b'
-  x.fillRect(375, 63, 70, 14)
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  return t
 }
 function pump(root: THREE.Group, x: number, z: number, index: number) {
   const g = new THREE.Group()
@@ -127,7 +104,46 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
     'service-module',
   )
 }
-function buildStation() {
+function brandedMaterial(texture: THREE.Texture) {
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
+  return new THREE.MeshStandardMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.04,
+    roughness: 0.38,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+  })
+}
+function fallbackBrandTexture(color: string) {
+  const rgb = new THREE.Color(color)
+  const data = new Uint8Array([
+    Math.round(rgb.r * 255),
+    Math.round(rgb.g * 255),
+    Math.round(rgb.b * 255),
+    255,
+  ])
+  const texture = new THREE.DataTexture(data, 1, 1)
+  texture.needsUpdate = true
+  return texture
+}
+function brandPlane(
+  root: THREE.Object3D,
+  texture: THREE.Texture,
+  size: [number, number],
+  pos: [number, number, number],
+  name: string,
+) {
+  return mesh(
+    root,
+    new THREE.PlaneGeometry(...size),
+    brandedMaterial(texture),
+    pos,
+    name,
+  )
+}
+function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   const root = new THREE.Group()
   root.name = 'q8-station'
   const asphalt = mat('#34383d', 0.92, 0.02),
@@ -143,6 +159,20 @@ function buildStation() {
     asphalt,
     [0, 0, 0],
     'forecourt',
+    [-Math.PI / 2, 0, 0],
+  )
+  // A second, slightly lighter aggregate plane breaks up the perfectly flat asphalt.
+  mesh(
+    root,
+    new THREE.PlaneGeometry(
+      L.forecourt.width - 1.5,
+      L.forecourt.depth - 1.5,
+      24,
+      18,
+    ),
+    mat('#3c4145', 0.96),
+    [0, 0.012, 0],
+    'forecourt-finish',
     [-Math.PI / 2, 0, 0],
   )
   box(
@@ -216,20 +246,22 @@ function buildStation() {
     box(root, [1.18, 0.18, 0.95], concrete, [x, 0.12, 0], 'column-foot')
     box(root, [1.08, 0.06, 0.84], blue, [x, 5.55, 0], 'column-cap')
   }
-  const logo = labelTexture('Q8')
-  if (logo) {
-    const logoMat = new THREE.MeshStandardMaterial({
-      map: logo,
-      roughness: 0.35,
-    })
-    mesh(
+  // Slim silver edge trims give the canopy a constructed, layered profile.
+  for (const z of [-L.canopy.depth / 2 - 0.205, L.canopy.depth / 2 + 0.205])
+    box(
       root,
-      new THREE.PlaneGeometry(4, 1.25),
-      logoMat,
-      [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.2],
-      'q8-canopy-logo',
+      [L.canopy.width + 0.35, 0.1, 0.08],
+      steel,
+      [0, L.canopy.height + 0.23, z],
+      'canopy-edge-trim',
     )
-  }
+  brandPlane(
+    root,
+    q8Texture,
+    [3.2, 1.55],
+    [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.205],
+    'q8-canopy-logo',
+  )
   for (let x = -8; x <= 8; x += 4)
     for (const z of [L.islands.frontZ, L.islands.backZ])
       pump(root, x, z, Math.round(x + z * 10))
@@ -254,20 +286,13 @@ function buildStation() {
     [L.shop.x, 4.35, -L.shop.depth / 2 + L.shop.z - 0.16],
     'shop-fascia',
   )
-  const svolta = labelTexture('SVOLTA', '#16877d', '#16877d')
-  if (svolta) {
-    const svoltaMat = new THREE.MeshStandardMaterial({
-      map: svolta,
-      roughness: 0.4,
-    })
-    mesh(
-      root,
-      new THREE.PlaneGeometry(5.2, 1),
-      svoltaMat,
-      [13, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
-      'svolta-brand',
-    )
-  }
+  brandPlane(
+    root,
+    svoltaTexture,
+    [5.8, 1.05],
+    [13, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
+    'svolta-brand',
+  )
   const glass = new THREE.MeshPhysicalMaterial({
     color: '#14313d',
     roughness: 0.12,
@@ -301,6 +326,13 @@ function buildStation() {
   )
   box(
     root,
+    [L.shop.width + 1.2, 0.18, 2.1],
+    concrete,
+    [L.shop.x, 0.1, L.shop.z + L.shop.depth / 2 + 0.9],
+    'shop-pavement',
+  )
+  box(
+    root,
     [L.totem.width, L.totem.height, 0.7],
     steel,
     [L.totem.x, L.totem.height / 2, L.totem.z],
@@ -313,19 +345,13 @@ function buildStation() {
     [L.totem.x, 6.65, L.totem.z + 0.4],
     'totem-brand',
   )
-  if (logo) {
-    const totemLogoMat = new THREE.MeshStandardMaterial({
-      map: logo,
-      roughness: 0.35,
-    })
-    mesh(
-      root,
-      new THREE.PlaneGeometry(2.7, 1.25),
-      totemLogoMat,
-      [L.totem.x, 7.05, L.totem.z + 0.46],
-      'totem-logo',
-    )
-  }
+  brandPlane(
+    root,
+    q8Texture,
+    [2.55, 1.3],
+    [L.totem.x, 7.05, L.totem.z + 0.46],
+    'totem-logo',
+  )
   for (let y = 3.2; y <= 5.2; y += 1)
     box(
       root,
@@ -333,6 +359,14 @@ function buildStation() {
       mat('#18233b', 0.3),
       [L.totem.x, y, L.totem.z + 0.4],
       'price-row',
+    )
+  for (const x of [L.totem.x - 1.7, L.totem.x + 1.7])
+    mesh(
+      root,
+      new THREE.CylinderGeometry(0.11, 0.14, 1.05, 16),
+      steel,
+      [x, 0.53, L.totem.z + 0.7],
+      'totem-bollard',
     )
   box(
     root,
@@ -362,7 +396,14 @@ function collect(root: THREE.Object3D) {
 }
 export const proceduralAdapter: StationModelAdapter = {
   async load() {
-    const root = buildStation()
+    const [q8Texture, svoltaTexture] =
+      import.meta.env.MODE === 'test'
+        ? [fallbackBrandTexture('#153b8c'), fallbackBrandTexture('#13877d')]
+        : await Promise.all([
+            new THREE.TextureLoader().loadAsync(BRAND_ASSETS.q8Logo),
+            new THREE.TextureLoader().loadAsync(BRAND_ASSETS.svoltaLogo),
+          ])
+    const root = buildStation(q8Texture, svoltaTexture)
     return {
       root,
       occlusionMeshes: collect(root),

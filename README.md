@@ -28,4 +28,8 @@ Le unità della scena sono metri. `src/domain/stationLayout.ts` contiene le quot
 
 ## Asset di brand Q8
 
-Gli asset sostituibili sono attesi in `public/brand/q8/`, ma i file binari non sono versionati. Fornire localmente o tramite la pipeline i PNG mantenendo nome, trasparenza e proporzioni (`logo-q8.png`, `logo-svolta.png`, `totem-logo.png`, `pump-brand.png`, `placeholder-media.png`). Anche gli eventuali placeholder dei dieci supporti in `public/media-placeholders/` restano esterni al repository; il rendering e il workflow di upload non dipendono dalla loro presenza.
+I path degli asset sono centralizzati in `src/config/brandAssets.ts`. Il logo Q8 e il logo Svolta presenti in `public/brand/q8/` sono usati sia dalla UI sia dal modello procedurale.
+
+## Passaggio futuro a un modello GLB
+
+Il modello procedurale è il fallback leggero e modificabile, ma non può raggiungere da solo il fotorealismo di un asset texturizzato ad hoc. `StationModelAdapter` resta il boundary: per sostituire il fallback configurare `glbAdapter` con un GLB ottimizzato in metri, asse Y-up, origine al centro del piazzale, materiali PBR compressi e nomi nodo stabili. Il GLB deve preservare gli ingombri e le coordinate di `stationLayout.ts`, così gli ancoraggi dei media point e le viste hotspot non cambiano. Si raccomandano mesh separate per shop, pensilina, pompe e totem, UV non sovrapposte, texture 2K/4K selettive e collision volumes semplificati.

@@ -6,6 +6,7 @@ import {
 } from '@/domain/stationConfig'
 
 export type SetupTool = 'inspect' | 'ground' | 'media' | 'walk' | null
+export type StationConfigStatus = 'loading' | 'not-configured' | 'valid' | 'invalid'
 export interface MeshInspection {
   name: string
   path: string
@@ -33,7 +34,7 @@ interface SetupState {
   enabled: boolean
   tool: SetupTool
   config: StationConfig
-  configLoaded: boolean
+  configStatus: StationConfigStatus
   selectedMesh: MeshInspection | null
   selectedMediaPointId: string | null
   currentView: CameraView | null
@@ -44,7 +45,7 @@ interface SetupState {
   enterSetup: () => void
   exitSetup: () => void
   previewView: (view: CameraView) => void
-  initialize: (config: StationConfig, loaded: boolean) => void
+  initialize: (config: StationConfig, status: StationConfigStatus) => void
   setTool: (tool: SetupTool) => void
   setSelectedMesh: (mesh: MeshInspection | null) => void
   setSelectedMediaPoint: (id: string | null) => void
@@ -62,7 +63,7 @@ export const useStationSetupStore = create<SetupState>((set) => ({
   enabled,
   tool: null,
   config: createEmptyStationConfig('low-poly', 'procedural'),
-  configLoaded: true,
+  configStatus: 'valid',
   selectedMesh: null,
   selectedMediaPointId: null,
   currentView: null,
@@ -73,8 +74,8 @@ export const useStationSetupStore = create<SetupState>((set) => ({
   enterSetup: () => set({ enabled: true }),
   exitSetup: () => set({ enabled: false, tool: null, selectedMesh: null }),
   previewView: (requestedView) => set((state) => ({ requestedView, viewRequestId: state.viewRequestId + 1 })),
-  initialize: (config, configLoaded) =>
-    set({ config, configLoaded, tool: null, selectedMesh: null, selectedMediaPointId: null, warning: null }),
+  initialize: (config, configStatus) =>
+    set({ config, configStatus, tool: null, selectedMesh: null, selectedMediaPointId: null, warning: null }),
   setTool: (tool) => set({ tool }),
   setSelectedMesh: (selectedMesh) => set({ selectedMesh }),
   setSelectedMediaPoint: (selectedMediaPointId) => set({ selectedMediaPointId }),

@@ -33,6 +33,24 @@ export interface StationModelDiagnostics {
   missingTextures: string[]
   scaleApplied: number
   hierarchy: StationHierarchyNode[]
+  textureFiles?: Array<{ filename: string; url: string; found: boolean }>
+  textureLinks?: Array<{
+    requested: string
+    resolvedUrl: string
+    status: 'found' | 'missing' | 'unknown'
+    mesh: string
+    material: string
+    materialType: string
+    mapPresent: boolean
+    mapSource: string | null
+    color: string | null
+    roughness: number | null
+    shininess: number | null
+    opacity: number
+    side: number
+    uvAttributes: string[]
+  }>
+  materialsConverted?: number
 }
 
 /**

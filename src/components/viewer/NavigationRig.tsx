@@ -12,6 +12,7 @@ import {
 } from '@/domain/walkthroughRoute'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
+import { orbitMinDistance } from './navigationLimits'
 
 const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
 const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
@@ -267,7 +268,11 @@ export function NavigationRig() {
             autoTime.current + delta * playbackSpeed,
           )
         const duration = config.walkPath.length * 4
-        const progress = THREE.MathUtils.clamp(autoTime.current / duration, 0, 1)
+        const progress = THREE.MathUtils.clamp(
+          autoTime.current / duration,
+          0,
+          1,
+        )
         const curve = new THREE.CatmullRomCurve3(
           config.walkPath.map((point) => new THREE.Vector3(...point.position)),
           false,
@@ -281,7 +286,10 @@ export function NavigationRig() {
         )
         const point = config.walkPath[pointIndex]!
         if (point.lookAt) target.set(...point.lookAt)
-        else target.copy(curve.getPoint(Math.min(1, progress + 0.02))).setY(destination.y)
+        else
+          target
+            .copy(curve.getPoint(Math.min(1, progress + 0.02)))
+            .setY(destination.y)
         camera.position.lerp(destination, 1 - Math.exp(-delta * 7))
         camera.lookAt(target)
         setProgress(progress)
@@ -377,7 +385,7 @@ export function NavigationRig() {
       zoomSpeed={0.7}
       enabled={mode === 'overview' && (overviewUnlocked || setupEnabled)}
       maxDistance={modelFrame ? modelFrame.radius * 3 : 52}
-      minDistance={modelFrame ? Math.max(2, modelFrame.radius * 0.18) : 20}
+      minDistance={orbitMinDistance(setupEnabled, modelFrame?.radius)}
       minPolarAngle={Math.PI * 0.19}
       maxPolarAngle={Math.PI * 0.455}
     />

@@ -1,84 +1,26 @@
 import { create } from 'zustand'
-import type { AdvertisingPoint } from '@/domain/schemas/banner'
 import type { MediaAsset } from '@/domain/schemas/media'
-
 interface ProjectState {
   projectName: string
-  activeStationId: string | null
-
-  // Fase 3: Asset e Banner
-  mediaAssets: Map<string, MediaAsset>
-  advertisingPoints: Map<string, AdvertisingPoint>
-
-  // Actions
-  setProjectName: (name: string) => void
-  setActiveStationId: (id: string | null) => void
-
-  // Asset actions
-  addMediaAsset: (asset: MediaAsset) => void
-  removeMediaAsset: (assetId: string) => void
-  getMediaAsset: (assetId: string) => MediaAsset | undefined
-  getAllMediaAssets: () => MediaAsset[]
-
-  // Banner actions
-  addAdvertisingPoint: (banner: AdvertisingPoint) => void
-  updateAdvertisingPoint: (id: string, updates: Partial<AdvertisingPoint>) => void
-  removeAdvertisingPoint: (id: string) => void
-  getAdvertisingPoint: (id: string) => AdvertisingPoint | undefined
-  getAllAdvertisingPoints: () => AdvertisingPoint[]
+  assignments: Record<string, MediaAsset>
+  assignAsset: (id: string, asset: MediaAsset) => void
+  clearAsset: (id: string) => void
 }
-
-export const useProjectStore = create<ProjectState>((set, get) => ({
-  projectName: 'Nuovo progetto',
-  activeStationId: null,
-  mediaAssets: new Map(),
-  advertisingPoints: new Map(),
-
-  setProjectName: (name) => set({ projectName: name }),
-  setActiveStationId: (id) => set({ activeStationId: id }),
-
-  addMediaAsset: (asset) =>
+export const useProjectStore = create<ProjectState>((set) => ({
+  projectName: 'Station Media 3D Planner',
+  assignments: {},
+  assignAsset: (id, asset) =>
     set((state) => {
-      const newMap = new Map(state.mediaAssets)
-      newMap.set(asset.id, asset)
-      return { mediaAssets: newMap }
+      const previous = state.assignments[id]
+      if (previous) URL.revokeObjectURL(previous.url)
+      return { assignments: { ...state.assignments, [id]: asset } }
     }),
-
-  removeMediaAsset: (assetId) =>
+  clearAsset: (id) =>
     set((state) => {
-      const newMap = new Map(state.mediaAssets)
-      newMap.delete(assetId)
-      return { mediaAssets: newMap }
+      const next = { ...state.assignments }
+      const previous = next[id]
+      if (previous) URL.revokeObjectURL(previous.url)
+      delete next[id]
+      return { assignments: next }
     }),
-
-  getMediaAsset: (assetId) => get().mediaAssets.get(assetId),
-
-  getAllMediaAssets: () => Array.from(get().mediaAssets.values()),
-
-  addAdvertisingPoint: (banner) =>
-    set((state) => {
-      const newMap = new Map(state.advertisingPoints)
-      newMap.set(banner.id, banner)
-      return { advertisingPoints: newMap }
-    }),
-
-  updateAdvertisingPoint: (id, updates) =>
-    set((state) => {
-      const existing = state.advertisingPoints.get(id)
-      if (!existing) return state
-      const newMap = new Map(state.advertisingPoints)
-      newMap.set(id, { ...existing, ...updates })
-      return { advertisingPoints: newMap }
-    }),
-
-  removeAdvertisingPoint: (id) =>
-    set((state) => {
-      const newMap = new Map(state.advertisingPoints)
-      newMap.delete(id)
-      return { advertisingPoints: newMap }
-    }),
-
-  getAdvertisingPoint: (id) => get().advertisingPoints.get(id),
-
-  getAllAdvertisingPoints: () => Array.from(get().advertisingPoints.values()),
 }))

@@ -18,7 +18,10 @@ export function StationDebugHelpers() {
         <box3Helper args={[new THREE.Box3(new THREE.Vector3(...selected.min), new THREE.Vector3(...selected.max)), '#facc15']} />
       )}
       {debug.ground && config.ground?.y !== undefined && bounds && (
-        <gridHelper position={[bounds.center[0], config.ground.y + 0.01, bounds.center[2]]} args={[Math.max(bounds.size[0], bounds.size[2]), 20, '#22c55e', '#166534']} />
+        <>
+          <gridHelper position={[bounds.center[0], config.ground.y + 0.01, bounds.center[2]]} args={[Math.max(bounds.size[0], bounds.size[2]), 20, '#22c55e', '#166534']} />
+          {selected && <mesh position={selected.hitPoint}><sphereGeometry args={[0.18]} /><meshBasicMaterial color="#22c55e" depthTest={false} /></mesh>}
+        </>
       )}
       {debug.hotspots && config.hotspots.map((hotspot) => (
         <mesh key={hotspot.id} position={hotspot.position}>

@@ -6,6 +6,7 @@ import {
   Telescope,
   Route,
   ChevronDown,
+  Settings,
 } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
@@ -13,6 +14,7 @@ import { BRAND_ASSETS } from '@/config/brandAssets'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { STATIONS, type StationId } from '@/domain/stations'
 import { useStationStore } from '@/stores/stationStore'
+import { useStationSetupStore } from '@/stores/stationSetupStore'
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
@@ -22,6 +24,8 @@ export function TopBar() {
   const stationId = useStationStore((s) => s.selectedStationId)
   const selectStation = useStationStore((s) => s.selectStation)
   const station = STATIONS.find((item) => item.id === stationId) ?? STATIONS[0]
+  const setupEnabled = useStationSetupStore((s) => s.enabled)
+  const enterSetup = useStationSetupStore((s) => s.enterSetup)
   const modes = [
     ['overview', 'Overview', Grid2X2],
     ['hotspot', 'Hotspot', Telescope],
@@ -80,6 +84,16 @@ export function TopBar() {
         </span>
         <ChevronDown size={15} className="pointer-events-none text-slate-400" />
       </label>
+      {station.modelType !== 'procedural' && !setupEnabled && (
+        <button
+          type="button"
+          onClick={enterSetup}
+          className="flex shrink-0 items-center gap-2 rounded-lg bg-amber-400 px-3 py-2.5 text-sm font-extrabold text-slate-950 shadow-sm transition hover:bg-amber-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+        >
+          <Settings size={17} />
+          Configura stazione
+        </button>
+      )}
       <button
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
         aria-label="Guida"

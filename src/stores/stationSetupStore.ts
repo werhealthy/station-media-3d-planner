@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type * as THREE from 'three'
 import {
   createEmptyStationConfig,
   type CameraView,
@@ -8,7 +7,6 @@ import {
 
 export type SetupTool = 'inspect' | 'ground' | 'media' | 'walk' | null
 export interface MeshInspection {
-  object: THREE.Mesh
   name: string
   path: string
   parent: string
@@ -41,6 +39,11 @@ interface SetupState {
   currentView: CameraView | null
   warning: string | null
   debug: DebugFlags
+  requestedView: CameraView | null
+  viewRequestId: number
+  enterSetup: () => void
+  exitSetup: () => void
+  previewView: (view: CameraView) => void
   initialize: (config: StationConfig, loaded: boolean) => void
   setTool: (tool: SetupTool) => void
   setSelectedMesh: (mesh: MeshInspection | null) => void
@@ -65,6 +68,11 @@ export const useStationSetupStore = create<SetupState>((set) => ({
   currentView: null,
   warning: null,
   debug: { bounds: true, ground: true, hotspots: true, media: true, walkPath: true },
+  requestedView: null,
+  viewRequestId: 0,
+  enterSetup: () => set({ enabled: true }),
+  exitSetup: () => set({ enabled: false, tool: null, selectedMesh: null }),
+  previewView: (requestedView) => set((state) => ({ requestedView, viewRequestId: state.viewRequestId + 1 })),
   initialize: (config, configLoaded) =>
     set({ config, configLoaded, tool: null, selectedMesh: null, selectedMediaPointId: null, warning: null }),
   setTool: (tool) => set({ tool }),

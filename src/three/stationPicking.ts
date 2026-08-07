@@ -28,7 +28,6 @@ export function inspectIntersection(
     }
   }
   return {
-    object: mesh,
     name: mesh.name || '(unnamed)',
     path: meshPath(mesh),
     parent: mesh.parent?.name || mesh.parent?.type || '(none)',

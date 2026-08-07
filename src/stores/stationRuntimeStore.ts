@@ -12,8 +12,12 @@ interface StationRuntimeState {
   bounds: RuntimeBounds | null
   diagnostics: StationModelDiagnostics | null
   loadWarning: string | null
-  setLoadedModel: (bounds: RuntimeBounds, diagnostics: StationModelDiagnostics | null) => void
+  setLoadedModel: (
+    bounds: RuntimeBounds,
+    diagnostics: StationModelDiagnostics | null,
+  ) => void
   setLoadWarning: (message: string | null) => void
+  reset: () => void
 }
 
 export const useStationRuntimeStore = create<StationRuntimeState>((set) => ({
@@ -22,4 +26,5 @@ export const useStationRuntimeStore = create<StationRuntimeState>((set) => ({
   loadWarning: null,
   setLoadedModel: (bounds, diagnostics) => set({ bounds, diagnostics }),
   setLoadWarning: (loadWarning) => set({ loadWarning }),
+  reset: () => set({ bounds: null, diagnostics: null, loadWarning: null }),
 }))

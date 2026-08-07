@@ -5,13 +5,32 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useState } from 'react'
 
-export function MediaPointPanel() {
+export function MediaPointPanel({
+  configured = true,
+}: {
+  configured?: boolean
+}) {
   const selectedId = useViewerStore((s) => s.selectedMediaPointId),
     select = useViewerStore((s) => s.selectMediaPoint)
   const assignments = useProjectStore((s) => s.assignments),
     assign = useProjectStore((s) => s.assignAsset),
     clear = useProjectStore((s) => s.clearAsset)
   const [error, setError] = useState('')
+  if (!configured) {
+    return (
+      <aside className="flex w-[370px] shrink-0 flex-col border-l border-slate-200 bg-white p-6">
+        <p className="text-xs font-bold uppercase tracking-[.16em] text-[#1d55bf]">
+          Media inventory
+        </p>
+        <h2 className="mt-2 text-xl font-bold text-slate-900">
+          Media point non configurati
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-slate-500">
+          Questa stazione non è ancora configurata con media point.
+        </p>
+      </aside>
+    )
+  }
   const point = MEDIA_POINTS.find((p) => p.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   async function upload(file?: File) {

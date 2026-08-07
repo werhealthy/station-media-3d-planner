@@ -17,7 +17,12 @@ type LoadState =
   | { status: 'loaded'; handle: StationModelHandle }
   | { status: 'error'; message: string }
 
-export function StationModel({ adapter, fallbackAdapter, onLoaded, onError }: StationModelProps) {
+export function StationModel({
+  adapter,
+  fallbackAdapter,
+  onLoaded,
+  onError,
+}: StationModelProps) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
 
   useEffect(() => {
@@ -31,7 +36,10 @@ export function StationModel({ adapter, fallbackAdapter, onLoaded, onError }: St
       } catch (error) {
         if (!fallbackAdapter) throw error
         const message = error instanceof Error ? error.message : String(error)
-        console.error('Modello esterno non disponibile; uso la stazione procedurale:', error)
+        console.error(
+          'Modello esterno non disponibile; uso la stazione procedurale:',
+          error,
+        )
         onError?.(`${message} È stato attivato il fallback procedurale.`)
         owner = fallbackAdapter
         return fallbackAdapter.load()
@@ -77,7 +85,16 @@ export function StationModel({ adapter, fallbackAdapter, onLoaded, onError }: St
   }
 
   if (state.status !== 'loaded') {
-    return null
+    return (
+      <Html center>
+        <div
+          role="status"
+          className="whitespace-nowrap rounded-lg bg-slate-950/80 px-4 py-2 text-sm font-semibold text-white shadow-lg"
+        >
+          Caricamento stazione…
+        </div>
+      </Html>
+    )
   }
 
   return <primitive object={state.handle.root} />

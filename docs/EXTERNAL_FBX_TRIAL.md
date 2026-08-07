@@ -1,9 +1,9 @@
 # Prova tecnica: stazione FBX esterna
 
-## Attivazione e confronto
+## Selezione e confronto
 
-- `/?stationModel=external` carica `public/models/q8-station/4002336.FBX`.
-- Senza parametro (o con `?stationModel=procedural`) resta attiva la stazione procedurale.
+- Il selettore nella top bar permette di passare tra la demo procedurale e il modello FBX.
+- `/?stationModel=external` resta disponibile come override tecnico iniziale.
 - Se il caricamento FBX fallisce, il viewer mostra un avviso e monta automaticamente il modello procedurale.
 
 L'adapter centra il footprint sull'origine, appoggia il punto più basso a `Y=0` e corregge
@@ -33,9 +33,9 @@ osservato nel parser è riportato di seguito.
   affidabili per pompe, shop, canopy, totem o ground: la semantica del modello è quindi **scarsa**
   e l'associazione futura dovrà essere salvata nella configurazione esterna.
 - Il file fa riferimento a 13 nomi, da `Maps/1_map(4002336).jpg` a
-  `Maps/13_map(4002336).jpg`; la directory `public/models/q8-station/Maps/` non è presente nel
-  repository, quindi tali file esterni sono mancanti. Il FBX contiene anche dati immagine embedded,
-  ma `FBXLoader` segnala diversi filename non definiti/placeholder.
+  `Maps/13_map(4002336).jpg`; tutti sono presenti in `public/models/q8-station/Maps/`.
+  Il resolver elimina gli eventuali path locali Windows salvati da 3ds Max e usa sempre quella
+  directory pubblica, preservando i nomi con parentesi.
 - Numerosi materiali sono V-Ray/3ds Max non supportati direttamente da Three.js (diffuse, bump,
   reflection e blend avanzati): `FBXLoader` mantiene le geometrie e degrada questi shader a
   `MeshPhongMaterial`. Di conseguenza il parsing è valido, ma la fedeltà dei materiali non può

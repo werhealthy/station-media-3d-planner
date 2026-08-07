@@ -16,6 +16,8 @@ const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
 const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
 const EYE_HEIGHT = 1.7
 const WALK_SPEED = 2.35
+const CAPSULE_RADIUS = 0.34
+const GRAVITY = 18
 
 const COLLIDERS = [
   { minX: 3.2, maxX: 22.8, minZ: -14.4, maxZ: -5.3 },
@@ -39,10 +41,10 @@ const COLLIDERS = [
 function canWalkTo(position: THREE.Vector3) {
   return !COLLIDERS.some(
     (box) =>
-      position.x > box.minX &&
-      position.x < box.maxX &&
-      position.z > box.minZ &&
-      position.z < box.maxZ,
+      position.x < box.maxX + CAPSULE_RADIUS &&
+      position.x > box.minX - CAPSULE_RADIUS &&
+      position.z > box.minZ - CAPSULE_RADIUS &&
+      position.z < box.maxZ + CAPSULE_RADIUS,
   )
 }
 
@@ -59,6 +61,7 @@ export function NavigationRig() {
   const target = useMemo(() => new THREE.Vector3(), [])
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
+  const verticalVelocity = useRef(0)
   const autoTime = useRef(0)
   const lastUiUpdate = useRef(0)
   const isPlaying = usePlaybackStore((s) => s.isPlaying)
@@ -89,6 +92,7 @@ export function NavigationRig() {
       perspectiveCamera.fov = 58
       perspectiveCamera.updateProjectionMatrix()
       velocity.current.set(0, 0, 0)
+      verticalVelocity.current = 0
       walkTime.current = 0
     }
   }, [camera, mode, perspectiveCamera])
@@ -139,11 +143,25 @@ export function NavigationRig() {
           .addScaledVector(velocity.current, delta)
         next.x = THREE.MathUtils.clamp(next.x, -29, 29)
         next.z = THREE.MathUtils.clamp(next.z, -20, 20)
-        // Conservative rectangular exclusion for the shop volume.
-        if (canWalkTo(next)) camera.position.copy(next)
-        else velocity.current.multiplyScalar(0.25)
+        // Resolve the capsule independently on each horizontal axis so the
+        // pedestrian naturally slides along walls instead of abruptly stopping.
+        const nextX = camera.position.clone()
+        nextX.x = next.x
+        const nextZ = camera.position.clone()
+        nextZ.z = next.z
+        if (canWalkTo(nextX)) camera.position.x = nextX.x
+        else velocity.current.x = 0
+        if (canWalkTo(nextZ)) camera.position.z = nextZ.z
+        else velocity.current.z = 0
         walkTime.current += delta * velocity.current.length() * 2.2
       }
+      verticalVelocity.current -= GRAVITY * delta
+      const groundedHeight = EYE_HEIGHT
+      camera.position.y = Math.max(
+        groundedHeight,
+        camera.position.y + verticalVelocity.current * delta,
+      )
+      if (camera.position.y <= groundedHeight) verticalVelocity.current = 0
       const bob = Math.sin(walkTime.current * Math.PI) * 0.014
       camera.position.y = THREE.MathUtils.lerp(
         camera.position.y,

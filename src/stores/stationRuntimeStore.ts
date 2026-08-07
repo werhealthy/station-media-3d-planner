@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { StationModelDiagnostics } from '@/adapters/station-model/types'
+import type * as THREE from 'three'
 
 export interface RuntimeBounds {
   min: [number, number, number]
@@ -10,9 +11,11 @@ export interface RuntimeBounds {
 
 interface StationRuntimeState {
   bounds: RuntimeBounds | null
+  root: THREE.Object3D | null
   diagnostics: StationModelDiagnostics | null
   loadWarning: string | null
   setLoadedModel: (
+    root: THREE.Object3D,
     bounds: RuntimeBounds,
     diagnostics: StationModelDiagnostics | null,
   ) => void
@@ -22,9 +25,10 @@ interface StationRuntimeState {
 
 export const useStationRuntimeStore = create<StationRuntimeState>((set) => ({
   bounds: null,
+  root: null,
   diagnostics: null,
   loadWarning: null,
-  setLoadedModel: (bounds, diagnostics) => set({ bounds, diagnostics }),
+  setLoadedModel: (root, bounds, diagnostics) => set({ root, bounds, diagnostics }),
   setLoadWarning: (loadWarning) => set({ loadWarning }),
-  reset: () => set({ bounds: null, diagnostics: null, loadWarning: null }),
+  reset: () => set({ root: null, bounds: null, diagnostics: null, loadWarning: null }),
 }))

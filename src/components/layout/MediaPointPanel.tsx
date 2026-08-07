@@ -1,14 +1,14 @@
 import { ArrowLeft, Check, ImagePlus, Trash2 } from 'lucide-react'
-import { MEDIA_POINTS } from '@/domain/mediaPoints'
+import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { readImageAsset } from '@/domain/schemas/media'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useState } from 'react'
 
 export function MediaPointPanel({
-  configured = true,
+  points,
 }: {
-  configured?: boolean
+  points: ConfigMediaPoint[]
 }) {
   const selectedId = useViewerStore((s) => s.selectedMediaPointId),
     select = useViewerStore((s) => s.selectMediaPoint)
@@ -16,7 +16,7 @@ export function MediaPointPanel({
     assign = useProjectStore((s) => s.assignAsset),
     clear = useProjectStore((s) => s.clearAsset)
   const [error, setError] = useState('')
-  if (!configured) {
+  if (!points.length) {
     return (
       <aside className="flex w-[370px] shrink-0 flex-col border-l border-slate-200 bg-white p-6">
         <p className="text-xs font-bold uppercase tracking-[.16em] text-[#1d55bf]">
@@ -31,7 +31,7 @@ export function MediaPointPanel({
       </aside>
     )
   }
-  const point = MEDIA_POINTS.find((p) => p.id === selectedId)
+  const point = points.find((p) => p.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   async function upload(file?: File) {
     if (!file || !point) return
@@ -51,14 +51,14 @@ export function MediaPointPanel({
               Media inventory
             </p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              10 media point
+              {points.length} media point
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               Seleziona uno spazio per assegnare la creatività.
             </p>
           </div>
           <div className="flex-1 space-y-2 overflow-y-auto p-4">
-            {MEDIA_POINTS.map((p) => (
+            {points.map((p) => (
               <button
                 key={p.id}
                 onClick={() => select(p.id)}

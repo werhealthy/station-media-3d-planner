@@ -1,7 +1,6 @@
 import { TopBar } from './TopBar'
 import { MediaPointPanel } from './MediaPointPanel'
 import { Canvas } from '@/components/viewer/Canvas'
-import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
 import { Lock, Rotate3D } from 'lucide-react'
 import { AutoWalkthroughPanel } from './AutoWalkthroughPanel'
@@ -9,6 +8,11 @@ import { useEffect } from 'react'
 import { useStationStore } from '@/stores/stationStore'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { getStation } from '@/domain/stations'
+import { useStationSetupStore } from '@/stores/stationSetupStore'
+import { createEmptyStationConfig } from '@/domain/stationConfig'
+import { PROCEDURAL_STATION_CONFIG } from '@/domain/stationConfigDefaults'
+import { loadStationConfig } from '@/adapters/station-config/stationConfigLoader'
+import { StationSetupPanel } from './StationSetupPanel'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
@@ -20,10 +24,31 @@ export function AppShell() {
   const resetViewer = useViewerStore((s) => s.resetForStation)
   const resetRuntime = useStationRuntimeStore((s) => s.reset)
   const station = getStation(stationId)
+  const setupEnabled = useStationSetupStore((s) => s.enabled)
+  const initializeSetup = useStationSetupStore((s) => s.initialize)
+  const config = useStationSetupStore((s) => s.config)
+  const setSetupWarning = useStationSetupStore((s) => s.setWarning)
   useEffect(() => {
     resetViewer()
     resetRuntime()
   }, [resetRuntime, resetViewer, stationId])
+  useEffect(() => {
+    const controller = new AbortController()
+    if (station.modelType === 'procedural') {
+      initializeSetup(PROCEDURAL_STATION_CONFIG, true)
+      return () => controller.abort()
+    }
+    const empty = createEmptyStationConfig(station.id, station.modelType, station.modelPath)
+    initializeSetup(empty, false)
+    void loadStationConfig(station, controller.signal)
+      .then((loaded) => initializeSetup(loaded ?? empty, Boolean(loaded)))
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return
+        initializeSetup(empty, false)
+        setSetupWarning(error instanceof Error ? error.message : 'Configurazione non valida.')
+      })
+    return () => controller.abort()
+  }, [initializeSetup, setSetupWarning, station])
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
       <TopBar />
@@ -46,7 +71,7 @@ export function AppShell() {
               aria-label="Hotspot stazione"
               className="absolute left-1/2 top-5 flex -translate-x-1/2 gap-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-md"
             >
-              {HOTSPOTS.map((spot) => (
+              {config.hotspots.map((spot) => (
                 <button
                   key={spot.id}
                   onClick={() => setHotspot(spot.id)}
@@ -58,6 +83,7 @@ export function AppShell() {
             </nav>
           )}
           {mode === 'auto' && <AutoWalkthroughPanel />}
+          {setupEnabled && <StationSetupPanel />}
           {mode === 'walkthrough' ? (
             <div className="absolute bottom-5 left-5 flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 shadow-md">
               <span>
@@ -88,7 +114,7 @@ export function AppShell() {
             )
           )}
         </section>
-        <MediaPointPanel configured={station.mediaPointsConfigured} />
+        {!setupEnabled && <MediaPointPanel points={config.mediaPoints} />}
       </main>
     </div>
   )

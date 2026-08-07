@@ -4,12 +4,14 @@ import type {
   StationModelAdapter,
   StationModelHandle,
 } from '@/adapters/station-model/types'
+import type { ThreeEvent } from '@react-three/fiber'
 
 interface StationModelProps {
   adapter: StationModelAdapter
   fallbackAdapter?: StationModelAdapter
   onLoaded?: (handle: StationModelHandle) => void
   onError?: (message: string) => void
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void
 }
 
 type LoadState =
@@ -22,6 +24,7 @@ export function StationModel({
   fallbackAdapter,
   onLoaded,
   onError,
+  onPointerDown,
 }: StationModelProps) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
 
@@ -97,5 +100,5 @@ export function StationModel({
     )
   }
 
-  return <primitive object={state.handle.root} />
+  return <primitive object={state.handle.root} onPointerDown={onPointerDown} />
 }

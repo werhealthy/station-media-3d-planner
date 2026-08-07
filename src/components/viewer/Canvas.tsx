@@ -1,6 +1,7 @@
 import { Canvas as R3FCanvas } from '@react-three/fiber'
 import { ContactShadows, Environment, Html } from '@react-three/drei'
-import { Suspense, useCallback, useMemo } from 'react'
+import { Suspense, useCallback, useEffect, useMemo } from 'react'
+import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { StationModel } from './StationModel'
 import { MediaPointsLayer } from './MediaPointsLayer'
@@ -10,6 +11,10 @@ import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationStore } from '@/stores/stationStore'
 import { getStation } from '@/domain/stations'
 import { selectStationAdapter } from '@/adapters/station-model/stationAdapter'
+import { useStationSetupStore } from '@/stores/stationSetupStore'
+import { applyHiddenMeshes, boxToRuntimeBounds, calculateUsefulBox } from '@/three/stationBounds'
+import { inspectIntersection, rotationFromSurfaceNormal } from '@/three/stationPicking'
+import { StationDebugHelpers } from './StationDebugHelpers'
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -18,11 +23,20 @@ export function Canvas() {
   const setLoadWarning = useStationRuntimeStore((state) => state.setLoadWarning)
   const loadWarning = useStationRuntimeStore((state) => state.loadWarning)
   const diagnostics = useStationRuntimeStore((state) => state.diagnostics)
+  const root = useStationRuntimeStore((state) => state.root)
+  const setupEnabled = useStationSetupStore((state) => state.enabled)
+  const tool = useStationSetupStore((state) => state.tool)
+  const config = useStationSetupStore((state) => state.config)
+  const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
+  const setTool = useStationSetupStore((state) => state.setTool)
+  const updateConfig = useStationSetupStore((state) => state.updateConfig)
+  const setWarning = useStationSetupStore((state) => state.setWarning)
   const handleLoaded = useCallback(
     (handle: StationModelHandle) => {
       const size = handle.boundingBox.getSize(new THREE.Vector3())
       const center = handle.boundingBox.getCenter(new THREE.Vector3())
       setLoadedModel(
+        handle.root,
         {
           min: handle.boundingBox.min.toArray(),
           max: handle.boundingBox.max.toArray(),
@@ -34,6 +48,54 @@ export function Canvas() {
     },
     [setLoadedModel],
   )
+  useEffect(() => {
+    if (!root) return
+    applyHiddenMeshes(root, config.hiddenMeshes)
+    const useful = boxToRuntimeBounds(calculateUsefulBox(root, config.hiddenMeshes))
+    if (useful) setLoadedModel(root, useful, diagnostics)
+  }, [config.hiddenMeshes, diagnostics, root, setLoadedModel])
+
+  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
+    if (!setupEnabled || !tool) return
+    event.stopPropagation()
+    const hit = event.intersections.find((item) => item.object instanceof THREE.Mesh && item.object.visible)
+    if (!hit) return
+    const inspection = inspectIntersection(hit)
+    if (!inspection) return
+    setSelectedMesh(inspection)
+    if (tool === 'ground') {
+      updateConfig((current) => ({ ...current, ground: { y: inspection.hitPoint[1], meshName: inspection.name, meshPath: inspection.path, normal: inspection.normal } }))
+      setWarning(null)
+      setTool('inspect')
+    } else if (tool === 'media') {
+      const index = config.mediaPoints.length + 1
+      const offset = new THREE.Vector3(...inspection.normal).multiplyScalar(0.012)
+      const position = new THREE.Vector3(...inspection.hitPoint).add(offset).toArray()
+      updateConfig((current) => ({
+        ...current,
+        mediaPoints: [...current.mediaPoints, {
+          id: `media-${String(index).padStart(2, '0')}`,
+          number: index,
+          name: `Media point ${index}`,
+          type: 'print',
+          width: 1,
+          height: 0.7,
+          position,
+          normal: inspection.normal,
+          rotation: rotationFromSurfaceNormal(inspection.normal),
+          attachedMeshName: inspection.name,
+          attachedMeshPath: inspection.path,
+          location: inspection.name,
+          surface: 'Superficie configurata',
+        }],
+      }))
+      setTool(null)
+    } else if (tool === 'walk') {
+      const index = config.walkPath.length + 1
+      const y = config.ground?.y ?? inspection.hitPoint[1]
+      updateConfig((current) => ({ ...current, walkPath: [...current.walkPath, { id: `WALK_${String(index).padStart(2, '0')}`, position: [inspection.hitPoint[0], y, inspection.hitPoint[2]] }] }))
+    }
+  }, [config.ground?.y, config.mediaPoints.length, config.walkPath.length, setSelectedMesh, setTool, setWarning, setupEnabled, tool, updateConfig])
   return (
     <R3FCanvas
       shadows
@@ -66,8 +128,9 @@ export function Canvas() {
           fallbackAdapter={selection.fallbackAdapter}
           onLoaded={handleLoaded}
           onError={setLoadWarning}
+          onPointerDown={handlePointerDown}
         />
-        {station.mediaPointsConfigured && <MediaPointsLayer />}
+        {(station.mediaPointsConfigured || config.mediaPoints.length > 0) && <MediaPointsLayer points={config.mediaPoints} />}
         <ContactShadows
           position={[0, 0.05, 0]}
           opacity={0.28}
@@ -76,6 +139,7 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
+        {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">
             <div className="ml-auto max-w-md rounded-lg bg-amber-950/90 px-4 py-3 text-sm text-white shadow-xl">

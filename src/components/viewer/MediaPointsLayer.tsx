@@ -1,9 +1,9 @@
-import { MEDIA_POINTS } from '@/domain/mediaPoints'
+import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { MediaPointMarker } from './MediaPointMarker'
-export function MediaPointsLayer() {
+export function MediaPointsLayer({ points }: { points: ConfigMediaPoint[] }) {
   return (
     <group>
-      {MEDIA_POINTS.map((point) => (
+      {points.map((point) => (
         <MediaPointMarker key={point.id} point={point} />
       ))}
     </group>

@@ -25,4 +25,16 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText('10 media point')).not.toBeInTheDocument()
   })
+  it('rende Station Setup visibile dal comando amministrativo', async () => {
+    render(<App />)
+    const setup = screen.getByRole('button', { name: 'Apri Station Setup' })
+    expect(setup).toBeVisible()
+    await userEvent.click(setup)
+    expect(screen.getByRole('heading', { name: 'STATION SETUP' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Inspect Mesh' })).toBeVisible()
+    expect(window.location.search).toContain('setup=1')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Chiudi Station Setup' }),
+    )
+  })
 })

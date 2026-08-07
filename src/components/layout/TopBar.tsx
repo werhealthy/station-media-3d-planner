@@ -6,6 +6,7 @@ import {
   Telescope,
   Route,
   ChevronDown,
+  Settings,
 } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
@@ -13,6 +14,7 @@ import { BRAND_ASSETS } from '@/config/brandAssets'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { STATIONS, type StationId } from '@/domain/stations'
 import { useStationStore } from '@/stores/stationStore'
+import { useStationSetupStore } from '@/stores/stationSetupStore'
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
@@ -22,6 +24,16 @@ export function TopBar() {
   const stationId = useStationStore((s) => s.selectedStationId)
   const selectStation = useStationStore((s) => s.selectStation)
   const station = STATIONS.find((item) => item.id === stationId) ?? STATIONS[0]
+  const setupEnabled = useStationSetupStore((s) => s.enabled)
+  const setSetupEnabled = useStationSetupStore((s) => s.setEnabled)
+  function toggleSetup() {
+    const next = !setupEnabled
+    setSetupEnabled(next)
+    const url = new URL(window.location.href)
+    if (next) url.searchParams.set('setup', '1')
+    else url.searchParams.delete('setup')
+    window.history.replaceState({}, '', url)
+  }
   const modes = [
     ['overview', 'Overview', Grid2X2],
     ['hotspot', 'Hotspot', Telescope],
@@ -80,6 +92,21 @@ export function TopBar() {
         </span>
         <ChevronDown size={15} className="pointer-events-none text-slate-400" />
       </label>
+      <button
+        type="button"
+        aria-label={setupEnabled ? 'Chiudi Station Setup' : 'Apri Station Setup'}
+        aria-pressed={setupEnabled}
+        title="Station Setup / Calibration Mode"
+        onClick={toggleSetup}
+        className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-bold transition ${
+          setupEnabled
+            ? 'border-amber-400 bg-amber-300 text-slate-950 shadow-sm'
+            : 'border-slate-200 bg-white text-slate-500 hover:border-amber-300 hover:bg-amber-50 hover:text-slate-800'
+        }`}
+      >
+        <Settings size={17} />
+        <span>Setup</span>
+      </button>
       <button
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
         aria-label="Guida"

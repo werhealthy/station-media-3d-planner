@@ -1,11 +1,11 @@
 import { Html, RoundedBox } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
-import type { MediaPoint } from '@/domain/mediaPoints'
+import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
 
-export function MediaPointMarker({ point }: { point: MediaPoint }) {
+export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const selected = useViewerStore((s) => s.selectedMediaPointId === point.id),
     hovered = useViewerStore((s) => s.hoveredMediaPointId === point.id)
   const select = useViewerStore((s) => s.selectMediaPoint),

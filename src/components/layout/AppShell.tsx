@@ -4,6 +4,7 @@ import { Canvas } from '@/components/viewer/Canvas'
 import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
 import { Lock, Rotate3D } from 'lucide-react'
+import { AutoWalkthroughPanel } from './AutoWalkthroughPanel'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
@@ -44,6 +45,7 @@ export function AppShell() {
               ))}
             </nav>
           )}
+          {mode === 'auto' && <AutoWalkthroughPanel />}
           {mode === 'walkthrough' ? (
             <div className="absolute bottom-5 left-5 flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 shadow-md">
               <span>
@@ -60,16 +62,18 @@ export function AppShell() {
               </button>
             </div>
           ) : (
-            <div className="pointer-events-none absolute bottom-5 left-5 rounded-lg border border-slate-200 bg-white/95 px-4 py-3 text-xs text-slate-600 shadow-md">
-              <b className="block text-sm text-slate-800">
-                Esplora la stazione
-              </b>
-              {mode === 'hotspot'
-                ? 'Scegli una vista guidata'
-                : overviewUnlocked
-                  ? 'Trascina per ruotare · scorri per avvicinare'
-                  : 'Vista editoriale bloccata · attiva Vista libera per esplorare'}
-            </div>
+            mode !== 'auto' && (
+              <div className="pointer-events-none absolute bottom-5 left-5 rounded-lg border border-slate-200 bg-white/95 px-4 py-3 text-xs text-slate-600 shadow-md">
+                <b className="block text-sm text-slate-800">
+                  Esplora la stazione
+                </b>
+                {mode === 'hotspot'
+                  ? 'Scegli una vista guidata'
+                  : overviewUnlocked
+                    ? 'Trascina per ruotare · scorri per avvicinare'
+                    : 'Vista editoriale bloccata · attiva Vista libera per esplorare'}
+              </div>
+            )
           )}
         </section>
         <MediaPointPanel />

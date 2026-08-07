@@ -88,12 +88,33 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
       `hose-${side}`,
       [0, Math.PI / 2, 0],
     )
+    const nozzle = new THREE.Group()
+    nozzle.position.set(side * 0.78, 1.36, 0.48)
+    nozzle.rotation.z = side * -0.12
+    nozzle.name = `nozzle-${side}`
+    g.add(nozzle)
     box(
-      g,
-      [0.15, 0.55, 0.16],
-      mat('#19a374', 0.35, 0.3),
-      [side * 0.78, 1.35, 0.48],
-      `nozzle-${side}`,
+      nozzle,
+      [0.18, 0.46, 0.14],
+      mat(side < 0 ? '#179868' : '#25282d', 0.34, 0.18),
+      [0, 0, 0],
+      'nozzle-grip',
+    )
+    mesh(
+      nozzle,
+      new THREE.CylinderGeometry(0.035, 0.05, 0.34, 12),
+      mat('#b9c0c5', 0.18, 0.78),
+      [side * 0.09, 0.3, 0],
+      'nozzle-spout',
+      [0, 0, (side * Math.PI) / 3],
+    )
+    mesh(
+      nozzle,
+      new THREE.TorusGeometry(0.1, 0.025, 8, 14, Math.PI * 1.55),
+      mat('#17191c', 0.72),
+      [0, -0.03, 0],
+      'nozzle-trigger-guard',
+      [0, Math.PI / 2, 0],
     )
   }
   box(
@@ -376,6 +397,36 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     'totem-poster',
   )
   box(root, [22, 0.3, 3.4], concrete, [2, 0.16, 0], 'pump-platform')
+  // Human-scale payment kiosk inspired by the Q8 self-service terminal reference.
+  const kiosk = new THREE.Group()
+  kiosk.position.set(-11.5, 0, -1.2)
+  kiosk.name = 'payment-kiosk'
+  root.add(kiosk)
+  box(kiosk, [0.95, 2.05, 0.62], white, [0, 1.08, 0], 'kiosk-body')
+  box(
+    kiosk,
+    [0.72, 0.82, 0.04],
+    mat('#10151b', 0.12, 0.18),
+    [0, 1.48, 0.33],
+    'kiosk-screen',
+  )
+  box(
+    kiosk,
+    [0.3, 0.12, 0.05],
+    mat('#282d33', 0.26, 0.35),
+    [0.18, 0.9, 0.34],
+    'kiosk-reader',
+  )
+  box(kiosk, [1.08, 0.1, 0.75], steel, [0, 0.08, 0], 'kiosk-foot')
+  // Raised pedestrian edge and two restrained planting beds add scale without clutter.
+  box(root, [30, 0.2, 1.1], concrete, [-10, 0.12, 14.5], 'pedestrian-curb')
+  box(
+    root,
+    [8.5, 0.34, 1.8],
+    mat('#5e6e48', 0.95),
+    [-21, 0.22, 13.7],
+    'landscape-bed',
+  )
   for (const x of [-28, 27])
     for (const z of [-16, 15])
       mesh(

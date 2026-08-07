@@ -1,409 +1,295 @@
 import * as THREE from 'three'
-import type { StationModelAdapter, StationModelHandle } from './types'
-
-function addMesh(
+import { STATION_LAYOUT as L } from '@/domain/stationLayout'
+import type { StationModelAdapter } from './types'
+const mat = (color: string, roughness = 0.55, metalness = 0) =>
+  new THREE.MeshStandardMaterial({ color, roughness, metalness })
+function mesh(
   parent: THREE.Object3D,
-  geometry: THREE.BufferGeometry,
+  geo: THREE.BufferGeometry,
   material: THREE.Material,
-  position: [number, number, number],
-  options?: { castShadow?: boolean; receiveShadow?: boolean; rotation?: [number, number, number] }
-): THREE.Mesh {
-  const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(...position)
-  if (options?.rotation) {
-    mesh.rotation.order = 'XYZ'
-    mesh.rotation.set(...options.rotation)
-  }
-  mesh.castShadow = options?.castShadow ?? false
-  mesh.receiveShadow = options?.receiveShadow ?? false
-  parent.add(mesh)
-  return mesh
+  pos: [number, number, number],
+  name: string,
+  rotation?: [number, number, number],
+) {
+  const m = new THREE.Mesh(geo, material)
+  m.name = name
+  m.position.set(...pos)
+  if (rotation) m.rotation.set(...rotation)
+  m.castShadow = true
+  m.receiveShadow = true
+  parent.add(m)
+  return m
 }
-
-function buildStation(): THREE.Group {
+function box(
+  parent: THREE.Object3D,
+  size: [number, number, number],
+  material: THREE.Material,
+  pos: [number, number, number],
+  name: string,
+) {
+  return mesh(parent, new THREE.BoxGeometry(...size), material, pos, name)
+}
+function labelTexture(text: string, bg = '#133a88', accent = '#f2aa1b') {
+  if (typeof document === 'undefined') return null
+  const c = document.createElement('canvas')
+  c.width = 512
+  c.height = 160
+  const x = c.getContext('2d')
+  if (!x) return null
+  x.fillStyle = bg
+  x.fillRect(0, 0, c.width, c.height)
+  x.fillStyle = 'white'
+  x.font = 'bold 82px Arial'
+  x.textAlign = 'center'
+  x.textBaseline = 'middle'
+  x.fillText(text, 220, 80)
+  x.fillStyle = accent
+  x.beginPath()
+  x.arc(410, 80, 50, 0, Math.PI * 2)
+  x.fill()
+  x.fillStyle = '#b51d2b'
+  x.fillRect(375, 63, 70, 14)
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
+}
+function pump(root: THREE.Group, x: number, z: number, index: number) {
+  const g = new THREE.Group()
+  g.position.set(x, 0, z)
+  g.name = `fuel-dispenser-${index}`
+  root.add(g)
+  box(
+    g,
+    [3.2, 0.22, 1.7],
+    mat('#b7bec5', 0.35, 0.55),
+    [0, 0.18, 0],
+    'pump-island',
+  )
+  box(g, [1.5, 2.1, 0.8], mat('#102b67', 0.28, 0.35), [0, 1.32, 0], 'pump-body')
+  box(
+    g,
+    [1.25, 0.7, 0.08],
+    mat('#101820', 0.15, 0.2),
+    [0, 1.62, 0.45],
+    'pump-display',
+  )
+  box(
+    g,
+    [1.55, 0.22, 0.92],
+    mat('#e6a51c', 0.3, 0.15),
+    [0, 2.4, 0],
+    'pump-header',
+  )
+  for (const side of [-1, 1]) {
+    mesh(
+      g,
+      new THREE.TorusGeometry(0.38, 0.045, 8, 18, Math.PI * 1.45),
+      mat('#20242a', 0.8),
+      [side * 0.75, 1.12, 0],
+      `hose-${side}`,
+      [0, Math.PI / 2, 0],
+    )
+    box(
+      g,
+      [0.15, 0.55, 0.16],
+      mat('#19a374', 0.35, 0.3),
+      [side * 0.78, 1.35, 0.48],
+      `nozzle-${side}`,
+    )
+  }
+  box(
+    g,
+    [0.9, 0.15, 0.5],
+    mat('#d9dde1', 0.3, 0.5),
+    [1.1, 0.43, 0],
+    'service-module',
+  )
+}
+function buildStation() {
   const root = new THREE.Group()
-  root.name = 'proceduralStation'
-
-  // Ground - better asphalt color
-  const groundMat = new THREE.MeshStandardMaterial({
-    color: '#5a5a5a',
-    roughness: 0.8,
-    metalness: 0.1,
-  })
-  const groundGeo = new THREE.PlaneGeometry(80, 80)
-  groundGeo.rotateX(-Math.PI / 2)
-  addMesh(root, groundGeo, groundMat, [0, 0, 0], { receiveShadow: true })
-
-  // Canopy structure - improved materials
-  const canopyRoofMat = new THREE.MeshStandardMaterial({
-    color: '#e8e8e8',
-    roughness: 0.4,
-    metalness: 0.3,
-  })
-  const canopyRoof = new THREE.BoxGeometry(45, 0.4, 32)
-  addMesh(root, canopyRoof, canopyRoofMat, [0, 4.2, 0], {
-    castShadow: true,
-    receiveShadow: true,
-  })
-
-  // Canopy edge supports - metallic look
-  const edgeMat = new THREE.MeshStandardMaterial({
-    color: '#cccccc',
-    roughness: 0.3,
-    metalness: 0.6,
-  })
-  addMesh(root, new THREE.BoxGeometry(45, 0.3, 0.5), edgeMat, [0, 4.3, -16], {
-    castShadow: true,
-  })
-  addMesh(root, new THREE.BoxGeometry(45, 0.3, 0.5), edgeMat, [0, 4.3, 16], {
-    castShadow: true,
-  })
-
-  // Canopy columns - sleek white/gray
-  const columnMat = new THREE.MeshStandardMaterial({
-    color: '#f5f5f5',
-    roughness: 0.3,
-    metalness: 0.4,
-  })
-  const columnGeo = new THREE.CylinderGeometry(0.6, 0.6, 4.2, 12)
-  const columnPositions: [number, number, number][] = [
-    [-20, 2.1, -12],
-    [-10, 2.1, -12],
-    [0, 2.1, -12],
-    [10, 2.1, -12],
-    [20, 2.1, -12],
-    [-20, 2.1, 12],
-    [-10, 2.1, 12],
-    [0, 2.1, 12],
-    [10, 2.1, 12],
-    [20, 2.1, 12],
-  ]
-  for (const pos of columnPositions) {
-    addMesh(root, columnGeo.clone(), columnMat, pos, { castShadow: true })
-  }
-
-  // Pump islands - much more detailed and realistic
-  const pumpBaseMat = new THREE.MeshStandardMaterial({
-    color: '#2a2a2a',
-    roughness: 0.4,
-    metalness: 0.5,
-  })
-  const pumpAccentMat = new THREE.MeshStandardMaterial({
-    color: '#00aa00',
-    roughness: 0.3,
-    metalness: 0.7,
-  })
-  const pumpDisplayMat = new THREE.MeshStandardMaterial({
-    color: '#1a1a1a',
-    roughness: 0.2,
-    metalness: 0.3,
-  })
-
-  const pumpPositions: [number, number, number][] = [
-    [-12, 0, -6],
-    [-4, 0, -6],
-    [4, 0, -6],
-    [12, 0, -6],
-    [-12, 0, 6],
-    [-4, 0, 6],
-    [4, 0, 6],
-    [12, 0, 6],
-  ]
-
-  for (const pos of pumpPositions) {
-    const pumpGroup = new THREE.Group()
-    pumpGroup.position.set(...pos)
-
-    // Base pedestal
-    addMesh(pumpGroup, new THREE.BoxGeometry(2.8, 0.4, 2.8), pumpBaseMat, [0, 0.2, 0], {
-      castShadow: true,
-      receiveShadow: true,
-    })
-
-    // Main pump body
-    addMesh(pumpGroup, new THREE.BoxGeometry(2.5, 1.8, 1.2), pumpBaseMat, [0, 1, 0], {
-      castShadow: true,
-      receiveShadow: true,
-    })
-
-    // Screen/Display
-    addMesh(
-      pumpGroup,
-      new THREE.BoxGeometry(2, 0.8, 0.15),
-      pumpDisplayMat,
-      [0, 1.4, 0.6],
-      { castShadow: true }
-    )
-
-    // Green accent stripe
-    addMesh(
-      pumpGroup,
-      new THREE.BoxGeometry(2.6, 0.15, 1.3),
-      pumpAccentMat,
-      [0, 1.8, 0],
-      { castShadow: true }
-    )
-
-    // Nozzle holder area
-    addMesh(
-      pumpGroup,
-      new THREE.BoxGeometry(0.3, 0.6, 0.5),
-      pumpAccentMat,
-      [-0.8, 0.3, 0],
-      { castShadow: true }
-    )
-    addMesh(
-      pumpGroup,
-      new THREE.BoxGeometry(0.3, 0.6, 0.5),
-      pumpAccentMat,
-      [0.8, 0.3, 0],
-      { castShadow: true }
-    )
-
-    root.add(pumpGroup)
-  }
-
-  // Building - improved colors and details
-  const buildingMat = new THREE.MeshStandardMaterial({
-    color: '#d4a574',
-    roughness: 0.6,
-    metalness: 0,
-  })
-  addMesh(root, new THREE.BoxGeometry(14, 5.5, 11), buildingMat, [22, 2.75, 0], {
-    castShadow: true,
-    receiveShadow: true,
-  })
-
-  // Building roof - darker tone
-  const roofMat = new THREE.MeshStandardMaterial({
-    color: '#8b5a3c',
-    roughness: 0.7,
-  })
-  addMesh(root, new THREE.BoxGeometry(14.2, 0.5, 11.2), roofMat, [22, 5.75, 0], {
-    castShadow: true,
-    receiveShadow: true,
-  })
-
-  // Building windows - bright, reflective
-  const windowMat = new THREE.MeshStandardMaterial({
-    color: '#66bbff',
-    emissive: '#1144aa',
-    emissiveIntensity: 0.4,
-    roughness: 0.1,
-    metalness: 0.5,
-  })
-  const windowGeo = new THREE.PlaneGeometry(1.2, 1.2)
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 2; j++) {
-      addMesh(root, windowGeo.clone(), windowMat, [
-        16 + (i - 1) * 2.8,
-        4 + j * 1.8,
-        5.55,
-      ])
-    }
-  }
-
-  // Building entrance door
-  const doorMat = new THREE.MeshStandardMaterial({
-    color: '#2a2a2a',
-    roughness: 0.5,
-  })
-  addMesh(root, new THREE.BoxGeometry(1.2, 2.2, 0.15), doorMat, [28, 1.1, 5.55], {
-    castShadow: true,
-  })
-
-  // Door handle
-  const handleMat = new THREE.MeshStandardMaterial({
-    color: '#d4af37',
-    roughness: 0.2,
-    metalness: 0.9,
-  })
-  addMesh(
+  root.name = 'q8-station'
+  const asphalt = mat('#34383d', 0.92, 0.02),
+    concrete = mat('#c9c9c3', 0.82),
+    blue = mat('#123a88', 0.26, 0.35),
+    white = mat('#f4f4f1', 0.4, 0.15),
+    steel = mat('#77818a', 0.3, 0.65),
+    teal = mat('#16877d', 0.35, 0.2),
+    gold = mat('#e4a11b', 0.35, 0.15)
+  mesh(
     root,
-    new THREE.CylinderGeometry(0.1, 0.1, 0.3, 8),
-    handleMat,
-    [28.5, 1.1, 5.57],
-    { castShadow: true, rotation: [0, 0, Math.PI / 2] }
-  )
-
-  // Parking area - better contrast
-  const parkingMat = new THREE.MeshStandardMaterial({
-    color: '#6a6a6a',
-    roughness: 0.7,
-    metalness: 0.1,
-  })
-  const parkingGeo = new THREE.PlaneGeometry(20, 25)
-  parkingGeo.rotateX(-Math.PI / 2)
-  addMesh(root, parkingGeo, parkingMat, [-28, 0.01, 0], {
-    receiveShadow: true,
-  })
-
-  // Parking lines - more visible
-  const parkingLineMat = new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    roughness: 0.5,
-    metalness: 0.1,
-  })
-  const parkingLineGeo = new THREE.PlaneGeometry(15, 0.25)
-  parkingLineGeo.rotateX(-Math.PI / 2)
-  for (let z = -10; z <= 10; z += 2.5) {
-    addMesh(root, parkingLineGeo.clone(), parkingLineMat, [-28, 0.02, z])
-  }
-
-  // Road - darker asphalt
-  const roadMat = new THREE.MeshStandardMaterial({
-    color: '#2a2a2a',
-    roughness: 0.8,
-    metalness: 0.05,
-  })
-  const roadGeo = new THREE.PlaneGeometry(12, 35)
-  roadGeo.rotateX(-Math.PI / 2)
-  addMesh(root, roadGeo, roadMat, [0, 0.01, 28], { receiveShadow: true })
-
-  // Road center line - visible yellow
-  const roadLineMat = new THREE.MeshStandardMaterial({
-    color: '#ffff00',
-    roughness: 0.4,
-  })
-  const roadLineGeo = new THREE.PlaneGeometry(0.4, 4)
-  roadLineGeo.rotateX(-Math.PI / 2)
-  for (let z = 10; z < 45; z += 4) {
-    addMesh(root, roadLineGeo.clone(), roadLineMat, [0, 0.02, z])
-  }
-
-  // Sign - Q8-style branding area
-  const signGroup = new THREE.Group()
-  signGroup.position.set(-22, 0, -18)
-
-  const poleMat = new THREE.MeshStandardMaterial({
-    color: '#444444',
-    roughness: 0.4,
-    metalness: 0.5,
-  })
-  addMesh(signGroup, new THREE.CylinderGeometry(0.25, 0.3, 5, 8), poleMat, [0, 0, 0], {
-    castShadow: true,
-  })
-
-  // Sign board - bright green (Q8 color)
-  const signMat = new THREE.MeshStandardMaterial({
-    color: '#00aa00',
-    roughness: 0.3,
-    metalness: 0.4,
-  })
-  addMesh(signGroup, new THREE.BoxGeometry(4, 2, 0.15), signMat, [0, 2.5, 0], {
-    castShadow: true,
-  })
-
-  root.add(signGroup)
-
-  // Street lamps - improved lighting
-  const lampGroup1 = new THREE.Group()
-  lampGroup1.position.set(18, 0, -22)
-
-  addMesh(
-    lampGroup1,
-    new THREE.CylinderGeometry(0.2, 0.2, 7, 8),
-    poleMat,
+    new THREE.PlaneGeometry(L.forecourt.width, L.forecourt.depth),
+    asphalt,
     [0, 0, 0],
-    { castShadow: true }
+    'forecourt',
+    [-Math.PI / 2, 0, 0],
   )
-
-  const lampHeadMat = new THREE.MeshStandardMaterial({
-    color: '#ffff88',
-    emissive: '#ffff00',
-    emissiveIntensity: 0.5,
-    roughness: 0.4,
-  })
-  addMesh(
-    lampGroup1,
-    new THREE.SphereGeometry(0.45, 8, 8),
-    lampHeadMat,
-    [0, 3.5, 0],
-    { castShadow: true }
+  box(
+    root,
+    [L.canopy.width, 0.55, L.canopy.depth],
+    white,
+    [0, L.canopy.height, 0],
+    'canopy-roof',
   )
-
-  root.add(lampGroup1)
-
-  // Second lamp on opposite side
-  const lampGroup2 = new THREE.Group()
-  lampGroup2.position.set(-18, 0, -22)
-
-  addMesh(
-    lampGroup2,
-    new THREE.CylinderGeometry(0.2, 0.2, 7, 8),
-    poleMat,
-    [0, 0, 0],
-    { castShadow: true }
+  box(
+    root,
+    [L.canopy.width + 0.15, L.canopy.fasciaHeight, 0.38],
+    blue,
+    [0, L.canopy.height - 0.1, L.canopy.depth / 2],
+    'canopy-fascia-front',
   )
-
-  addMesh(
-    lampGroup2,
-    new THREE.SphereGeometry(0.45, 8, 8),
-    lampHeadMat,
-    [0, 3.5, 0],
-    { castShadow: true }
+  box(
+    root,
+    [L.canopy.width + 0.15, L.canopy.fasciaHeight, 0.38],
+    blue,
+    [0, L.canopy.height - 0.1, -L.canopy.depth / 2],
+    'canopy-fascia-back',
   )
-
-  root.add(lampGroup2)
-
-  // Additional landscape - trash/recycling area
-  const wasteAreaMat = new THREE.MeshStandardMaterial({
-    color: '#7a7a7a',
-    roughness: 0.6,
-  })
-  const wasteGeo = new THREE.PlaneGeometry(6, 5)
-  wasteGeo.rotateX(-Math.PI / 2)
-  addMesh(root, wasteGeo, wasteAreaMat, [30, 0.01, 12], { receiveShadow: true })
-
-  // Waste bins
-  const binMat = new THREE.MeshStandardMaterial({
-    color: '#444444',
-    roughness: 0.5,
-  })
-  for (let i = 0; i < 3; i++) {
-    addMesh(
+  box(
+    root,
+    [0.38, L.canopy.fasciaHeight, L.canopy.depth],
+    blue,
+    [-L.canopy.width / 2, L.canopy.height - 0.1, 0],
+    'canopy-fascia-side',
+  )
+  box(
+    root,
+    [0.38, L.canopy.fasciaHeight, L.canopy.depth],
+    blue,
+    [L.canopy.width / 2, L.canopy.height - 0.1, 0],
+    'canopy-fascia-side',
+  )
+  for (const x of [-7, 7]) {
+    box(root, [1, 5.75, 0.75], steel, [x, 3, 0], 'canopy-column')
+    box(root, [1.18, 0.18, 0.95], concrete, [x, 0.12, 0], 'column-foot')
+  }
+  const logo = labelTexture('Q8')
+  if (logo) {
+    const logoMat = new THREE.MeshStandardMaterial({
+      map: logo,
+      roughness: 0.35,
+    })
+    mesh(
       root,
-      new THREE.BoxGeometry(1.2, 1.5, 1),
-      binMat,
-      [28 + i * 1.5, 0.75, 12],
-      { castShadow: true, receiveShadow: true }
+      new THREE.PlaneGeometry(4, 1.25),
+      logoMat,
+      [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.2],
+      'q8-canopy-logo',
     )
   }
-
+  for (let x = -8; x <= 8; x += 4)
+    for (const z of [L.islands.frontZ, L.islands.backZ])
+      pump(root, x, z, Math.round(x + z * 10))
+  box(
+    root,
+    [L.shop.width, L.shop.height, L.shop.depth],
+    mat('#d9dcda', 0.55),
+    [L.shop.x, L.shop.height / 2, L.shop.z],
+    'shop-building',
+  )
+  box(
+    root,
+    [L.shop.width + 0.3, 0.5, L.shop.depth + 0.3],
+    mat('#727c85', 0.35, 0.4),
+    [L.shop.x, L.shop.height + 0.15, L.shop.z],
+    'shop-roof',
+  )
+  box(
+    root,
+    [L.shop.width, 0.9, 0.3],
+    teal,
+    [L.shop.x, 4.35, -L.shop.depth / 2 + L.shop.z - 0.16],
+    'shop-fascia',
+  )
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: '#14313d',
+    roughness: 0.12,
+    metalness: 0.25,
+    transmission: 0.18,
+    transparent: true,
+    opacity: 0.88,
+  })
+  for (let x = 5; x <= 20; x += 3)
+    box(
+      root,
+      [2.5, 3, 0.12],
+      glass,
+      [x, 2.25, L.shop.z + L.shop.depth / 2 + 0.07],
+      'shop-glazing',
+    )
+  box(
+    root,
+    [1.7, 3.25, 0.15],
+    glass,
+    [13, 1.8, L.shop.z + L.shop.depth / 2 + 0.15],
+    'shop-entry',
+  )
+  box(
+    root,
+    [L.totem.width, L.totem.height, 0.7],
+    steel,
+    [L.totem.x, L.totem.height / 2, L.totem.z],
+    'price-totem',
+  )
+  box(
+    root,
+    [L.totem.width - 0.3, 2.1, 0.08],
+    blue,
+    [L.totem.x, 6.65, L.totem.z + 0.4],
+    'totem-brand',
+  )
+  for (let y = 3.2; y <= 5.2; y += 1)
+    box(
+      root,
+      [L.totem.width - 0.35, 0.7, 0.08],
+      mat('#18233b', 0.3),
+      [L.totem.x, y, L.totem.z + 0.4],
+      'price-row',
+    )
+  box(
+    root,
+    [L.totem.width - 0.35, 1.4, 0.08],
+    gold,
+    [L.totem.x, 1.8, L.totem.z + 0.4],
+    'totem-poster',
+  )
+  box(root, [22, 0.3, 3.4], concrete, [2, 0.16, 0], 'pump-platform')
+  for (const x of [-28, 27])
+    for (const z of [-16, 15])
+      mesh(
+        root,
+        new THREE.CylinderGeometry(0.09, 0.13, 7, 10),
+        steel,
+        [x, 3.5, z],
+        'light-pole',
+      )
   return root
 }
-
-function collectMeshes(root: THREE.Object3D): THREE.Mesh[] {
-  const meshes: THREE.Mesh[] = []
-  root.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      meshes.push(child)
-    }
+function collect(root: THREE.Object3D) {
+  const out: THREE.Mesh[] = []
+  root.traverse((o) => {
+    if (o instanceof THREE.Mesh) out.push(o)
   })
-  return meshes
+  return out
 }
-
-function disposeMesh(mesh: THREE.Mesh): void {
-  mesh.geometry.dispose()
-  if (Array.isArray(mesh.material)) {
-    mesh.material.forEach((m) => m.dispose())
-  } else {
-    mesh.material.dispose()
-  }
-}
-
 export const proceduralAdapter: StationModelAdapter = {
-  async load(): Promise<StationModelHandle> {
+  async load() {
     const root = buildStation()
-    const occlusionMeshes = collectMeshes(root)
-    const boundingBox = new THREE.Box3().setFromObject(root)
-
-    return { root, occlusionMeshes, boundingBox }
+    return {
+      root,
+      occlusionMeshes: collect(root),
+      boundingBox: new THREE.Box3().setFromObject(root),
+    }
   },
-
-  dispose(handle: StationModelHandle): void {
-    for (const mesh of collectMeshes(handle.root)) {
-      disposeMesh(mesh)
+  dispose(handle) {
+    for (const m of collect(handle.root)) {
+      m.geometry.dispose()
+      const materials = Array.isArray(m.material) ? m.material : [m.material]
+      for (const material of materials) {
+        for (const value of Object.values(material)) {
+          if (value instanceof THREE.Texture) value.dispose()
+        }
+        material.dispose()
+      }
     }
   },
 }

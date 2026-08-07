@@ -1,106 +1,32 @@
-import { Pause, Play, Move3D, RotateCw, Maximize2 } from 'lucide-react'
-import { Button } from '@/components/common/Button'
-import { useUiStore, type ViewMode } from '@/stores/uiStore'
+import { CircleHelp, MapPin } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
-import { usePlaybackStore } from '@/stores/playbackStore'
-import { useViewerStore } from '@/stores/viewerStore'
-import { cn } from '@/lib/cn'
-
-const VIEW_MODES: { id: ViewMode; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'hotspot', label: 'Hotspot' },
-  { id: 'walkthrough', label: 'Walkthrough' },
-]
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
-  const viewMode = useUiStore((s) => s.viewMode)
-  const setViewMode = useUiStore((s) => s.setViewMode)
-  const isPlaying = usePlaybackStore((s) => s.isPlaying)
-  const play = usePlaybackStore((s) => s.play)
-  const pause = usePlaybackStore((s) => s.pause)
-  const transformMode = useViewerStore((s) => s.transformMode)
-  const setTransformMode = useViewerStore((s) => s.setTransformMode)
-
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-4">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="truncate text-sm font-semibold text-slate-900">
-          {projectName}
+    <header className="flex h-[76px] shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-7 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#11347e] text-xl font-black text-white">
+          Q8
+        </div>
+        <div>
+          <p className="text-lg font-bold text-[#12265b]">{projectName}</p>
+          <p className="text-xs text-slate-500">Configuratore creatività</p>
+        </div>
+      </div>
+      <div className="ml-auto flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700">
+        <MapPin size={17} className="text-[#1954c6]" />
+        Q8 Milano Est
+        <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+          Demo
         </span>
       </div>
-
-      <nav
-        aria-label="Modalita' di visualizzazione"
-        className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-1"
+      <button
+        className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+        aria-label="Guida"
       >
-        {VIEW_MODES.map((mode) => (
-          <button
-            key={mode.id}
-            type="button"
-            aria-pressed={viewMode === mode.id}
-            onClick={() => setViewMode(mode.id)}
-            className={cn(
-              'rounded px-3 py-1 text-sm font-medium transition-colors',
-              viewMode === mode.id
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800',
-            )}
-          >
-            {mode.label}
-          </button>
-        ))}
-      </nav>
-
-      {viewMode === 'overview' && (
-        <nav
-          aria-label="Modalita' trasformazione banner"
-          className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-1"
-        >
-          <Button
-            type="button"
-            variant={transformMode === 'translate' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTransformMode('translate')}
-            title="Sposta banner (T)"
-          >
-            <Move3D size={14} /> Sposta
-          </Button>
-          <Button
-            type="button"
-            variant={transformMode === 'rotate' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTransformMode('rotate')}
-            title="Ruota banner (R)"
-          >
-            <RotateCw size={14} /> Ruota
-          </Button>
-          <Button
-            type="button"
-            variant={transformMode === 'scale' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTransformMode('scale')}
-            title="Ridimensiona banner (S)"
-          >
-            <Maximize2 size={14} /> Scala
-          </Button>
-        </nav>
-      )}
-
-      {viewMode === 'walkthrough' && (
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={isPlaying ? 'Pausa' : 'Riproduci'}
-            title={isPlaying ? 'Pausa' : 'Riproduci'}
-            onClick={() => (isPlaying ? pause() : play())}
-          >
-            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-          </Button>
-        </div>
-      )}
+        <CircleHelp size={22} />
+      </button>
     </header>
   )
 }

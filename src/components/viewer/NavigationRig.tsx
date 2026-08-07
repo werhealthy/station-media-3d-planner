@@ -6,11 +6,45 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { HOTSPOTS } from '@/domain/hotspots'
 import { useViewerStore } from '@/stores/viewerStore'
+import { usePlaybackStore } from '@/stores/playbackStore'
+import {
+  WALKTHROUGH_DURATION,
+  WALKTHROUGH_ROUTE,
+} from '@/domain/walkthroughRoute'
 
 const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
 const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
 const EYE_HEIGHT = 1.7
 const WALK_SPEED = 2.35
+
+const COLLIDERS = [
+  { minX: 3.2, maxX: 22.8, minZ: -14.4, maxZ: -5.3 },
+  { minX: -23.9, maxX: -20.1, minZ: -10.9, maxZ: -9.1 },
+  ...[-8, -4, 0, 4, 8].flatMap((x) =>
+    [2.8, -3.2].map((z) => ({
+      minX: x - 1.1,
+      maxX: x + 1.1,
+      minZ: z - 0.85,
+      maxZ: z + 0.85,
+    })),
+  ),
+  ...[-7, 7].map((x) => ({
+    minX: x - 0.75,
+    maxX: x + 0.75,
+    minZ: -0.65,
+    maxZ: 0.65,
+  })),
+]
+
+function canWalkTo(position: THREE.Vector3) {
+  return !COLLIDERS.some(
+    (box) =>
+      position.x > box.minX &&
+      position.x < box.maxX &&
+      position.z > box.minZ &&
+      position.z < box.maxZ,
+  )
+}
 
 export function NavigationRig() {
   const mode = useViewerStore((s) => s.navigationMode)
@@ -25,6 +59,14 @@ export function NavigationRig() {
   const target = useMemo(() => new THREE.Vector3(), [])
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
+  const autoTime = useRef(0)
+  const lastUiUpdate = useRef(0)
+  const isPlaying = usePlaybackStore((s) => s.isPlaying)
+  const playbackSpeed = usePlaybackStore((s) => s.playbackSpeed)
+  const setProgress = usePlaybackStore((s) => s.setProgress)
+  const setActiveStep = usePlaybackStore((s) => s.setActiveStep)
+  const pause = usePlaybackStore((s) => s.pause)
+  const seekToken = usePlaybackStore((s) => s.seekToken)
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
@@ -50,6 +92,20 @@ export function NavigationRig() {
       walkTime.current = 0
     }
   }, [camera, mode, perspectiveCamera])
+
+  useEffect(() => {
+    if (mode !== 'auto') return
+    autoTime.current =
+      usePlaybackStore.getState().progress * WALKTHROUGH_DURATION
+    perspectiveCamera.fov = 56
+    perspectiveCamera.updateProjectionMatrix()
+  }, [mode, perspectiveCamera])
+
+  useEffect(() => {
+    if (mode === 'auto')
+      autoTime.current =
+        usePlaybackStore.getState().progress * WALKTHROUGH_DURATION
+  }, [mode, seekToken])
 
   useFrame((_, delta) => {
     if (mode === 'walkthrough') {
@@ -84,8 +140,7 @@ export function NavigationRig() {
         next.x = THREE.MathUtils.clamp(next.x, -29, 29)
         next.z = THREE.MathUtils.clamp(next.z, -20, 20)
         // Conservative rectangular exclusion for the shop volume.
-        if (!(next.x > 3.5 && next.x < 22.5 && next.z < -5.5))
-          camera.position.copy(next)
+        if (canWalkTo(next)) camera.position.copy(next)
         else velocity.current.multiplyScalar(0.25)
         walkTime.current += delta * velocity.current.length() * 2.2
       }
@@ -95,6 +150,46 @@ export function NavigationRig() {
         EYE_HEIGHT + bob,
         1 - Math.exp(-delta * 12),
       )
+      return
+    }
+
+    if (mode === 'auto') {
+      if (isPlaying)
+        autoTime.current = Math.min(
+          WALKTHROUGH_DURATION,
+          autoTime.current + delta * playbackSpeed,
+        )
+      let elapsed = 0
+      let stepIndex = WALKTHROUGH_ROUTE.length - 1
+      for (let index = 0; index < WALKTHROUGH_ROUTE.length; index += 1) {
+        if (autoTime.current <= elapsed + WALKTHROUGH_ROUTE[index]!.duration) {
+          stepIndex = index
+          break
+        }
+        elapsed += WALKTHROUGH_ROUTE[index]!.duration
+      }
+      const current = WALKTHROUGH_ROUTE[stepIndex]!
+      const previous = WALKTHROUGH_ROUTE[Math.max(0, stepIndex - 1)]!
+      const local = THREE.MathUtils.clamp(
+        (autoTime.current - elapsed) / current.duration,
+        0,
+        1,
+      )
+      const smooth = THREE.MathUtils.smootherstep(local, 0, 1)
+      destination
+        .set(...previous.position)
+        .lerp(new THREE.Vector3(...current.position), smooth)
+      target
+        .set(...previous.gazeTarget)
+        .lerp(new THREE.Vector3(...current.gazeTarget), smooth)
+      camera.position.lerp(destination, 1 - Math.exp(-delta * 7))
+      camera.lookAt(target)
+      if (autoTime.current - lastUiUpdate.current > 0.12 || !isPlaying) {
+        lastUiUpdate.current = autoTime.current
+        setProgress(autoTime.current / WALKTHROUGH_DURATION)
+        setActiveStep(stepIndex, current.mediaPointId ?? null)
+      }
+      if (autoTime.current >= WALKTHROUGH_DURATION && isPlaying) pause()
       return
     }
 

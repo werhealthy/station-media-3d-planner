@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 interface ViewerState {
-  navigationMode: 'overview' | 'hotspot' | 'walkthrough'
+  navigationMode: 'overview' | 'hotspot' | 'walkthrough' | 'auto'
   activeHotspotId: string | null
   selectedMediaPointId: string | null
   hoveredMediaPointId: string | null

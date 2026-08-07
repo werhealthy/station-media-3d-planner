@@ -13,6 +13,9 @@ interface PlaybackState {
    */
   progress: number
   playbackSpeed: number
+  activeStepIndex: number
+  activeMediaPointId: string | null
+  seekToken: number
 
   setActiveRouteId: (id: string | null) => void
   play: () => void
@@ -20,6 +23,8 @@ interface PlaybackState {
   stop: () => void
   setProgress: (progress: number) => void
   setPlaybackSpeed: (speed: number) => void
+  setActiveStep: (index: number, mediaPointId: string | null) => void
+  seekTo: (progress: number) => void
 }
 
 export const usePlaybackStore = create<PlaybackState>()(
@@ -28,12 +33,29 @@ export const usePlaybackStore = create<PlaybackState>()(
     isPlaying: false,
     progress: 0,
     playbackSpeed: 1,
+    activeStepIndex: 0,
+    activeMediaPointId: null,
+    seekToken: 0,
 
     setActiveRouteId: (id) => set({ activeRouteId: id, progress: 0 }),
     play: () => set({ isPlaying: true }),
     pause: () => set({ isPlaying: false }),
-    stop: () => set({ isPlaying: false, progress: 0 }),
-    setProgress: (progress) => set({ progress: Math.min(1, Math.max(0, progress)) }),
+    stop: () =>
+      set({
+        isPlaying: false,
+        progress: 0,
+        activeStepIndex: 0,
+        activeMediaPointId: null,
+      }),
+    setProgress: (progress) =>
+      set({ progress: Math.min(1, Math.max(0, progress)) }),
     setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
+    setActiveStep: (activeStepIndex, activeMediaPointId) =>
+      set({ activeStepIndex, activeMediaPointId }),
+    seekTo: (progress) =>
+      set((state) => ({
+        progress: Math.min(1, Math.max(0, progress)),
+        seekToken: state.seekToken + 1,
+      })),
   })),
 )

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { getJourney, journeyDuration } from '@/domain/journeys'
+import { pedestrianCollisionAt } from '@/domain/journeySafety'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { BRAND_ASSETS } from '@/config/brandAssets'
@@ -24,6 +25,7 @@ export function JourneyActors() {
   const actorElapsed = useRef(0)
   const actorStart = useRef(new THREE.Vector3())
   const actorDestination = useRef(new THREE.Vector3())
+  const actorCandidate = useRef(new THREE.Vector3())
   const q8Logo = useTexture(BRAND_ASSETS.q8Logo)
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
@@ -65,9 +67,11 @@ export function JourneyActors() {
       1,
     )
     const travel = THREE.MathUtils.smoothstep(local, 0, 1)
-    attendant.current.position
+    actorCandidate.current
       .copy(actorStart.current)
       .lerp(actorDestination.current, travel)
+    if (!pedestrianCollisionAt(actorCandidate.current))
+      attendant.current.position.copy(actorCandidate.current)
     const walking =
       actorStart.current.distanceToSquared(actorDestination.current) > 0.04 &&
       local < 0.98

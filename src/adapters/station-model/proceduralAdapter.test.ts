@@ -50,17 +50,20 @@ describe('proceduralAdapter composition', () => {
     }
   })
 
-  it('uses four pumps and a single non-overlapping double entrance', async () => {
+  it('uses two compact pumps and a walkable Svolta entrance', async () => {
     const handle = await proceduralAdapter.load()
     const sceneNames = names(handle.root)
 
     expect(
       sceneNames.filter((name) => name.startsWith('fuel-dispenser-')),
-    ).toHaveLength(4)
+    ).toHaveLength(2)
     expect(
       sceneNames.filter((name) => name === 'shop-entry-door'),
     ).toHaveLength(2)
     expect(sceneNames).not.toContain('shop-glazing')
+    expect(sceneNames).not.toContain('shop-structural-shell')
+    expect(sceneNames).toContain('shop-back-wall')
+    expect(sceneNames).toContain('shop-checkout-counter')
     expect(
       sceneNames.filter((name) => name.startsWith('landscape-tree-')).length,
     ).toBeGreaterThanOrEqual(36)

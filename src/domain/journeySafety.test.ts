@@ -22,7 +22,7 @@ function segmentCollisions(
 }
 
 describe('journey physical safety', () => {
-  it.each(['self-service', 'servito'] as const)(
+  it.each(['servito', 'self-service', 'self-svolta'] as const)(
     'keeps the full %s vehicle footprint outside every obstacle',
     (journeyId) => {
       expect(arrivalCurveCollisions(getJourney(journeyId).arrivalPath)).toEqual(
@@ -31,17 +31,20 @@ describe('journey physical safety', () => {
     },
   )
 
-  it('keeps every self-service pedestrian segment outside static supports', () => {
-    const steps = getJourney('self-service').steps.filter(
-      (step) => step.cameraMode === 'pedestrian',
-    )
-    for (let index = 1; index < steps.length; index += 1) {
-      expect(
-        segmentCollisions(steps[index - 1]!.position, steps[index]!.position),
-        `${steps[index - 1]!.id} -> ${steps[index]!.id}`,
-      ).toEqual([])
-    }
-  })
+  it.each(['self-service', 'self-svolta'] as const)(
+    'keeps every %s pedestrian segment outside static supports',
+    (journeyId) => {
+      const steps = getJourney(journeyId).steps.filter(
+        (step) => step.cameraMode === 'pedestrian',
+      )
+      for (let index = 1; index < steps.length; index += 1) {
+        expect(
+          segmentCollisions(steps[index - 1]!.position, steps[index]!.position),
+          `${steps[index - 1]!.id} -> ${steps[index]!.id}`,
+        ).toEqual([])
+      }
+    },
+  )
 
   it('routes the attendant around pumps and the pump-ear support', () => {
     const cues = getJourney('servito').steps.flatMap((step) =>

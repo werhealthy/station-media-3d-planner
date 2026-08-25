@@ -115,17 +115,13 @@ export function FirstPersonAvatar() {
     mode === 'auto' &&
     Boolean(
       step &&
-      [
-        'self-take-nozzle',
-        'self-insert-nozzle',
-        'self-refuel',
-        'self-refuel-check',
-        'self-refuel-observe',
-        'self-remove-nozzle',
-        'self-replace-nozzle',
-      ].includes(step.id),
+      ['take-nozzle', 'insert-nozzle', 'refuel', 'remove-nozzle', 'replace-nozzle'].some(
+        (action) => step.id.includes(action),
+      ),
     )
-  const paying = mode === 'auto' && step?.id === 'self-payment'
+  const paying =
+    mode === 'auto' &&
+    (step?.id === 'self-payment' || step?.id === 'svolta-payment')
 
   useFrame((_, delta) => {
     if (!body.current || !visible) {

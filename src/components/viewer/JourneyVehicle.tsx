@@ -14,27 +14,43 @@ export function JourneyVehicle() {
   const cockpit = useRef<THREE.Group>(null)
   const vehicleYaw = useRef(-Math.PI / 2)
   const forward = useRef(new THREE.Vector3())
-  const step = getJourney(activeRouteId).steps[activeStepIndex]
+  const previousCameraPosition = useRef(new THREE.Vector3())
+  const movementReady = useRef(false)
+  const journey = getJourney(activeRouteId)
+  const step = journey.steps[activeStepIndex]
   const visible = mode === 'auto' && step?.cameraMode === 'vehicle'
   const parkedCarVisible =
     mode === 'auto' &&
-    activeRouteId === 'self-service' &&
+    Boolean(journey.parkedVehicle) &&
     step?.cameraMode === 'pedestrian' &&
-    step.id !== 'self-exit'
+    step.motion !== 'exit'
 
   useFrame((_, delta) => {
-    if (!cockpit.current || !visible) return
+    if (!cockpit.current || !visible) {
+      movementReady.current = false
+      return
+    }
     const carIsMoving = step.motion === 'drive' || step.motion === 'brake'
     let desiredYaw = step.vehicleYaw ?? vehicleYaw.current
     if (carIsMoving) {
       cockpit.current.position.copy(camera.position)
-      camera.getWorldDirection(forward.current)
-      forward.current.y = 0
-      if (forward.current.lengthSq() > 0.001) {
+      if (movementReady.current) {
+        forward.current.subVectors(
+          camera.position,
+          previousCameraPosition.current,
+        )
+        forward.current.y = 0
+      }
+      if (movementReady.current && forward.current.lengthSq() > 0.0000001) {
         forward.current.normalize()
         desiredYaw = Math.atan2(-forward.current.x, -forward.current.z)
       }
-    } else cockpit.current.position.set(...step.position)
+      previousCameraPosition.current.copy(camera.position)
+      movementReady.current = true
+    } else {
+      cockpit.current.position.set(...step.position)
+      movementReady.current = false
+    }
     vehicleYaw.current = THREE.MathUtils.lerp(
       vehicleYaw.current,
       desiredYaw,
@@ -102,8 +118,8 @@ export function JourneyVehicle() {
 
       <group
         visible={parkedCarVisible}
-        position={[-5, 0, 7.2]}
-        rotation={[0, Math.PI / 2, 0]}
+        position={journey.parkedVehicle?.position ?? [0, 0, 0]}
+        rotation={[0, journey.parkedVehicle?.yaw ?? 0, 0]}
       >
         <RoundedBox
           args={[1.82, 0.52, 4.2]}

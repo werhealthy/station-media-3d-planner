@@ -6,7 +6,11 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { eyeHeightFromPersonHeight, useViewerStore } from '@/stores/viewerStore'
 import { usePlaybackStore } from '@/stores/playbackStore'
-import { getJourney, journeyDuration } from '@/domain/journeys'
+import {
+  getJourney,
+  journeyDuration,
+  type JourneyMotion,
+} from '@/domain/journeys'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
 import { orbitMinDistance } from './navigationLimits'
@@ -46,10 +50,7 @@ function canWalkTo(position: THREE.Vector3) {
   )
 }
 
-function easeJourneyMotion(
-  local: number,
-  motion: 'drive' | 'brake' | 'exit' | 'walk' | 'glance' | 'hold',
-) {
+function easeJourneyMotion(local: number, motion: JourneyMotion) {
   switch (motion) {
     case 'drive':
       return 1 - Math.pow(1 - local, 1.55)
@@ -57,6 +58,8 @@ function easeJourneyMotion(
       return 1 - Math.pow(1 - local, 2.7)
     case 'exit':
       return THREE.MathUtils.clamp(local * 1.18, 0, 1)
+    case 'enter':
+      return THREE.MathUtils.smoothstep(local, 0, 1)
     case 'glance':
       return 1 - Math.pow(1 - local, 4.6)
     case 'hold':
@@ -398,14 +401,11 @@ export function NavigationRig() {
       destination
         .set(...previous.position)
         .lerp(new THREE.Vector3(...current.position), motionAmount)
-      if (previous.cameraMode === 'pedestrian') destination.y = eyeHeight
-      if (current.cameraMode === 'pedestrian') {
-        const startY =
-          previous.cameraMode === 'pedestrian'
-            ? eyeHeight
-            : previous.position[1]
-        destination.y = THREE.MathUtils.lerp(startY, eyeHeight, motionAmount)
-      }
+      const startY =
+        previous.cameraMode === 'pedestrian' ? eyeHeight : previous.position[1]
+      const endY =
+        current.cameraMode === 'pedestrian' ? eyeHeight : current.position[1]
+      destination.y = THREE.MathUtils.lerp(startY, endY, motionAmount)
       target
         .set(...previous.gazeTarget)
         .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)

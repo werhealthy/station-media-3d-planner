@@ -2,7 +2,7 @@ import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, type RefObject } from 'react'
 import * as THREE from 'three'
-import { getJourney } from '@/domain/journeys'
+import { getJourney, journeyDuration } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -14,21 +14,13 @@ const sleeve = new THREE.MeshStandardMaterial({
   color: '#25324a',
   roughness: 0.82,
 })
-const nozzle = new THREE.MeshStandardMaterial({
-  color: '#20252b',
-  metalness: 0.2,
-  roughness: 0.48,
-})
-
 interface ArmProps {
   side: -1 | 1
   armRef: RefObject<THREE.Group | null>
-  nozzleInHand: boolean
   paying: boolean
-  tapping: boolean
 }
 
-function Arm({ side, armRef, nozzleInHand, paying }: ArmProps) {
+function Arm({ side, armRef, paying }: ArmProps) {
   const isActionHand = side === 1
   return (
     <group ref={armRef} position={[side * 0.19, -0.23, -0.48]}>
@@ -57,27 +49,10 @@ function Arm({ side, armRef, nozzleInHand, paying }: ArmProps) {
         castShadow
         material={skin}
       />
-      {isActionHand && nozzleInHand && (
-        <group position={[0.015, -0.095, -0.26]} rotation={[0.02, -0.17, 0]}>
-          <RoundedBox
-            args={[0.075, 0.095, 0.22]}
-            radius={0.018}
-            smoothness={3}
-            material={nozzle}
-          />
-          <mesh position={[0, 0.055, -0.16]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.014, 0.019, 0.22, 12]} />
-            <meshStandardMaterial
-              color="#c7cbd0"
-              metalness={0.7}
-              roughness={0.3}
-            />
-          </mesh>
-          <mesh position={[0.065, 0.005, 0.03]} rotation={[0, 0, -0.35]}>
-            <torusGeometry args={[0.065, 0.01, 8, 18, Math.PI * 1.4]} />
-            <meshStandardMaterial color="#111418" roughness={0.65} />
-          </mesh>
-        </group>
+      {isActionHand && !paying && (
+        <mesh position={[0.02, -0.105, -0.3]} rotation={[Math.PI / 2, 0, 0]} material={skin}>
+          <cylinderGeometry args={[0.014, 0.018, 0.15, 14]} />
+        </mesh>
       )}
       {isActionHand && paying && (
         <group
@@ -117,21 +92,26 @@ export function FirstPersonAvatar() {
   const lastPosition = useRef(new THREE.Vector3())
   const gait = useRef(0)
   const step = getJourney(routeId).steps[activeStepIndex]
+  const journey = getJourney(routeId)
   const autoPedestrian = mode === 'auto' && step?.cameraMode === 'pedestrian'
   const visible = mode === 'walkthrough' || autoPedestrian
-  const nozzleInHand =
-    mode === 'auto' &&
-    step?.nozzle?.owner === 'driver' &&
-    ['hand', 'inserting', 'inserted', 'removing', 'returning'].includes(
-      step.nozzle.state,
-    )
   const paying =
     mode === 'auto' &&
     (step?.id === 'self-insert-cash' || step?.id === 'svolta-payment')
-  const tapping =
+  const tapStep =
     mode === 'auto' &&
-    Boolean(step?.terminalScreen) &&
-    !['cash-instructions', 'cash-amount'].includes(step?.terminalScreen ?? '')
+    Boolean(
+      step &&
+        [
+          'self-terminal-start',
+          'self-no-payback',
+          'self-select-pump',
+          'self-select-fuel',
+          'self-select-payment',
+          'self-cash-amount',
+          'self-review',
+        ].includes(step.id),
+    )
 
   useFrame((_, delta) => {
     if (!body.current || !visible) {
@@ -145,7 +125,6 @@ export function FirstPersonAvatar() {
     lastPosition.current.copy(camera.position)
     const moving = horizontalSpeed > 0.18
     if (moving) gait.current += delta * Math.min(horizontalSpeed, 2.4) * 4.6
-    else if (tapping) gait.current += delta
 
     body.current.position.copy(camera.position)
     body.current.quaternion.copy(camera.quaternion)
@@ -162,10 +141,39 @@ export function FirstPersonAvatar() {
         swing + breathe,
         settle,
       )
-      const tap = tapping ? -0.52 + Math.sin(gait.current * 5.5) * 0.1 : 0
+      const elapsedBefore = journey.steps
+        .slice(0, activeStepIndex)
+        .reduce((total, item) => total + item.duration, 0)
+      const local = step
+        ? THREE.MathUtils.clamp(
+            (usePlaybackStore.getState().progress * journeyDuration(journey) -
+              elapsedBefore) /
+              Math.max(step.duration, 0.001),
+            0,
+            1,
+          )
+        : 0
+      // One reach-and-release pulse at the end of each actionable screen.
+      const tapPhase = THREE.MathUtils.clamp((local - 0.56) / 0.4, 0, 1)
+      const extension = tapStep ? Math.sin(tapPhase * Math.PI) : 0
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
-        -swing + breathe + tap,
+        -swing + breathe - extension * 0.08,
+        settle,
+      )
+      rightArm.current.position.x = THREE.MathUtils.lerp(
+        rightArm.current.position.x,
+        0.19 - extension * 0.11,
+        settle,
+      )
+      rightArm.current.position.y = THREE.MathUtils.lerp(
+        rightArm.current.position.y,
+        -0.23 + extension * 0.11,
+        settle,
+      )
+      rightArm.current.position.z = THREE.MathUtils.lerp(
+        rightArm.current.position.z,
+        -0.48 - extension * 0.42,
         settle,
       )
     }
@@ -176,16 +184,12 @@ export function FirstPersonAvatar() {
       <Arm
         side={-1}
         armRef={leftArm}
-        nozzleInHand={nozzleInHand}
         paying={paying}
-        tapping={false}
       />
       <Arm
         side={1}
         armRef={rightArm}
-        nozzleInHand={nozzleInHand}
         paying={paying}
-        tapping={tapping}
       />
     </group>
   )

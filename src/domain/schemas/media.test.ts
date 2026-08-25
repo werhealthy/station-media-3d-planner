@@ -16,4 +16,19 @@ describe('MediaAssetSchema', () => {
       }).success,
     ).toBe(true)
   })
+
+  it('conserva la dimensione originale di una creativita compressa', () => {
+    const asset = MediaAssetSchema.parse({
+      id: 'compressed-1',
+      name: 'campagna-compresso.jpg',
+      mimeType: 'image/jpeg',
+      size: 8 * 1024 * 1024,
+      originalSize: 24 * 1024 * 1024,
+      width: 4096,
+      height: 1024,
+      aspectRatio: 4,
+      url: 'blob:compressed-preview',
+    })
+    expect(asset.originalSize).toBe(24 * 1024 * 1024)
+  })
 })

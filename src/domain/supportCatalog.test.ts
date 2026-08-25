@@ -31,4 +31,23 @@ describe('supportCatalog', () => {
       height: 1.696,
     })
   })
+
+  it('mantiene nel modello le proporzioni calibrate dai riferimenti fotografici', () => {
+    expect(
+      Object.fromEntries(
+        ['2', '4', '10', '6', '7', '9', '8'].map((id) => {
+          const support = getSupportType(id)
+          return [id, [support?.dimensions.width, support?.dimensions.height]]
+        }),
+      ),
+    ).toEqual({
+      '2': [0.72, 1.35],
+      '4': [0.46, 0.78],
+      '6': [0.72, 1.55],
+      '7': [0.62, 1.18],
+      '8': [0.68, 1.28],
+      '9': [0.7, 2.35],
+      '10': [0.42, 0.72],
+    })
+  })
 })

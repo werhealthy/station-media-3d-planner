@@ -46,8 +46,9 @@ export type SupportCatalogEntry = z.infer<typeof SupportCatalogEntrySchema>
  * pump-topper dimensions come from the supplied UI reference. The SmartOPT
  * body follows the supplied 507 x 606 x 1696 mm technical drawing; its touch
  * area is derived proportionally from that front view.
- * Every other physical size is explicitly
- * marked as estimated so it cannot be mistaken for approved production data.
+ * The remaining formats are calibrated from the document photographs against
+ * known station objects (dispenser, column and price pylon). They preserve the
+ * visible aspect and relative scale, but are still not production drawings.
  */
 export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
   .array(SupportCatalogEntrySchema)
@@ -83,10 +84,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.8,
-        height: 0.6,
-        source: 'estimated',
-        note: 'Ingombro provvisorio ricavato dalle fotografie del documento.',
+        width: 0.72,
+        height: 1.35,
+        source: 'derived',
+        note: 'Formato verticale calibrato sulle fotografie: circa 720 x 1350 mm.',
       },
       targetDistance: '1,5-3 m',
       eyesOn: '2-3 s',
@@ -104,10 +105,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.75,
-        height: 1.5,
-        source: 'estimated',
-        note: 'Ingombro provvisorio ricavato dalle fotografie del documento.',
+        width: 0.46,
+        height: 0.78,
+        source: 'derived',
+        note: 'Proporzione ricavata dal pannello montato sulla colonna: circa 460 x 780 mm.',
       },
       targetDistance: '1,5-3 m',
       eyesOn: '5-10 s',
@@ -125,10 +126,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.35,
-        height: 0.65,
-        source: 'estimated',
-        note: 'Formato Maxi provvisorio ricavato dalle fotografie.',
+        width: 0.42,
+        height: 0.72,
+        source: 'derived',
+        note: 'Formato Maxi ricavato dal confronto con erogatore e SmartOPT: circa 420 x 720 mm.',
       },
       targetDistance: '0,5-1 m',
       eyesOn: '10-15 s',
@@ -167,10 +168,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.8,
-        height: 1.2,
-        source: 'estimated',
-        note: 'Pannello provvisorio ricavato dalle fotografie del documento.',
+        width: 0.72,
+        height: 1.55,
+        source: 'derived',
+        note: 'Sagoma verticale su base acqua/cemento ricavata dalle fotografie: circa 720 x 1550 mm.',
       },
       targetDistance: '1-3 m',
       eyesOn: '4-8 s (stima)',
@@ -209,10 +210,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.8,
-        height: 1.6,
-        source: 'estimated',
-        note: 'Proporzione verticale provvisoria ricavata dalle fotografie.',
+        width: 0.62,
+        height: 1.18,
+        source: 'derived',
+        note: 'Pannello sospeso sotto il palo prezzi ricavato dalle fotografie: circa 620 x 1180 mm.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',
@@ -230,10 +231,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.75,
-        height: 2.6,
-        source: 'estimated',
-        note: 'Sagoma e ingombro provvisori ricavati dalle fotografie.',
+        width: 0.7,
+        height: 2.35,
+        source: 'derived',
+        note: 'Vela e asta calibrate sulle fotografie: telo circa 700 x 2350 mm.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',
@@ -251,10 +252,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'structural',
       assignable: false,
       dimensions: {
-        width: 0.85,
-        height: 1.45,
-        source: 'estimated',
-        note: 'Ingombro provvisorio; il documento non fornisce quote costruttive.',
+        width: 0.68,
+        height: 1.28,
+        source: 'derived',
+        note: 'Ingombro del corpo ricavato dalle fotografie: circa 680 x 1280 mm; quota da validare in produzione.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',

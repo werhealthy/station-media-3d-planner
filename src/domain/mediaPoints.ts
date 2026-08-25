@@ -65,7 +65,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso isola anteriore',
     surface: 'Supporto a terra',
     heightFromGround: 0,
-    position: [-pumpX, 0.62, frontZ + 2.35],
+    position: [-pumpX, 0.79, frontZ + 2.35],
     rotation: [0, 0, 0],
   }),
   supportPoint('4', {
@@ -74,7 +74,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Colonna pensilina',
     surface: 'Piastra verticale',
     heightFromGround: 1.35,
-    position: [STATION_LAYOUT.canopy.columnX, 2.1, -0.86],
+    position: [STATION_LAYOUT.canopy.columnX, 1.74, -0.86],
     rotation: [0, 0, 0],
   }),
   supportPoint('10', {
@@ -107,7 +107,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso Svolta',
     surface: 'Sagomato autoportante',
     heightFromGround: 0,
-    position: [14.7, 1.05, -4.02],
+    position: [14.7, 0.9, -4.02],
     rotation: [0, 0, 0],
   }),
   supportPoint('5', {
@@ -125,7 +125,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Palo bandiera',
     surface: 'Pannello bifacciale sospeso',
     heightFromGround: 1.05,
-    position: [STATION_LAYOUT.totem.x, 1.85, STATION_LAYOUT.totem.z + 0.52],
+    position: [STATION_LAYOUT.totem.x, 1.64, STATION_LAYOUT.totem.z + 0.52],
     rotation: [0, 0, 0],
   }),
   supportPoint('9', {
@@ -136,7 +136,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     heightFromGround: 0,
     position: [
       STATION_LAYOUT.entry.beachFlagX,
-      1.5,
+      1.18,
       STATION_LAYOUT.entry.beachFlagZ,
     ],
     rotation: [0, 0, 0],
@@ -149,7 +149,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     heightFromGround: 0,
     position: [
       STATION_LAYOUT.entry.concreteSignX,
-      1.05,
+      0.72,
       STATION_LAYOUT.entry.concreteSignZ,
     ],
     rotation: [0, 0, 0],

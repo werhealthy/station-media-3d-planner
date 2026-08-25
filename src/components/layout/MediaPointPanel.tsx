@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
-import { readImageAsset } from '@/domain/schemas/media'
+import { readCreativeAsset } from '@/domain/schemas/media'
 import { getSupportType } from '@/domain/supportCatalog'
 import { analyzeCreativeFit } from '@/core/creative/creativeFit'
 import { BRAND_ASSETS } from '@/config/brandAssets'
@@ -80,7 +80,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
     if (!file || !point) return
     setError('')
     try {
-      assign(point.id, await readImageAsset(file))
+      assign(point.id, await readCreativeAsset(file))
     } catch (uploadError) {
       setError(
         uploadError instanceof Error
@@ -316,6 +316,11 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       </button>
                     </div>
                     <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+                      {asset.mimeType === 'application/pdf' && (
+                        <span className="mr-1.5 rounded bg-red-50 px-1.5 py-0.5 font-bold text-red-700">
+                          PDF · prima pagina
+                        </span>
+                      )}
                       {asset.width} × {asset.height} px ·{' '}
                       {ratioLabel(asset.aspectRatio)}
                     </div>
@@ -400,7 +405,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   <input
                     id={`creative-upload-${point.id}`}
                     type="file"
-                    accept="image/jpeg,image/png"
+                    accept="image/jpeg,image/png,application/pdf,.pdf"
                     className="sr-only"
                     onChange={(event) => void upload(event.target.files?.[0])}
                   />
@@ -412,11 +417,13 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                     <span className="font-semibold text-slate-800">
                       {usesSmartOptIdle
                         ? 'Sostituisci la schermata idle'
-                        : 'Carica JPEG o PNG'}
+                        : 'Carica JPEG, PNG o PDF'}
                     </span>
                     <span className="mt-1 text-xs text-slate-500">
                       Rapporto richiesto{' '}
                       {ratioLabel(point.width / point.height)} · massimo 15 MB
+                      <br />
+                      Per i PDF viene visualizzata la prima pagina
                     </span>
                   </label>
                 </>

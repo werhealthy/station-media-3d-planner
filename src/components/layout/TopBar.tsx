@@ -3,7 +3,6 @@ import {
   Footprints,
   Grid2X2,
   MapPin,
-  Telescope,
   Route,
   ChevronDown,
   Settings,
@@ -21,14 +20,15 @@ export function TopBar() {
   const mode = useViewerStore((s) => s.navigationMode)
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const play = usePlaybackStore((s) => s.play)
+  const activeRouteId = usePlaybackStore((s) => s.activeRouteId)
+  const setActiveRouteId = usePlaybackStore((s) => s.setActiveRouteId)
   const stationId = useStationStore((s) => s.selectedStationId)
   const selectStation = useStationStore((s) => s.selectStation)
   const station = STATIONS.find((item) => item.id === stationId) ?? STATIONS[0]
   const setupEnabled = useStationSetupStore((s) => s.enabled)
   const enterSetup = useStationSetupStore((s) => s.enterSetup)
   const modes = [
-    ['overview', 'Overview', Grid2X2],
-    ['hotspot', 'Hotspot', Telescope],
+    ['overview', 'Esplora', Grid2X2],
     ['walkthrough', 'Walkthrough', Footprints],
     ['auto', 'Auto tour', Route],
   ] as const
@@ -75,9 +75,12 @@ export function TopBar() {
             key={id}
             onClick={() => {
               setMode(id)
-              if (id === 'auto') play()
+              if (id === 'auto') {
+                if (!activeRouteId) setActiveRouteId('self-service')
+                play()
+              }
             }}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === id ? 'bg-[#1746a2] text-white shadow-md shadow-blue-900/15' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm'}`}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${(id === 'overview' ? mode === 'overview' || mode === 'hotspot' : mode === id) ? 'bg-[#1746a2] text-white shadow-md shadow-blue-900/15' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm'}`}
           >
             <Icon size={17} />
             {label}

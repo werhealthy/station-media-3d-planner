@@ -256,14 +256,7 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
     [0, 1.62, 0.45],
     'pump-display',
   )
-  roundedBox(
-    g,
-    [1.62, 0.31, 0.94],
-    0.07,
-    mat('#e6a51c', 0.26, 0.18),
-    [0, 2.36, 0],
-    'pump-header',
-  )
+  roundedBox(g, [2.5, 0.2, 0.94], 0.07, stainless, [0, 2.42, 0], 'pump-header')
   box(g, [1.38, 0.05, 0.78], stainless, [0, 2.18, 0], 'pump-header-seam')
   box(
     g,
@@ -341,6 +334,88 @@ function pump(root: THREE.Group, x: number, z: number, index: number) {
     [1.1, 0.43, 0],
     'service-module',
   )
+
+  // Q8 Easy front inspired by the supplied Kuwait reference: three tall fuel
+  // grade columns on the left, transaction display on the right and a deep
+  // blue lower cabinet. These parts sit on the customer-facing side.
+  roundedBox(
+    g,
+    [2.48, 2.06, 0.16],
+    0.06,
+    stainless,
+    [0, 1.42, 0.47],
+    'kuwait-pump-front-frame',
+  )
+  box(
+    g,
+    [2.25, 1.86, 0.08],
+    mat('#27313a', 0.34, 0.32),
+    [0, 1.45, 0.57],
+    'kuwait-pump-front-backing',
+  )
+  const gradeColors = ['#1d8757', '#f2f4ef', '#17191c']
+  for (const [gradeIndex, x] of [-0.88, -0.5, -0.12].entries()) {
+    box(
+      g,
+      [0.3, 1.62, 0.12],
+      mat('#aeb5ba', 0.32, 0.62),
+      [x, 1.55, 0.65],
+      `kuwait-grade-column-${gradeIndex}`,
+    )
+    box(
+      g,
+      [0.22, 0.54, 0.06],
+      mat(gradeColors[gradeIndex]!, 0.44, 0.12),
+      [x, 1.91, 0.73],
+      `kuwait-grade-label-${gradeIndex}`,
+    )
+    box(
+      g,
+      [0.23, 0.58, 0.07],
+      mat('#11161c', 0.72),
+      [x, 1.22, 0.73],
+      `kuwait-nozzle-recess-${gradeIndex}`,
+    )
+    tube(
+      g,
+      [
+        new THREE.Vector3(x, 1.35, 0.76),
+        new THREE.Vector3(x - 0.08, 0.65, 0.92),
+        new THREE.Vector3(x + 0.03, 0.18, 0.84),
+        new THREE.Vector3(x + 0.05, 1.08, 0.76),
+      ],
+      0.028,
+      rubber,
+      `kuwait-hose-${gradeIndex}`,
+    )
+  }
+  box(
+    g,
+    [0.98, 0.58, 0.1],
+    new THREE.MeshStandardMaterial({
+      color: '#10171c',
+      emissive: '#263d45',
+      emissiveIntensity: 0.22,
+      roughness: 0.18,
+    }),
+    [0.62, 1.74, 0.69],
+    'kuwait-transaction-display',
+  )
+  box(
+    g,
+    [1.02, 0.55, 0.1],
+    mat('#111820', 0.5),
+    [0.62, 1.12, 0.69],
+    'kuwait-receipt-bay',
+  )
+  roundedBox(
+    g,
+    [1.16, 0.58, 0.18],
+    0.05,
+    mat('#102c78', 0.28, 0.28),
+    [0.58, 0.58, 0.66],
+    'kuwait-blue-cabinet',
+  )
 }
 function brandedMaterial(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace
@@ -390,7 +465,24 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
     teal = mat('#16877d', 0.35, 0.2),
-    gold = mat('#e4a11b', 0.35, 0.15)
+    gold = mat('#e4a11b', 0.35, 0.15),
+    grass = aggregateMaterial('#678452', 0.98, [28, 20], 9471, 0.055)
+  mesh(
+    root,
+    new THREE.PlaneGeometry(180, 140),
+    grass,
+    [0, -0.045, -8],
+    'surrounding-landscape',
+    [-Math.PI / 2, 0, 0],
+  )
+  mesh(
+    root,
+    new THREE.PlaneGeometry(120, 13),
+    asphalt,
+    [0, -0.018, 19.5],
+    'access-road',
+    [-Math.PI / 2, 0, 0],
+  )
   mesh(
     root,
     new THREE.PlaneGeometry(L.forecourt.width, L.forecourt.depth),
@@ -399,7 +491,6 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     'forecourt',
     [-Math.PI / 2, 0, 0],
   )
-  const grass = aggregateMaterial('#678452', 0.98, [10, 4], 9471, 0.055)
   mesh(
     root,
     new THREE.PlaneGeometry(62, 6),
@@ -670,7 +761,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   )
   const totem = new THREE.Group()
   totem.position.set(L.totem.x, 0, L.totem.z)
-  totem.name = 'price-totem'
+  totem.name = 'price-pylon'
   root.add(totem)
   roundedBox(
     totem,
@@ -678,37 +769,37 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     0.12,
     steel,
     [0, L.totem.height / 2 + 0.05, 0],
-    'totem-structural-frame',
+    'price-pylon-structural-frame',
   )
   box(
     totem,
     [L.totem.width - 0.18, L.totem.height - 0.9, 0.97],
     mat('#202b35', 0.34, 0.48),
     [0, L.totem.height / 2, 0],
-    'totem-deep-inset',
+    'price-pylon-deep-inset',
   )
   box(
     totem,
     [L.totem.width + 0.72, 0.22, 1.34],
     concrete,
     [0, 0.12, 0],
-    'totem-base',
+    'price-pylon-base',
   )
   box(
     totem,
     [L.totem.width + 0.38, 0.16, 1.12],
     steel,
     [0, 0.31, 0],
-    'totem-base-trim',
+    'price-pylon-base-trim',
   )
   box(
     totem,
     [L.totem.width - 0.3, 2.1, 0.08],
     blue,
     [0, 6.65, 0.5],
-    'totem-brand-panel',
+    'price-pylon-brand-panel',
   )
-  brandPlane(totem, q8Texture, [2.55, 1.3], [0, 7.05, 0.55], 'totem-logo')
+  brandPlane(totem, q8Texture, [2.55, 1.3], [0, 7.05, 0.55], 'price-pylon-logo')
   for (const y of [3.2, 4.2, 5.2]) {
     box(
       totem,
@@ -742,7 +833,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [L.totem.width - 0.35, 1.4, 0.08],
     gold,
     [0, 1.8, 0.5],
-    'totem-poster-panel',
+    'price-pylon-stendardo-panel',
   )
   for (const x of [L.totem.x - 1.7, L.totem.x + 1.7])
     mesh(
@@ -750,7 +841,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       new THREE.CylinderGeometry(0.11, 0.14, 1.05, 16),
       steel,
       [x, 0.53, L.totem.z + 0.7],
-      'totem-bollard',
+      'price-pylon-bollard',
     )
   // Human-scale payment kiosk inspired by the Q8 self-service terminal reference.
   const kiosk = new THREE.Group()

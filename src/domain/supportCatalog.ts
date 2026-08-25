@@ -111,7 +111,7 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       eyesOn: '5-10 s',
       maxWords: '8-12 parole',
       qrPolicy: 'conditional',
-      qrNote: 'Da validare solo per fruizione sicura dall\'abitacolo.',
+      qrNote: "Da validare solo per fruizione sicura dall'abitacolo.",
     },
     {
       id: '10',
@@ -136,10 +136,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
     },
     {
       id: '11',
-      name: 'DSP / Accettatore digitale 21"',
+      name: 'Totem pagamento / DSP 21"',
       family: 'Terminale digitale',
       journeyPhase: 'Decisione, transazione e chiusura',
-      function: 'Interfaccia transazionale con contenuti contestuali.',
+      function: 'Terminale elettronico di pagamento con contenuti contestuali.',
       shape: 'digital-screen',
       type: 'digital',
       assignable: true,
@@ -216,7 +216,7 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       eyesOn: 'Circa 1 s',
       maxWords: '3-5 parole',
       qrPolicy: 'prohibited',
-      qrNote: 'Non leggibile in sicurezza durante l\'approccio.',
+      qrNote: "Non leggibile in sicurezza durante l'approccio.",
     },
     {
       id: '9',
@@ -262,7 +262,9 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
     },
   ])
 
-const SUPPORTS_BY_ID = new Map(SUPPORT_CATALOG.map((support) => [support.id, support]))
+const SUPPORTS_BY_ID = new Map(
+  SUPPORT_CATALOG.map((support) => [support.id, support]),
+)
 
 export function getSupportType(id?: string): SupportCatalogEntry | undefined {
   return id ? SUPPORTS_BY_ID.get(id) : undefined

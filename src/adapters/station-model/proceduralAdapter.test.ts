@@ -64,6 +64,9 @@ describe('proceduralAdapter composition', () => {
     expect(
       sceneNames.filter((name) => name.startsWith('landscape-tree-')),
     ).toHaveLength(12)
+    expect(sceneNames).toContain('price-pylon')
+    expect(sceneNames).toContain('price-pylon-stendardo-panel')
+    expect(sceneNames).not.toContain('totem')
 
     proceduralAdapter.dispose(handle)
   })

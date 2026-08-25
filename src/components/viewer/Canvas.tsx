@@ -23,6 +23,7 @@ import {
 } from '@/three/stationPicking'
 import { StationDebugHelpers } from './StationDebugHelpers'
 import { FirstPersonAvatar } from './FirstPersonAvatar'
+import { JourneyVehicle } from './JourneyVehicle'
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -208,6 +209,7 @@ export function Canvas() {
         />
         <NavigationRig />
         <FirstPersonAvatar />
+        <JourneyVehicle />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">

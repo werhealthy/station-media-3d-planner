@@ -12,7 +12,9 @@ describe('App', () => {
     expect(screen.getByText('Station Media 3D Planner')).toBeInTheDocument()
     expect(screen.getByText('10 supporti')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Sovrapompa \/ Cappuccio/ }),
+      screen.getByRole('button', {
+        name: /Sovrapompa \/ Cappuccio.*ID 1/,
+      }),
     ).toBeInTheDocument()
   })
   it('cambia stazione e nasconde l’inventario procedurale', async () => {
@@ -36,10 +38,14 @@ describe('App', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('10 supporti')).not.toBeInTheDocument()
-    const setupButton = screen.getByRole('button', { name: 'Configura stazione' })
+    const setupButton = screen.getByRole('button', {
+      name: 'Configura stazione',
+    })
     expect(setupButton).toBeVisible()
     await userEvent.click(setupButton)
-    expect(screen.getByRole('heading', { name: 'Configura stazione' })).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: 'Configura stazione' }),
+    ).toBeVisible()
     expect(
       await screen.findByText(/Questa stazione non è ancora configurata/),
     ).toBeVisible()
@@ -48,11 +54,19 @@ describe('App', () => {
       screen.queryByText('Impossibile caricare la configurazione.'),
     ).not.toBeInTheDocument()
     expect(screen.getAllByText('Stazione casuale con texture')).toHaveLength(2)
-    await userEvent.click(screen.getByRole('button', { name: 'Seleziona elemento da nascondere' }))
-    expect(screen.getByRole('button', { name: 'Seleziona nella scena…' })).toBeVisible()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Seleziona elemento da nascondere' }),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Seleziona nella scena…' }),
+    ).toBeVisible()
     expect(screen.queryByText('groundY')).not.toBeInTheDocument()
     expect(screen.queryByText('JSON')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Chiudi configurazione' }))
-    expect(screen.queryByRole('heading', { name: 'Configura stazione' })).not.toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Chiudi configurazione' }),
+    )
+    expect(
+      screen.queryByRole('heading', { name: 'Configura stazione' }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -1,9 +1,11 @@
 import { Pause, Play, RotateCcw, Sparkles } from 'lucide-react'
 import { MEDIA_POINTS } from '@/domain/mediaPoints'
 import {
-  WALKTHROUGH_DURATION,
-  WALKTHROUGH_ROUTE,
-} from '@/domain/walkthroughRoute'
+  getJourney,
+  journeyDuration,
+  STATION_JOURNEYS,
+  type JourneyId,
+} from '@/domain/journeys'
 import { estimateAttention } from '@/core/attention/attentionModel'
 import { usePlaybackStore } from '@/stores/playbackStore'
 
@@ -20,10 +22,14 @@ export function AutoWalkthroughPanel() {
   const stop = usePlaybackStore((s) => s.stop)
   const seekTo = usePlaybackStore((s) => s.seekTo)
   const setActiveStep = usePlaybackStore((s) => s.setActiveStep)
+  const activeRouteId = usePlaybackStore((s) => s.activeRouteId)
+  const setActiveRouteId = usePlaybackStore((s) => s.setActiveRouteId)
+  const journey = getJourney(activeRouteId)
+  const duration = journeyDuration(journey)
   const activePoint = MEDIA_POINTS.find(
     (point) => point.id === activeMediaPointId,
   )
-  const step = WALKTHROUGH_ROUTE[activeStepIndex]
+  const step = journey.steps[activeStepIndex]
   const estimate = step?.mediaPointId
     ? estimateAttention({
         distanceMeters: 7 + activeStepIndex,
@@ -35,20 +41,36 @@ export function AutoWalkthroughPanel() {
     : null
 
   const seekStep = (index: number) => {
-    const seconds = WALKTHROUGH_ROUTE.slice(0, index).reduce(
-      (total, item) => total + item.duration,
-      0,
-    )
-    seekTo(seconds / WALKTHROUGH_DURATION)
-    setActiveStep(index, WALKTHROUGH_ROUTE[index]!.mediaPointId ?? null)
+    const seconds = journey.steps
+      .slice(0, index)
+      .reduce((total, item) => total + item.duration, 0)
+    seekTo(seconds / duration)
+    setActiveStep(index, journey.steps[index]!.mediaPointId ?? null)
   }
 
   return (
     <section className="auto-panel" aria-label="Controlli auto walkthrough">
       <div className="auto-summary">
         <span className="eyebrow">
-          <Sparkles size={14} /> Simulazione attenzione
+          <Sparkles size={14} /> Journey simulata
         </span>
+        <select
+          aria-label="Journey"
+          value={journey.id}
+          onChange={(event) => {
+            stop()
+            setActiveRouteId(event.target.value as JourneyId)
+            setActiveStep(0, null)
+            play()
+          }}
+          className="journey-select"
+        >
+          {STATION_JOURNEYS.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
         <strong>{step?.label ?? 'Percorso Q8'}</strong>
         <span>
           {activePoint
@@ -79,8 +101,8 @@ export function AutoWalkthroughPanel() {
       </button>
       <div className="timeline-wrap">
         <div className="timeline-meta">
-          <span>{formatTime(progress * WALKTHROUGH_DURATION)}</span>
-          <span>{formatTime(WALKTHROUGH_DURATION)}</span>
+          <span>{formatTime(progress * duration)}</span>
+          <span>{formatTime(duration)}</span>
         </div>
         <input
           aria-label="Progresso walkthrough"
@@ -92,7 +114,7 @@ export function AutoWalkthroughPanel() {
           onChange={(event) => seekTo(Number(event.target.value))}
         />
         <div className="step-dots">
-          {WALKTHROUGH_ROUTE.map((item, index) => (
+          {journey.steps.map((item, index) => (
             <button
               key={item.id}
               aria-label={`Vai a ${item.label}`}

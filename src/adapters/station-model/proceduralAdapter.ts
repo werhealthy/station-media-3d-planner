@@ -195,151 +195,172 @@ function shrubRow(
     shrub.scale.set(1.18, 0.82, 0.9)
   }
 }
-function pump(root: THREE.Group, x: number, z: number, index: number) {
+function pump(
+  root: THREE.Group,
+  x: number,
+  z: number,
+  index: number,
+  q8Texture: THREE.Texture,
+) {
   const g = new THREE.Group()
   g.position.set(x, 0, z)
   g.name = `fuel-dispenser-${index}`
   root.add(g)
+
+  const stainless = mat('#aeb7be', 0.22, 0.76)
+  const darkSteel = mat('#343d45', 0.3, 0.58)
+  const navy = mat('#102c78', 0.28, 0.3)
+  const black = mat('#10151a', 0.76, 0.04)
+  const glass = new THREE.MeshStandardMaterial({
+    color: '#0d171d',
+    emissive: '#294c54',
+    emissiveIntensity: 0.28,
+    metalness: 0.28,
+    roughness: 0.13,
+  })
+
   box(
     g,
-    [3.2, 0.22, 1.7],
-    mat('#b7bec5', 0.35, 0.55),
+    [3.55, 0.22, 1.82],
+    mat('#b5bcc1', 0.45, 0.48),
     [0, 0.18, 0],
     'pump-island',
   )
-  const paintedMetal = mat('#102b67', 0.24, 0.42)
-  const stainless = mat('#aeb8c0', 0.22, 0.78)
-  const rubber = mat('#111418', 0.86, 0.02)
-  const plastic = mat('#171c22', 0.3, 0.08)
   roundedBox(
     g,
-    [1.42, 1.72, 0.84],
-    0.09,
-    paintedMetal,
-    [0, 1.38, 0],
-    'pump-sculpted-body',
+    [2.88, 2.12, 0.78],
+    0.07,
+    stainless,
+    [0, 1.31, 0],
+    'q8-easy-main-body',
   )
-  box(g, [1.54, 1.36, 0.06], paintedMetal, [0, 1.34, -0.44], 'pump-rear-panel')
-  for (const side of [-1, 1]) {
+  roundedBox(
+    g,
+    [1.28, 0.69, 0.86],
+    0.06,
+    navy,
+    [0.67, 0.69, 0],
+    'q8-easy-lower-cabinet',
+  )
+  box(
+    g,
+    [1.28, 1.04, 0.74],
+    darkSteel,
+    [0.67, 1.57, 0],
+    'q8-easy-transaction-column',
+  )
+  box(
+    g,
+    [1.07, 0.52, 0.055],
+    glass,
+    [0.67, 1.78, 0.425],
+    'q8-easy-transaction-display',
+  )
+  box(
+    g,
+    [1.06, 0.35, 0.06],
+    mat('#161d24', 0.52),
+    [0.67, 1.28, 0.426],
+    'q8-easy-receipt-bay',
+  )
+  for (const y of [1.89, 1.75, 1.6]) {
     box(
       g,
-      [0.08, 1.46, 0.72],
-      stainless,
-      [side * 0.75, 1.38, 0],
-      'pump-side-rail',
-    )
-    box(
-      g,
-      [0.05, 0.54, 0.48],
-      plastic,
-      [side * 0.79, 1.42, 0.05],
-      'nozzle-holder-recess',
+      [0.5, 0.025, 0.022],
+      mat('#7f949a', 0.2),
+      [0.67, y, 0.458],
+      'q8-easy-display-line',
     )
   }
-  box(
-    g,
-    [1.66, 0.12, 0.96],
-    mat('#dce2e6', 0.24, 0.5),
-    [0, 0.55, 0],
-    'pump-lower-trim',
-  )
-  box(
-    g,
-    [1.25, 0.7, 0.08],
-    new THREE.MeshStandardMaterial({
-      color: '#07131a',
-      roughness: 0.1,
-      metalness: 0.35,
-      emissive: '#123d47',
-      emissiveIntensity: 0.45,
-    }),
-    [0, 1.62, 0.45],
-    'pump-display',
-  )
-  roundedBox(
-    g,
-    [1.62, 0.31, 0.94],
-    0.07,
-    mat('#e6a51c', 0.26, 0.18),
-    [0, 2.36, 0],
-    'pump-header',
-  )
-  box(g, [1.38, 0.05, 0.78], stainless, [0, 2.18, 0], 'pump-header-seam')
-  box(
-    g,
-    [1.08, 0.08, 0.09],
-    mat('#78c7d0', 0.12, 0.15),
-    [0, 1.76, 0.5],
-    'display-glow',
-  )
-  for (const bx of [-0.38, 0, 0.38])
+  for (const xButton of [0.36, 0.57, 0.78, 0.99])
     box(
       g,
-      [0.24, 0.16, 0.08],
-      mat('#e8edf0', 0.35),
-      [bx, 1.35, 0.5],
-      'pump-keypad',
+      [0.105, 0.07, 0.025],
+      mat('#c8d0d4', 0.3),
+      [xButton, 1.14, 0.459],
+      'q8-easy-display-key',
     )
-  for (let i = 0; i < 4; i += 1)
-    mesh(
+
+  const fuelColumns = [
+    { x: -1.03, color: '#23864f', label: '#d9f0df' },
+    { x: -0.57, color: '#f0f0ec', label: '#e4a11b' },
+    { x: -0.11, color: '#242a2f', label: '#f0f0ec' },
+  ]
+  const rubber = mat('#111316', 0.9, 0.01)
+  for (const [gradeIndex, grade] of fuelColumns.entries()) {
+    roundedBox(
       g,
-      new THREE.CylinderGeometry(0.055, 0.055, 0.025, 18),
-      mat(i === 0 ? '#2da06f' : '#d8dde1', 0.26),
-      [-0.42 + i * 0.28, 1.12, 0.49],
-      'grade-selector',
-      [Math.PI / 2, 0, 0],
+      [0.42, 1.86, 0.7],
+      0.035,
+      stainless,
+      [grade.x, 1.39, 0],
+      `q8-easy-grade-column-${gradeIndex}`,
     )
-  for (const side of [-1, 1]) {
-    tube(
+    box(
       g,
-      [
-        new THREE.Vector3(side * 0.69, 1.9, -0.2),
-        new THREE.Vector3(side * 1.05, 1.35, -0.1),
-        new THREE.Vector3(side * 1.03, 0.62, 0.25),
-        new THREE.Vector3(side * 0.78, 1.2, 0.47),
-      ],
-      0.038,
-      rubber,
-      `hose-${side}`,
+      [0.31, 0.55, 0.05],
+      mat(grade.color, 0.34, 0.12),
+      [grade.x, 1.96, 0.405],
+      `q8-easy-grade-label-${gradeIndex}`,
+    )
+    box(
+      g,
+      [0.12, 0.34, 0.022],
+      mat(grade.label, 0.26),
+      [grade.x, 2.03, 0.437],
+      `q8-easy-grade-stripe-${gradeIndex}`,
+    )
+    roundedBox(
+      g,
+      [0.29, 0.66, 0.09],
+      0.025,
+      black,
+      [grade.x, 1.26, 0.405],
+      `q8-easy-nozzle-recess-${gradeIndex}`,
     )
     const nozzle = new THREE.Group()
-    nozzle.position.set(side * 0.78, 1.36, 0.48)
-    nozzle.rotation.z = side * -0.12
-    nozzle.name = `nozzle-${side}`
+    nozzle.name = `q8-easy-nozzle-${gradeIndex}`
+    nozzle.position.set(grade.x, 1.33, 0.49)
+    nozzle.rotation.z = gradeIndex === 1 ? -0.08 : 0.08
     g.add(nozzle)
     roundedBox(
       nozzle,
-      [0.2, 0.48, 0.15],
-      0.035,
-      mat(side < 0 ? '#159765' : '#25282d', 0.34, 0.18),
+      [0.16, 0.44, 0.13],
+      0.025,
+      mat(grade.color, 0.38, 0.12),
       [0, 0, 0],
-      'nozzle-grip',
+      'q8-easy-nozzle-handle',
     )
-    box(nozzle, [0.3, 0.18, 0.2], plastic, [0, 0.15, 0], 'nozzle-head')
-    mesh(
-      nozzle,
-      new THREE.CylinderGeometry(0.035, 0.05, 0.34, 12),
-      mat('#b9c0c5', 0.18, 0.78),
-      [side * 0.09, 0.3, 0],
-      'nozzle-spout',
-      [0, 0, (side * Math.PI) / 3],
-    )
-    mesh(
-      nozzle,
-      new THREE.TorusGeometry(0.1, 0.025, 8, 14, Math.PI * 1.55),
-      mat('#17191c', 0.72),
-      [0, -0.03, 0],
-      'nozzle-trigger-guard',
-      [0, Math.PI / 2, 0],
+    box(nozzle, [0.25, 0.17, 0.17], black, [0, 0.14, 0], 'q8-easy-nozzle-head')
+    tube(
+      g,
+      [
+        new THREE.Vector3(grade.x, 1.47, 0.39),
+        new THREE.Vector3(grade.x - 0.14, 0.73, 0.62),
+        new THREE.Vector3(grade.x - 0.08, 0.23, 0.7),
+        new THREE.Vector3(grade.x + 0.05, 1.12, 0.51),
+      ],
+      0.027,
+      rubber,
+      `q8-easy-hose-${gradeIndex}`,
     )
   }
-  box(g, [1.2, 0.22, 0.08], stainless, [0, 0.78, 0.47], 'pump-access-trim')
+
   box(
     g,
-    [0.9, 0.15, 0.5],
-    mat('#d9dde1', 0.3, 0.5),
-    [1.1, 0.43, 0],
-    'service-module',
+    [2.98, 0.16, 0.92],
+    mat('#cbd1d5', 0.26, 0.68),
+    [0, 2.43, 0],
+    'q8-easy-top-cap',
+  )
+  box(g, [2.72, 0.11, 0.76], darkSteel, [0, 0.42, 0], 'q8-easy-base-trim')
+  box(g, [2.76, 2.02, 0.055], navy, [0, 1.41, -0.418], 'q8-easy-rear-panel')
+  brandPlane(
+    g,
+    q8Texture,
+    [0.76, 0.36],
+    [0.67, 0.68, 0.445],
+    'q8-easy-cabinet-logo',
   )
 }
 function brandedMaterial(texture: THREE.Texture) {
@@ -390,7 +411,39 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
     teal = mat('#16877d', 0.35, 0.2),
-    gold = mat('#e4a11b', 0.35, 0.15)
+    grass = aggregateMaterial('#678452', 0.98, [28, 20], 9471, 0.055)
+  const surroundings = mesh(
+    root,
+    new THREE.PlaneGeometry(360, 280),
+    grass,
+    [0, -0.045, -22],
+    'surrounding-landscape',
+    [-Math.PI / 2, 0, 0],
+  )
+  surroundings.userData.stationHelper = true
+  const approachRoad = mesh(
+    root,
+    new THREE.PlaneGeometry(220, 14),
+    asphalt,
+    [0, -0.018, 19.5],
+    'access-road',
+    [-Math.PI / 2, 0, 0],
+  )
+  approachRoad.userData.stationHelper = true
+  box(
+    root,
+    [220, 0.08, 1.35],
+    concrete,
+    [0, 0.015, 12.1],
+    'roadside-footpath',
+  ).userData.stationHelper = true
+  box(
+    root,
+    [220, 0.08, 1.35],
+    concrete,
+    [0, 0.015, 26.9],
+    'roadside-footpath',
+  ).userData.stationHelper = true
   mesh(
     root,
     new THREE.PlaneGeometry(L.forecourt.width, L.forecourt.depth),
@@ -399,7 +452,6 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     'forecourt',
     [-Math.PI / 2, 0, 0],
   )
-  const grass = aggregateMaterial('#678452', 0.98, [10, 4], 9471, 0.055)
   mesh(
     root,
     new THREE.PlaneGeometry(62, 6),
@@ -423,7 +475,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, 0.04, -21.5],
     'road-curb',
   )
-  for (let x = -27; x <= 27; x += 9)
+  for (let x = -90; x <= 90; x += 9)
     box(
       root,
       [4.5, 0.025, 0.16],
@@ -526,7 +578,29 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   )
   for (const x of [-5, 5])
     for (const z of [L.islands.frontZ, L.islands.backZ])
-      pump(root, x, z, Math.round(x + z * 10))
+      pump(root, x, z, Math.round(x + z * 10), q8Texture)
+  const islandRail = mat('#aeb6bc', 0.2, 0.82)
+  for (const x of [-5, 5])
+    for (const z of [L.islands.frontZ, L.islands.backZ])
+      for (const side of [-1, 1]) {
+        const railX = x + side * 2.03
+        for (const railZ of [z - 0.54, z + 0.54])
+          mesh(
+            root,
+            new THREE.CylinderGeometry(0.045, 0.052, 0.72, 16),
+            islandRail,
+            [railX, 0.55, railZ],
+            'pump-protection-post',
+          )
+        mesh(
+          root,
+          new THREE.CylinderGeometry(0.047, 0.047, 1.08, 16),
+          islandRail,
+          [railX, 0.88, z],
+          'pump-protection-rail',
+          [Math.PI / 2, 0, 0],
+        )
+      }
   box(
     root,
     [L.shop.width, L.shop.height, L.shop.depth - 0.55],
@@ -668,9 +742,25 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [L.shop.x, 0.1, L.shop.z + L.shop.depth / 2 + 0.9],
     'shop-pavement',
   )
+  for (const x of [5.1, 8.4, 17.6, 20.9])
+    box(
+      root,
+      [0.12, 0.025, 3.4],
+      mat('#f5f1df', 0.74),
+      [x, 0.02, -3.15],
+      'parking-bay-line',
+    )
+  for (const x of [10.9, 15.1])
+    mesh(
+      root,
+      new THREE.CylinderGeometry(0.09, 0.12, 0.92, 16),
+      mat('#7f8990', 0.28, 0.7),
+      [x, 0.56, -5.18],
+      'shop-entrance-bollard',
+    )
   const totem = new THREE.Group()
   totem.position.set(L.totem.x, 0, L.totem.z)
-  totem.name = 'price-totem'
+  totem.name = 'price-pylon'
   root.add(totem)
   roundedBox(
     totem,
@@ -678,37 +768,37 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     0.12,
     steel,
     [0, L.totem.height / 2 + 0.05, 0],
-    'totem-structural-frame',
+    'price-pylon-structural-frame',
   )
   box(
     totem,
     [L.totem.width - 0.18, L.totem.height - 0.9, 0.97],
     mat('#202b35', 0.34, 0.48),
     [0, L.totem.height / 2, 0],
-    'totem-deep-inset',
+    'price-pylon-deep-inset',
   )
   box(
     totem,
     [L.totem.width + 0.72, 0.22, 1.34],
     concrete,
     [0, 0.12, 0],
-    'totem-base',
+    'price-pylon-base',
   )
   box(
     totem,
     [L.totem.width + 0.38, 0.16, 1.12],
     steel,
     [0, 0.31, 0],
-    'totem-base-trim',
+    'price-pylon-base-trim',
   )
   box(
     totem,
     [L.totem.width - 0.3, 2.1, 0.08],
     blue,
     [0, 6.65, 0.5],
-    'totem-brand-panel',
+    'price-pylon-brand-panel',
   )
-  brandPlane(totem, q8Texture, [2.55, 1.3], [0, 7.05, 0.55], 'totem-logo')
+  brandPlane(totem, q8Texture, [2.55, 1.3], [0, 7.05, 0.55], 'price-pylon-logo')
   for (const y of [3.2, 4.2, 5.2]) {
     box(
       totem,
@@ -737,42 +827,14 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       'fuel-label',
     )
   }
-  box(
-    totem,
-    [L.totem.width - 0.35, 1.4, 0.08],
-    gold,
-    [0, 1.8, 0.5],
-    'totem-poster-panel',
-  )
   for (const x of [L.totem.x - 1.7, L.totem.x + 1.7])
     mesh(
       root,
       new THREE.CylinderGeometry(0.11, 0.14, 1.05, 16),
       steel,
       [x, 0.53, L.totem.z + 0.7],
-      'totem-bollard',
+      'price-pylon-bollard',
     )
-  // Human-scale payment kiosk inspired by the Q8 self-service terminal reference.
-  const kiosk = new THREE.Group()
-  kiosk.position.set(-11.5, 0, -1.2)
-  kiosk.name = 'payment-kiosk'
-  root.add(kiosk)
-  box(kiosk, [0.95, 2.05, 0.62], white, [0, 1.08, 0], 'kiosk-body')
-  box(
-    kiosk,
-    [0.72, 0.82, 0.04],
-    mat('#10151b', 0.12, 0.18),
-    [0, 1.48, 0.33],
-    'kiosk-screen',
-  )
-  box(
-    kiosk,
-    [0.3, 0.12, 0.05],
-    mat('#282d33', 0.26, 0.35),
-    [0.18, 0.9, 0.34],
-    'kiosk-reader',
-  )
-  box(kiosk, [1.08, 0.1, 0.75], steel, [0, 0.08, 0], 'kiosk-foot')
   // Raised pedestrian edge and two restrained planting beds add scale without clutter.
   box(root, [30, 0.2, 1.1], concrete, [-10, 0.12, 14.5], 'pedestrian-curb')
   box(
@@ -800,6 +862,29 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   ]
   for (const [index, [x, z, scale]] of treePositions.entries())
     tree(root, x, z, scale, index + 1)
+  let perimeterTreeId = treePositions.length + 1
+  for (let x = -34; x <= 34; x += 5.2) {
+    tree(
+      root,
+      x,
+      -27.5 + Math.sin(x * 0.37) * 0.9,
+      0.92 + ((perimeterTreeId * 17) % 7) * 0.045,
+      perimeterTreeId,
+    )
+    perimeterTreeId += 1
+  }
+  for (let z = -22; z <= 11; z += 6.3) {
+    tree(root, -36, z, 0.82 + (perimeterTreeId % 4) * 0.06, perimeterTreeId)
+    perimeterTreeId += 1
+    tree(
+      root,
+      36,
+      z + 1.8,
+      0.88 + (perimeterTreeId % 3) * 0.06,
+      perimeterTreeId,
+    )
+    perimeterTreeId += 1
+  }
   for (const x of [-28, 27])
     for (const z of [-16, 15])
       mesh(

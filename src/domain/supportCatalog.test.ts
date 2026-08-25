@@ -19,4 +19,15 @@ describe('supportCatalog', () => {
   it('non tratta il sagomato prezzo come spazio pubblicitario', () => {
     expect(getSupportType('8')?.assignable).toBe(false)
   })
+
+  it('usa il display verticale 9:16 del Fortech smartOPT Maxi', () => {
+    const terminal = getSupportType('11')
+    expect(terminal?.name).toContain('Fortech smartOPT Maxi')
+    expect(terminal?.dimensions.width).toBeLessThan(
+      terminal?.dimensions.height ?? 0,
+    )
+    expect(
+      (terminal?.dimensions.width ?? 0) / (terminal?.dimensions.height ?? 1),
+    ).toBeCloseTo(9 / 16, 2)
+  })
 })

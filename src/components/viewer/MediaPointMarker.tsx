@@ -6,6 +6,7 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
 import { containedSurfaceSize } from '@/core/creative/creativeFit'
+import { BRAND_ASSETS } from '@/config/brandAssets'
 import { MediaSupportGeometry } from './MediaSupportGeometry'
 
 export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
@@ -14,31 +15,26 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const select = useViewerStore((s) => s.selectMediaPoint)
   const hover = useViewerStore((s) => s.hoverMediaPoint)
   const asset = useProjectStore((s) => s.assignments[point.id])
-  const fitMode = useProjectStore((s) => s.fitModes[point.id] ?? 'contain')
+  const defaultIdle =
+    point.supportTypeId === '11'
+      ? { url: BRAND_ASSETS.smartOptIdle, width: 240, height: 405 }
+      : undefined
+  const displayedAsset = asset ?? defaultIdle
   const availableSurface = useMemo<[number, number]>(() => {
     if (point.supportShape === 'beach-flag')
       return [point.width * 0.68, point.height * 0.78]
     return [point.width, point.height]
   }, [point.height, point.supportShape, point.width])
-  const texture = useImageTexture(
-    asset?.url,
-    asset
-      ? {
-          sourceAspectRatio: asset.aspectRatio,
-          targetAspectRatio: availableSurface[0] / availableSurface[1],
-          fitMode,
-        }
-      : undefined,
-  )
+  const texture = useImageTexture(displayedAsset?.url)
   const surfaceSize = useMemo<[number, number]>(() => {
-    if (!asset || fitMode === 'cover') return availableSurface
+    if (!displayedAsset) return availableSurface
     return containedSurfaceSize(
       availableSurface[0],
       availableSurface[1],
-      asset.width,
-      asset.height,
+      displayedAsset.width,
+      displayedAsset.height,
     )
-  }, [asset, availableSurface, fitMode])
+  }, [availableSurface, displayedAsset])
   const frameColor = selected
     ? '#55a5ff'
     : hovered
@@ -91,7 +87,9 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
                 : '#263041'
           }
           emissive={point.type === 'digital' ? '#092d77' : '#000000'}
-          emissiveIntensity={texture ? 0.12 : point.type === 'digital' ? 0.3 : 0}
+          emissiveIntensity={
+            texture ? 0.12 : point.type === 'digital' ? 0.3 : 0
+          }
         />
       </mesh>
       <Html

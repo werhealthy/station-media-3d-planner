@@ -23,6 +23,7 @@ import {
 } from '@/three/stationPicking'
 import { StationDebugHelpers } from './StationDebugHelpers'
 import { FirstPersonAvatar } from './FirstPersonAvatar'
+import { JourneyVehicle } from './JourneyVehicle'
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -158,12 +159,12 @@ export function Canvas() {
       style={{ cursor: setupEnabled && tool ? 'crosshair' : 'grab' }}
       shadows
       dpr={[1, 1.75]}
-      camera={{ position: [30, 16, 31], fov: 43, near: 0.1, far: 180 }}
+      camera={{ position: [30, 16, 31], fov: 43, near: 0.1, far: 320 }}
       gl={{ antialias: true, toneMapping: 4, toneMappingExposure: 1.12 }}
     >
       <Suspense fallback={null}>
-        <color attach="background" args={['#b8d6ee']} />
-        <fog attach="fog" args={['#bfd9ec', 72, 138]} />
+        <color attach="background" args={['#a9cfea']} />
+        <fog attach="fog" args={['#afcee2', 118, 255]} />
         <Sky
           distance={450000}
           sunPosition={[-18, 30, 22]}
@@ -208,6 +209,7 @@ export function Canvas() {
         />
         <NavigationRig />
         <FirstPersonAvatar />
+        <JourneyVehicle />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">

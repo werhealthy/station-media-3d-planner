@@ -21,6 +21,8 @@ export function AppShell() {
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
   const setOverviewUnlocked = useViewerStore((s) => s.setOverviewUnlocked)
+  const eyeHeight = useViewerStore((s) => s.eyeHeight)
+  const setEyeHeight = useViewerStore((s) => s.setEyeHeight)
   const stationId = useStationStore((s) => s.selectedStationId)
   const resetViewer = useViewerStore((s) => s.resetForStation)
   const resetRuntime = useStationRuntimeStore((s) => s.reset)
@@ -29,6 +31,7 @@ export function AppShell() {
   const initializeSetup = useStationSetupStore((s) => s.initialize)
   const config = useStationSetupStore((s) => s.config)
   const setSetupWarning = useStationSetupStore((s) => s.setWarning)
+  const exploreMode = mode === 'overview' || mode === 'hotspot'
   useEffect(() => {
     resetViewer()
     resetRuntime()
@@ -74,7 +77,7 @@ export function AppShell() {
       <main className="flex min-h-0 flex-1">
         <section className="relative min-w-0 flex-1">
           <Canvas />
-          {mode === 'overview' && (
+          {exploreMode && (
             <button
               type="button"
               aria-pressed={overviewUnlocked}
@@ -82,10 +85,10 @@ export function AppShell() {
               className="absolute left-5 top-5 flex items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-4 py-2.5 text-sm font-semibold text-[#153276] shadow-lg shadow-slate-900/10 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
               {overviewUnlocked ? <Lock size={17} /> : <Rotate3D size={17} />}
-              {overviewUnlocked ? 'Blocca overview' : 'Vista libera'}
+              {overviewUnlocked ? 'Blocca vista' : 'Vista libera'}
             </button>
           )}
-          {mode === 'hotspot' && (
+          {exploreMode && (
             <nav
               aria-label="Hotspot stazione"
               className="absolute left-1/2 top-5 flex -translate-x-1/2 gap-1 rounded-lg border border-slate-200 bg-white p-1.5 shadow-md"
@@ -111,6 +114,19 @@ export function AppShell() {
                 </b>
                 Click per guardare · WASD/frecce per muoverti · ESC per uscire
               </span>
+              <label className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 font-semibold text-slate-700">
+                Altezza
+                <select
+                  aria-label="Altezza persona"
+                  value={eyeHeight}
+                  onChange={(event) => setEyeHeight(Number(event.target.value))}
+                  className="bg-transparent font-bold text-[#1746a2] outline-none"
+                >
+                  <option value={1.55}>155 cm</option>
+                  <option value={1.7}>170 cm</option>
+                  <option value={1.85}>185 cm</option>
+                </select>
+              </label>
               <button
                 onClick={() => setMode('overview')}
                 className="rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-800 hover:bg-slate-50"
@@ -119,16 +135,14 @@ export function AppShell() {
               </button>
             </div>
           ) : (
-            mode !== 'auto' && (
+            exploreMode && (
               <div className="pointer-events-none absolute bottom-5 left-5 rounded-lg border border-slate-200 bg-white/95 px-4 py-3 text-xs text-slate-600 shadow-md">
                 <b className="block text-sm text-slate-800">
                   Esplora la stazione
                 </b>
-                {mode === 'hotspot'
-                  ? 'Scegli una vista guidata'
-                  : overviewUnlocked
-                    ? 'Trascina per ruotare · scorri per avvicinare'
-                    : 'Vista editoriale bloccata · attiva Vista libera per esplorare'}
+                {overviewUnlocked
+                  ? 'Trascina per ruotare · scorri per avvicinare'
+                  : 'Scegli un hotspot o attiva Vista libera per esplorare'}
               </div>
             )
           )}

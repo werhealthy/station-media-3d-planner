@@ -23,11 +23,12 @@ const nozzle = new THREE.MeshStandardMaterial({
 interface ArmProps {
   side: -1 | 1
   armRef: RefObject<THREE.Group | null>
-  refueling: boolean
+  nozzleInHand: boolean
+  paying: boolean
 }
 
-function Arm({ side, armRef, refueling }: ArmProps) {
-  const isNozzleHand = refueling && side === 1
+function Arm({ side, armRef, nozzleInHand, paying }: ArmProps) {
+  const isActionHand = side === 1
   return (
     <group ref={armRef} position={[side * 0.19, -0.23, -0.48]}>
       <mesh
@@ -55,7 +56,7 @@ function Arm({ side, armRef, refueling }: ArmProps) {
         castShadow
         material={skin}
       />
-      {isNozzleHand && (
+      {isActionHand && nozzleInHand && (
         <group position={[0.015, -0.095, -0.26]} rotation={[0.02, -0.17, 0]}>
           <RoundedBox
             args={[0.075, 0.095, 0.22]}
@@ -76,6 +77,17 @@ function Arm({ side, armRef, refueling }: ArmProps) {
             <meshStandardMaterial color="#111418" roughness={0.65} />
           </mesh>
         </group>
+      )}
+      {isActionHand && paying && (
+        <RoundedBox
+          args={[0.085, 0.006, 0.13]}
+          radius={0.006}
+          smoothness={2}
+          position={[0.015, -0.095, -0.285]}
+          rotation={[0.18, -0.12, 0.03]}
+        >
+          <meshStandardMaterial color="#1746a2" roughness={0.4} />
+        </RoundedBox>
       )}
     </group>
   )
@@ -99,7 +111,23 @@ export function FirstPersonAvatar() {
   const step = getJourney(routeId).steps[activeStepIndex]
   const autoPedestrian = mode === 'auto' && step?.cameraMode === 'pedestrian'
   const visible = mode === 'walkthrough' || autoPedestrian
-  const refueling = mode === 'auto' && step?.id === 'self-refuel'
+  const nozzleInHand =
+    mode === 'auto' &&
+    Boolean(
+      step &&
+      [
+        'self-take-nozzle',
+        'self-turn-filler',
+        'self-insert-nozzle',
+        'self-refuel',
+        'self-refuel-observe',
+        'self-remove-nozzle',
+        'self-replace-nozzle',
+      ].includes(step.id),
+    )
+  const paying =
+    mode === 'auto' &&
+    (step?.id === 'self-payment' || step?.id === 'self-payment-confirmed')
 
   useFrame((_, delta) => {
     if (!body.current || !visible) {
@@ -139,8 +167,18 @@ export function FirstPersonAvatar() {
 
   return (
     <group ref={body} visible={visible}>
-      <Arm side={-1} armRef={leftArm} refueling={refueling} />
-      <Arm side={1} armRef={rightArm} refueling={refueling} />
+      <Arm
+        side={-1}
+        armRef={leftArm}
+        nozzleInHand={nozzleInHand}
+        paying={paying}
+      />
+      <Arm
+        side={1}
+        armRef={rightArm}
+        nozzleInHand={nozzleInHand}
+        paying={paying}
+      />
     </group>
   )
 }

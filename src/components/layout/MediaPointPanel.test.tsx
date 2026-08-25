@@ -60,7 +60,25 @@ describe('MediaPointPanel', () => {
     expect(
       screen.getByText(/non è configurabile come spazio pubblicitario/),
     ).toBeVisible()
-    expect(screen.queryByText('Carica JPEG o PNG')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Carica JPEG, PNG o PDF'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('consente il caricamento di una creatività PDF', () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    useViewerStore.getState().selectMediaPoint(point.id)
+
+    const { container } = render(
+      <MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />,
+    )
+
+    expect(screen.getByText('Carica JPEG, PNG o PDF')).toBeVisible()
+    expect(container.querySelector('input[type="file"]')).toHaveAttribute(
+      'accept',
+      'image/jpeg,image/png,application/pdf,.pdf',
+    )
+    expect(screen.getByText(/prima pagina/)).toBeVisible()
   })
 
   it('permette di nascondere e ripristinare un supporto', async () => {

@@ -22,7 +22,7 @@ function segmentCollisions(
 }
 
 describe('journey physical safety', () => {
-  it.each(['servito', 'self-service', 'self-svolta'] as const)(
+  it.each(['servito', 'self-service', 'servito-svolta'] as const)(
     'keeps the full %s vehicle footprint outside every obstacle',
     (journeyId) => {
       const journey = getJourney(journeyId)
@@ -31,7 +31,7 @@ describe('journey physical safety', () => {
     },
   )
 
-  it.each(['self-service', 'self-svolta'] as const)(
+  it.each(['self-service', 'servito-svolta'] as const)(
     'keeps every %s pedestrian segment outside static supports',
     (journeyId) => {
       const steps = getJourney(journeyId).steps.filter(

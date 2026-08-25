@@ -15,7 +15,7 @@ describe('station journeys', () => {
     expect(STATION_JOURNEYS.map((journey) => journey.id)).toEqual([
       'servito',
       'self-service',
-      'self-svolta',
+      'servito-svolta',
     ])
     const commonIds = [
       'common-station',
@@ -38,10 +38,10 @@ describe('station journeys', () => {
       expect(journeyDuration(journey)).toBeGreaterThan(100)
     }
     expect(
-      getJourney('self-service').steps.find(
-        (step) => step.id === 'self-payment-choice',
-      )?.decision,
-    ).toBe('payment-location')
+      getJourney('self-service').steps.some(
+        (step) => step.decision === 'operator-payment',
+      ),
+    ).toBe(false)
   })
 
   it('keeps Journey A in the vehicle and returns the nozzle before payment', () => {
@@ -58,6 +58,7 @@ describe('station journeys', () => {
       'hand',
       'hand',
       'inserting',
+      'inserted',
       'inserted',
       'inserted',
       'inserted',
@@ -103,6 +104,7 @@ describe('station journeys', () => {
       'fuel',
       'payment-method',
       'cash-instructions',
+      'cash-instructions',
       'cash-amount',
       'review',
       'confirmed',
@@ -117,7 +119,7 @@ describe('station journeys', () => {
   })
 
   it('enters Svolta, pays inside and exposes the store supports on return', () => {
-    const svolta = getJourney('self-svolta')
+    const svolta = getJourney('servito-svolta')
     const entranceIndex = svolta.steps.findIndex(
       (step) => step.id === 'svolta-enter-store',
     )

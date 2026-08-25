@@ -1,4 +1,4 @@
-export type JourneyId = 'servito' | 'self-service' | 'self-svolta'
+export type JourneyId = 'servito' | 'self-service' | 'servito-svolta'
 
 export type JourneyMotion =
   | 'drive'
@@ -9,7 +9,7 @@ export type JourneyMotion =
   | 'glance'
   | 'hold'
 
-export type JourneyDecision = 'service-mode' | 'payment-location'
+export type JourneyDecision = 'service-mode' | 'operator-payment'
 
 export type SmartOptScreen =
   | 'idle'
@@ -247,36 +247,19 @@ function commonArrivalSteps(
   ]
 }
 
-function selfChoiceSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
-  return [
-    {
-      id: 'self-first-contact',
-      phase:
-        prefix === 'self'
-          ? 'B1 · Accostamento alla pompa Self'
-          : 'C1 · Accostamento all’erogatore Self',
-      label: 'Memorizza il numero della pompa; la triade resta periferica',
-      position: SELF_STOP,
-      gazeTarget: [-4.6, 1.4, 2.55],
-      duration: 3,
-      cameraMode: 'vehicle',
-      motion: 'hold',
-      vehicleYaw: WESTBOUND,
-      mediaPointId: 'mp-01',
-    },
-    {
-      id: 'self-payment-choice',
-      phase: 'Self · Scelta del luogo di pagamento',
-      label: 'Sceglie se pagare all’accettatore o nella cassa Svolta',
-      position: SELF_STOP,
-      gazeTarget: [-4.6, 1.35, 2.55],
-      duration: 0.6,
-      cameraMode: 'vehicle',
-      motion: 'hold',
-      vehicleYaw: WESTBOUND,
-      decision: 'payment-location',
-    },
-  ]
+function selfFirstContactStep(): JourneyStep {
+  return {
+    id: 'self-first-contact',
+    phase: 'B1 · Accostamento alla pompa Self',
+    label: 'Memorizza il numero della pompa; la triade resta periferica',
+    position: SELF_STOP,
+    gazeTarget: [-4.6, 1.4, 2.55],
+    duration: 3,
+    cameraMode: 'vehicle',
+    motion: 'hold',
+    vehicleYaw: WESTBOUND,
+    mediaPointId: 'mp-01',
+  }
 }
 
 function terminalFlowSteps(): JourneyStep[] {
@@ -317,7 +300,13 @@ function terminalFlowSteps(): JourneyStep[] {
       'cash-instructions',
       2.5,
     ),
-    screenStep('self-insert-cash', 'Inserisce 50 €', 'cash-amount', 3),
+    screenStep(
+      'self-insert-cash',
+      'Inserisce le banconote nel terminale',
+      'cash-instructions',
+      2.5,
+    ),
+    screenStep('self-cash-amount', 'Il terminale rileva 50 € inseriti', 'cash-amount', 2.4),
     screenStep('self-review', 'Controlla il riepilogo e conferma', 'review', 3),
     {
       ...screenStep(
@@ -648,12 +637,12 @@ const servedSteps: JourneyStep[] = [
     label: 'Il cliente attende in auto mentre il gestore rifornisce',
     position: SERVED_STOP,
     gazeTarget: [3.68, 1.45, 2.09],
-    duration: 42,
+    duration: 40,
     cameraMode: 'vehicle',
     motion: 'hold',
     vehicleYaw: WESTBOUND,
     mediaPointId: 'mp-04',
-    dwellSeconds: 42,
+    dwellSeconds: 40,
     actor: attendant([6.9, 0, 4.15], [6.75, 1.05, 4.75], 'refuel'),
     nozzle: { owner: 'attendant', pump: 'servito', state: 'inserted' },
   },
@@ -663,12 +652,12 @@ const servedSteps: JourneyStep[] = [
     label: 'Durante l’attesa il Pannello Colonna entra naturalmente nel campo visivo',
     position: SERVED_STOP,
     gazeTarget: [6.4, 2.1, -0.86],
-    duration: 10,
+    duration: 8,
     cameraMode: 'vehicle',
     motion: 'glance',
     vehicleYaw: WESTBOUND,
     mediaPointId: 'mp-03',
-    dwellSeconds: 10,
+    dwellSeconds: 8,
     actor: attendant([6.9, 0, 4.15], [6.75, 1.05, 4.75], 'refuel'),
     nozzle: { owner: 'attendant', pump: 'servito', state: 'inserted' },
   },
@@ -678,12 +667,26 @@ const servedSteps: JourneyStep[] = [
     label: 'Completa la lettura della triade durante il dwell time',
     position: SERVED_STOP,
     gazeTarget: [4.6, 2.36, 2.08],
-    duration: 8,
+    duration: 7,
     cameraMode: 'vehicle',
     motion: 'glance',
     vehicleYaw: WESTBOUND,
     mediaPointId: 'mp-01',
-    dwellSeconds: 8,
+    dwellSeconds: 7,
+    actor: attendant([6.9, 0, 4.15], [6.75, 1.05, 4.75], 'refuel'),
+    nozzle: { owner: 'attendant', pump: 'servito', state: 'inserted' },
+  },
+  {
+    id: 'served-dwell-phone',
+    phase: 'A3 · Attesa durante il rifornimento',
+    label: 'Durante l’attesa consulta brevemente il telefono, senza perdere il contesto',
+    position: SERVED_STOP,
+    gazeTarget: [4.55, 0.58, 4.7],
+    duration: 5,
+    cameraMode: 'vehicle',
+    motion: 'glance',
+    vehicleYaw: WESTBOUND,
+    dwellSeconds: 5,
     actor: attendant([6.9, 0, 4.15], [6.75, 1.05, 4.75], 'refuel'),
     nozzle: { owner: 'attendant', pump: 'servito', state: 'inserted' },
   },
@@ -756,7 +759,7 @@ const servedSteps: JourneyStep[] = [
 
 const selfServiceSteps: JourneyStep[] = [
   ...commonArrivalSteps('self', SELF_STOP),
-  ...selfChoiceSteps('self'),
+  selfFirstContactStep(),
   {
     id: 'self-exit',
     phase: 'B2 · Uscita dall’auto e orientamento verso l’accettatore',
@@ -832,7 +835,7 @@ const selfServiceSteps: JourneyStep[] = [
 
 const selfSvoltaSteps: JourneyStep[] = [
   ...commonArrivalSteps('self', SELF_STOP),
-  ...selfChoiceSteps('svolta'),
+  selfFirstContactStep(),
   {
     id: 'svolta-exit',
     phase: 'C2 · Orientamento verso Svolta',
@@ -998,9 +1001,9 @@ export const STATION_JOURNEYS: StationJourney[] = [
     steps: selfServiceSteps,
   },
   {
-    id: 'self-svolta',
-    name: 'C · Self con pagamento in Svolta',
-    description: 'Auto → pompa → Svolta → pompa → auto.',
+    id: 'servito-svolta',
+    name: 'C · Servito con pagamento in Svolta',
+    description: 'Auto → servizio del gestore → Svolta → auto.',
     arrivalPath: selfArrival,
     arrivalEndStepId: 'self-stop',
     departurePath: selfDeparture,

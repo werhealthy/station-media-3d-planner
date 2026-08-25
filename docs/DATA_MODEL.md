@@ -19,6 +19,24 @@ Ogni progetto esportato include un campo `schemaVersion` (numero intero). Quando
 
 ## Entità
 
+### SupportType
+
+Definisce una tipologia Q8 riutilizzabile in più stazioni. È distinta dalla
+singola istanza collocata nella scena: per esempio `Sovrapompa / Cappuccio` è
+un tipo, mentre il sovrapompa montato sull'erogatore 3 è un media point.
+
+| Campo | Tipo | Note |
+|---|---|---|
+| `id`, `name` | stringa | ID ufficiale e denominazione della distinta |
+| `shape` | enum | geometria procedurale del supporto |
+| `type` | `digital \| print \| structural` | gli elementi strutturali non accettano creatività |
+| `dimensions` | width/height/source/note | metri e provenienza della quota |
+| `targetDistance`, `eyesOn`, `maxWords` | stringa | regole di lettura tratte dalla distinta |
+| `qrPolicy` | enum | `prohibited`, `conditional`, `allowed`, `not-applicable` |
+
+Il catalogo corrente è in `src/domain/supportCatalog.ts`. Le quote mancanti
+nel documento sono marcate `estimated`: non vanno considerate quote esecutive.
+
 ### Project
 
 Il contenitore di primo livello, ciò che viene salvato/esportato come un progetto.
@@ -79,10 +97,14 @@ Come da requisiti di prodotto, ogni banner ha almeno:
 | Campo | Tipo | Note |
 |---|---|---|
 | `id`, `name`, `stationId` | stringa | |
+| `supportTypeId` | stringa, opzionale | riferimento al catalogo Q8; assente per supporti custom |
+| `supportShape` | enum | forma procedurale usata nel viewer |
+| `assignable` | booleano | `false` per elementi strutturali/non pubblicitari |
 | `type` | `'digital' \| 'print'` | |
 | `position` | `{x,y,z}` metri | coordinate locali alla stazione |
 | `rotation` | `{x,y,z}` gradi | Euler, vedi convenzioni sopra |
 | `size` | `{width, height}` metri | dimensioni fisiche; mai negative o nulle |
+| `heightFromGround` | numero, metri | quota dichiarata del supporto |
 | `aspectRatio` | numero | derivato da `size`, usato per l'adattamento degli asset |
 | `frontDirection` | derivato | asse locale +Z dopo rotazione (non un campo indipendente, per evitare inconsistenze) |
 | `assignedAssetId` | stringa, opzionale | riferimento a un `MediaAsset` |

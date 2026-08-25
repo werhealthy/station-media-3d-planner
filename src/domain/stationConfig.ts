@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SupportShapeSchema } from './supportCatalog'
 
 const finite = z.number().finite()
 export const Vector3Schema = z.tuple([finite, finite, finite])
@@ -34,12 +35,16 @@ export const ConfigMediaPointSchema = z.object({
   id: z.string().min(1),
   number: z.number().int().positive(),
   name: z.string().min(1),
+  supportTypeId: z.string().min(1).optional(),
+  supportShape: SupportShapeSchema.default('freestanding'),
   type: z.enum(['digital', 'print']),
+  assignable: z.boolean().default(true),
   position: Vector3Schema,
   normal: Vector3Schema,
   rotation: Vector3Schema,
   width: finite.positive(),
   height: finite.positive(),
+  heightFromGround: finite.nonnegative().optional(),
   attachedMeshName: z.string().optional(),
   attachedMeshPath: z.string().optional(),
   location: z.string().default('Stazione'),

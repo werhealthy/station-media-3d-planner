@@ -1,140 +1,143 @@
 import { z } from 'zod'
 import { STATION_LAYOUT } from './stationLayout'
+import { SupportShapeSchema, getSupportType } from './supportCatalog'
 
 const MediaPointSchema = z.object({
   id: z.string(),
   number: z.number().int().min(1),
   name: z.string(),
+  supportTypeId: z.string(),
+  supportShape: SupportShapeSchema,
   location: z.string(),
   type: z.enum(['digital', 'print']),
+  assignable: z.boolean(),
   surface: z.string(),
   width: z.number().positive(),
   height: z.number().positive(),
+  heightFromGround: z.number().nonnegative(),
   position: z.tuple([z.number(), z.number(), z.number()]),
   rotation: z.tuple([z.number(), z.number(), z.number()]),
 })
 export type MediaPoint = z.infer<typeof MediaPointSchema>
 
 const { frontZ, backZ } = STATION_LAYOUT.islands
+
+function supportPoint(
+  supportTypeId: string,
+  point: Omit<
+    MediaPoint,
+    | 'supportTypeId'
+    | 'supportShape'
+    | 'name'
+    | 'type'
+    | 'assignable'
+    | 'width'
+    | 'height'
+  >,
+): MediaPoint {
+  const support = getSupportType(supportTypeId)
+  if (!support) throw new Error(`Supporto Q8 sconosciuto: ${supportTypeId}`)
+  return {
+    ...point,
+    supportTypeId,
+    supportShape: support.shape,
+    name: support.name,
+    type: support.type === 'digital' ? 'digital' : 'print',
+    assignable: support.assignable,
+    width: support.dimensions.width,
+    height: support.dimensions.height,
+  }
+}
+
 export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
-  {
+  supportPoint('1', {
     id: 'mp-01',
     number: 1,
-    name: 'Pump Topper 1',
     location: 'Isola anteriore',
-    type: 'digital',
-    surface: 'LED screen',
-    width: 1.6,
-    height: 0.55,
-    position: [4, 3.05, frontZ + 0.72],
+    surface: 'Cappuccio erogatore',
+    heightFromGround: 2.4,
+    position: [4, 2.36, frontZ + 0.48],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('2', {
     id: 'mp-02',
     number: 2,
-    name: 'Pump Side 1',
-    location: 'Isola anteriore',
-    type: 'print',
-    surface: 'Pannello laterale',
-    width: 0.8,
-    height: 1.15,
-    position: [7.8, 1.25, frontZ + 0.72],
+    location: 'Ingresso isola anteriore',
+    surface: 'Supporto a terra',
+    heightFromGround: 0,
+    position: [8.2, 0.62, frontZ + 2.2],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('4', {
     id: 'mp-03',
     number: 3,
-    name: 'Shop Fascia',
-    location: 'Shop',
-    type: 'digital',
-    surface: 'LED screen',
-    width: 3.4,
-    height: 0.7,
-    position: [13, 4.2, -5.95],
+    location: 'Colonna pensilina',
+    surface: 'Piastra verticale',
+    heightFromGround: 1.35,
+    position: [7, 2.1, 0.39],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('10', {
     id: 'mp-04',
     number: 4,
-    name: 'Column Wrap',
-    location: 'Pensilina',
-    type: 'print',
-    surface: 'Pannello colonna',
-    width: 0.75,
-    height: 1.5,
-    position: [7, 2.2, backZ + 0.45],
+    location: 'Erogatore posteriore',
+    surface: 'Estensione erogatore',
+    heightFromGround: 1.1,
+    position: [-3.08, 1.45, backZ + 0.49],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('11', {
     id: 'mp-05',
     number: 5,
-    name: 'Pump Topper 2',
-    location: 'Isola posteriore',
-    type: 'digital',
-    surface: 'LED screen',
-    width: 1.6,
-    height: 0.55,
-    position: [-4, 3.05, backZ + 0.72],
+    location: 'Accettatore Self',
+    surface: 'Display digitale 21 pollici',
+    heightFromGround: 1.35,
+    position: [-11.5, 1.52, -0.86],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('6', {
     id: 'mp-06',
     number: 6,
-    name: 'Shop Poster',
-    location: 'Shop',
-    type: 'print',
-    surface: 'Vetrina',
-    width: 1.1,
-    height: 1.7,
-    position: [19, 2.1, -5.94],
+    location: 'Ingresso Svolta',
+    surface: 'Sagomato autoportante',
+    heightFromGround: 0,
+    position: [18.5, 1.05, -5.72],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('5', {
     id: 'mp-07',
     number: 7,
-    name: 'Totem Lower Panel',
-    location: 'Ingresso',
-    type: 'print',
-    surface: 'Totem',
-    width: 2.1,
-    height: 1.45,
-    position: [-22, 2.15, -8.34],
-    rotation: [0, 0, 0],
-  },
-  {
+    location: 'Perimetro piazzale',
+    surface: 'Struttura 4 x 3 m',
+    heightFromGround: 0.35,
+    position: [18, 1.85, 12.5],
+    rotation: [0, 180, 0],
+  }),
+  supportPoint('7', {
     id: 'mp-08',
     number: 8,
-    name: 'Forecourt Poster',
-    location: 'Ingresso piazzale',
-    type: 'print',
-    surface: 'Freestanding',
-    width: 1.5,
-    height: 1.8,
-    position: [-13, 1.45, 9],
+    location: 'Palo bandiera',
+    surface: 'Pannello bifacciale sospeso',
+    heightFromGround: 1.05,
+    position: [-22, 1.85, -9.43],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('9', {
     id: 'mp-09',
     number: 9,
-    name: 'Flag',
     location: 'Ingresso piazzale',
-    type: 'print',
-    surface: 'Bandiera',
-    width: 1.15,
-    height: 2.7,
-    position: [-20, 2.3, 8],
+    surface: 'Vela mobile',
+    heightFromGround: 0,
+    position: [-20, 1.5, 8],
     rotation: [0, 0, 0],
-  },
-  {
+  }),
+  supportPoint('8', {
     id: 'mp-10',
     number: 10,
-    name: 'Shop Header',
-    location: 'Shop',
-    type: 'digital',
-    surface: 'LED screen',
-    width: 2.2,
-    height: 0.65,
-    position: [9.4, 4.2, -5.94],
+    location: 'Ingresso isola',
+    surface: 'Base fissa in cemento',
+    heightFromGround: 0,
+    position: [-13, 1.05, 9],
     rotation: [0, 0, 0],
-  },
+  }),
 ])

@@ -24,36 +24,10 @@ import { orbitMinDistance } from './navigationLimits'
 const OVERVIEW_POSITION = new THREE.Vector3(30, 16, 31)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
 const WALK_SPEED = 1.68
-const CAPSULE_RADIUS = 0.34
 const GRAVITY = 18
 
-const COLLIDERS = [
-  { minX: 3.2, maxX: 22.8, minZ: -14.4, maxZ: -5.3 },
-  { minX: -23.9, maxX: -20.1, minZ: -10.9, maxZ: -9.1 },
-  ...[-5, 5].flatMap((x) =>
-    [2.8, -3.2].map((z) => ({
-      minX: x - 1.1,
-      maxX: x + 1.1,
-      minZ: z - 0.85,
-      maxZ: z + 0.85,
-    })),
-  ),
-  ...[-7, 7].map((x) => ({
-    minX: x - 0.75,
-    maxX: x + 0.75,
-    minZ: -0.65,
-    maxZ: 0.65,
-  })),
-]
-
 function canWalkTo(position: THREE.Vector3) {
-  return !COLLIDERS.some(
-    (box) =>
-      position.x < box.maxX + CAPSULE_RADIUS &&
-      position.x > box.minX - CAPSULE_RADIUS &&
-      position.z > box.minZ - CAPSULE_RADIUS &&
-      position.z < box.maxZ + CAPSULE_RADIUS,
-  )
+  return !pedestrianCollisionAt(position)
 }
 
 function easeJourneyMotion(local: number, motion: JourneyMotion) {
@@ -90,6 +64,8 @@ export function NavigationRig() {
   const keys = useRef(new Set<string>())
   const destination = useMemo(() => new THREE.Vector3(), [])
   const target = useMemo(() => new THREE.Vector3(), [])
+  const authoredGaze = useMemo(() => new THREE.Vector3(), [])
+  const smoothedAutoTarget = useRef(new THREE.Vector3())
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
   const verticalVelocity = useRef(0)
@@ -236,6 +212,7 @@ export function NavigationRig() {
       if (start && firstStep) {
         camera.position.set(...start)
         lastSafeAutoPosition.current.copy(camera.position)
+        smoothedAutoTarget.current.set(...firstStep.gazeTarget)
         camera.lookAt(...firstStep.gazeTarget)
       }
     }
@@ -444,6 +421,12 @@ export function NavigationRig() {
         }
         destination.copy(lastSafeAutoPosition.current)
         target.copy(destination).addScaledVector(tangent, 9).setY(1.3)
+        if (current.mediaPointId) {
+          authoredGaze.set(...current.gazeTarget)
+          // The car keeps following its physical trajectory while the driver's
+          // head briefly turns toward the support relevant to this phase.
+          target.lerp(authoredGaze, 0.72)
+        }
       } else {
         const motionAmount = easeJourneyMotion(local, current.motion)
         const gazeAmount =
@@ -483,7 +466,11 @@ export function NavigationRig() {
       }
 
       camera.position.copy(destination)
-      camera.lookAt(target)
+      smoothedAutoTarget.current.lerp(
+        target,
+        1 - Math.exp(-delta * (inContinuousArrival ? 3.4 : 7)),
+      )
+      camera.lookAt(smoothedAutoTarget.current)
       const desiredFov = current.cameraMode === 'vehicle' ? 68 : 64
       if (Math.abs(perspectiveCamera.fov - desiredFov) > 0.05) {
         perspectiveCamera.fov = THREE.MathUtils.lerp(

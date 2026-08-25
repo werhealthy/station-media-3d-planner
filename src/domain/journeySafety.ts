@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { STATION_LAYOUT as L } from './stationLayout'
 
 export interface PlanarBounds {
   id: string
@@ -13,28 +14,52 @@ export const VEHICLE_LENGTH = 4.4
 export const PEDESTRIAN_RADIUS = 0.34
 
 /**
- * Conservative floor footprints for every solid object touched by the two tours.
+ * Conservative floor footprints for every solid object touched by the tours.
  * They intentionally include plinths and protection rails, not only visible meshes.
  */
 export const JOURNEY_OBSTACLES: PlanarBounds[] = [
-  { id: 'shop', minX: 3.2, maxX: 22.8, minZ: -14.4, maxZ: -5.3 },
-  { id: 'price-pylon', minX: -23.9, maxX: -20.1, minZ: -10.9, maxZ: -9.1 },
-  { id: 'roadside-landscape', minX: -25.3, maxX: -16.7, minZ: 12.75, maxZ: 14.65 },
-  { id: 'pedestrian-curb', minX: -25, maxX: 5, minZ: 13.9, maxZ: 15.1 },
-  { id: 'entry-tree', minX: -30.1, maxX: -27.9, minZ: 3.9, maxZ: 6.1 },
-  { id: 'pump-front-self', minX: -7.2, maxX: -2.8, minZ: 1.8, maxZ: 3.8 },
-  { id: 'pump-front-served', minX: 2.8, maxX: 7.2, minZ: 1.8, maxZ: 3.8 },
-  { id: 'pump-back-self', minX: -7.2, maxX: -2.8, minZ: -4.2, maxZ: -2.2 },
-  { id: 'pump-back-served', minX: 2.8, maxX: 7.2, minZ: -4.2, maxZ: -2.2 },
-  { id: 'canopy-column-left', minX: -7.75, maxX: -6.25, minZ: -0.65, maxZ: 0.65 },
-  { id: 'canopy-column-right', minX: 6.25, maxX: 7.75, minZ: -0.65, maxZ: 0.65 },
-  { id: 'pump-ear-mp02', minX: 4.4, maxX: 5.6, minZ: 4.65, maxZ: 5.35 },
-  { id: 'smartopt-mp05', minX: -12.05, maxX: -10.95, minZ: -1.35, maxZ: -0.35 },
-  { id: 'shop-support-mp06', minX: 17.8, maxX: 19.2, minZ: -6.1, maxZ: -5.35 },
-  { id: 'backdrop-mp07', minX: -13.1, maxX: -8.9, minZ: -6.55, maxZ: -5.95 },
-  { id: 'flag-mp08', minX: -22.55, maxX: -21.45, minZ: -9.7, maxZ: -9.15 },
-  { id: 'banner-mp09', minX: -20.65, maxX: -19.35, minZ: 7.65, maxZ: 8.35 },
-  { id: 'concrete-sign-mp10', minX: -13.85, maxX: -12.15, minZ: 8.5, maxZ: 9.5 },
+  {
+    id: 'shop-left-wall',
+    minX: L.shop.x - L.shop.width / 2 - 0.02,
+    maxX: L.shop.x - L.shop.width / 2 + 0.36,
+    minZ: L.shop.z - L.shop.depth / 2,
+    maxZ: L.shop.z + L.shop.depth / 2,
+  },
+  {
+    id: 'shop-right-wall',
+    minX: L.shop.x + L.shop.width / 2 - 0.36,
+    maxX: L.shop.x + L.shop.width / 2 + 0.02,
+    minZ: L.shop.z - L.shop.depth / 2,
+    maxZ: L.shop.z + L.shop.depth / 2,
+  },
+  {
+    id: 'shop-back-wall',
+    minX: L.shop.x - L.shop.width / 2,
+    maxX: L.shop.x + L.shop.width / 2,
+    minZ: L.shop.z - L.shop.depth / 2 - 0.02,
+    maxZ: L.shop.z - L.shop.depth / 2 + 0.36,
+  },
+  { id: 'shop-counter', minX: 10.7, maxX: 13.9, minZ: -9.1, maxZ: -8.2 },
+  { id: 'price-pylon', minX: -19.6, maxX: -16.4, minZ: 9.7, maxZ: 11.1 },
+  { id: 'roadside-landscape', minX: -21.7, maxX: -10.7, minZ: 10.9, maxZ: 13 },
+  { id: 'pedestrian-curb', minX: -23, maxX: 0, minZ: 12.1, maxZ: 13.2 },
+  { id: 'pump-self', minX: -6.6, maxX: -2.6, minZ: 0.5, maxZ: 2.7 },
+  { id: 'pump-served', minX: 2.6, maxX: 6.6, minZ: 0.5, maxZ: 2.7 },
+  { id: 'canopy-column-left', minX: -7.15, maxX: -5.65, minZ: -1.9, maxZ: -0.6 },
+  { id: 'canopy-column-right', minX: 5.65, maxX: 7.15, minZ: -1.9, maxZ: -0.6 },
+  { id: 'pump-leader-mp02', minX: -5.2, maxX: -4, minZ: 3.6, maxZ: 4.3 },
+  { id: 'smartopt-mp05', minX: -9.55, maxX: -8.45, minZ: -0.25, maxZ: 0.85 },
+  { id: 'shop-support-mp06', minX: 14, maxX: 15.4, minZ: -4.4, maxZ: -3.65 },
+  { id: 'backdrop-mp07', minX: -10.7, maxX: -6.5, minZ: -4.6, maxZ: -3.95 },
+  { id: 'stendardo-mp08', minX: -18.6, maxX: -17.4, minZ: 10.05, maxZ: 10.95 },
+  { id: 'beach-flag-mp09', minX: -15.1, maxX: -13.9, minZ: 10.25, maxZ: 10.95 },
+  {
+    id: 'concrete-sign-mp10',
+    minX: L.entry.concreteSignX - 0.85,
+    maxX: L.entry.concreteSignX + 0.85,
+    minZ: L.entry.concreteSignZ - 0.45,
+    maxZ: L.entry.concreteSignZ + 0.45,
+  },
 ]
 
 export function createArrivalCurve(

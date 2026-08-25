@@ -20,7 +20,7 @@ const MediaPointSchema = z.object({
 })
 export type MediaPoint = z.infer<typeof MediaPointSchema>
 
-const { frontZ, backZ } = STATION_LAYOUT.islands
+const { frontZ, pumpX } = STATION_LAYOUT.islands
 
 function supportPoint(
   supportTypeId: string,
@@ -56,7 +56,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Isola anteriore',
     surface: 'Cappuccio erogatore',
     heightFromGround: 2.4,
-    position: [5, 2.36, frontZ + 0.48],
+    position: [pumpX, 2.36, frontZ + 0.48],
     rotation: [0, 0, 0],
   }),
   supportPoint('2', {
@@ -65,7 +65,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso isola anteriore',
     surface: 'Supporto a terra',
     heightFromGround: 0,
-    position: [5, 0.62, frontZ + 2.2],
+    position: [-pumpX, 0.62, frontZ + 2.35],
     rotation: [0, 0, 0],
   }),
   supportPoint('4', {
@@ -74,16 +74,16 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Colonna pensilina',
     surface: 'Piastra verticale',
     heightFromGround: 1.35,
-    position: [7, 2.1, 0.39],
+    position: [STATION_LAYOUT.canopy.columnX, 2.1, -0.86],
     rotation: [0, 0, 0],
   }),
   supportPoint('10', {
     id: 'mp-04',
     number: 10,
-    location: 'Erogatore posteriore',
+    location: 'Erogatore Servito',
     surface: 'Estensione erogatore',
     heightFromGround: 1.1,
-    position: [-4.08, 1.45, backZ + 0.49],
+    position: [pumpX - 0.92, 1.45, frontZ + 0.49],
     rotation: [0, 0, 0],
   }),
   supportPoint('11', {
@@ -92,7 +92,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Isola Self · terminale di pagamento',
     surface: 'Display verticale touch 21 pollici',
     heightFromGround: 1.27,
-    position: [-11.5, 1.5, -0.86],
+    position: [STATION_LAYOUT.terminal.x, 1.5, STATION_LAYOUT.terminal.z],
     rotation: [0, 0, 0],
   }),
   supportPoint('6', {
@@ -101,7 +101,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso Svolta',
     surface: 'Sagomato autoportante',
     heightFromGround: 0,
-    position: [18.5, 1.05, -5.72],
+    position: [14.7, 1.05, -4.02],
     rotation: [0, 0, 0],
   }),
   supportPoint('5', {
@@ -110,7 +110,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Fondale dietro le pompe',
     surface: 'Struttura 4 x 3 m',
     heightFromGround: 0.35,
-    position: [-11, 1.85, -6.25],
+    position: [-8.6, 1.85, -4.28],
     rotation: [0, 0, 0],
   }),
   supportPoint('7', {
@@ -119,7 +119,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Palo bandiera',
     surface: 'Pannello bifacciale sospeso',
     heightFromGround: 1.05,
-    position: [-22, 1.85, -9.43],
+    position: [STATION_LAYOUT.totem.x, 1.85, STATION_LAYOUT.totem.z + 0.52],
     rotation: [0, 0, 0],
   }),
   supportPoint('9', {
@@ -128,7 +128,11 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso piazzale',
     surface: 'Vela mobile',
     heightFromGround: 0,
-    position: [-20, 1.5, 8],
+    position: [
+      STATION_LAYOUT.entry.beachFlagX,
+      1.5,
+      STATION_LAYOUT.entry.beachFlagZ,
+    ],
     rotation: [0, 0, 0],
   }),
   supportPoint('8', {
@@ -137,7 +141,11 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso isola',
     surface: 'Base fissa in cemento',
     heightFromGround: 0,
-    position: [-13, 1.05, 9],
+    position: [
+      STATION_LAYOUT.entry.concreteSignX,
+      1.05,
+      STATION_LAYOUT.entry.concreteSignZ,
+    ],
     rotation: [0, 0, 0],
   }),
 ])

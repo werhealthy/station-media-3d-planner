@@ -423,25 +423,24 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   surroundings.userData.stationHelper = true
   const approachRoad = mesh(
     root,
-    new THREE.PlaneGeometry(220, 14),
+    new THREE.PlaneGeometry(220, L.road.depth),
     asphalt,
-    [0, -0.018, 19.5],
+    [0, -0.018, L.road.centerZ],
     'access-road',
     [-Math.PI / 2, 0, 0],
   )
   approachRoad.userData.stationHelper = true
+  // The frontage pavement is split at the actual driveway. The previous
+  // continuous slab visually and physically cut across the station entrance.
+  box(root, [116, 0.08, 1.1], concrete, [-52, 0.015, 12.55], 'roadside-footpath')
+    .userData.stationHelper = true
+  box(root, [89, 0.08, 1.1], concrete, [65.5, 0.015, 12.55], 'roadside-footpath')
+    .userData.stationHelper = true
   box(
     root,
     [220, 0.08, 1.35],
     concrete,
-    [0, 0.015, 12.1],
-    'roadside-footpath',
-  ).userData.stationHelper = true
-  box(
-    root,
-    [220, 0.08, 1.35],
-    concrete,
-    [0, 0.015, 26.9],
+    [0, 0.015, 25.55],
     'roadside-footpath',
   ).userData.stationHelper = true
   mesh(
@@ -454,17 +453,17 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   )
   mesh(
     root,
-    new THREE.PlaneGeometry(62, 6),
+    new THREE.PlaneGeometry(44, 3.2),
     grass,
-    [0, 0.025, -19.8],
+    [0, 0.025, -14.35],
     'rear-landscape-lawn',
     [-Math.PI / 2, 0, 0],
   )
   mesh(
     root,
-    new THREE.PlaneGeometry(5.5, 36),
+    new THREE.PlaneGeometry(3.2, 24),
     grass,
-    [-29.1, 0.025, -1.5],
+    [-21.4, 0.025, -1.5],
     'entry-landscape-lawn',
     [-Math.PI / 2, 0, 0],
   )
@@ -472,7 +471,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     root,
     [L.forecourt.width, 0.1, 1.2],
     concrete,
-    [0, 0.04, -21.5],
+    [0, 0.04, -15.35],
     'road-curb',
   )
   for (let x = -90; x <= 90; x += 9)
@@ -480,7 +479,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       root,
       [4.5, 0.025, 0.16],
       mat('#ece7cf', 0.8),
-      [x, 0.025, 18],
+      [x, 0.025, L.road.centerZ],
       'road-marking',
     )
   box(
@@ -497,7 +496,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, L.canopy.height - 0.35, 0],
     'canopy-undertray',
   )
-  for (let x = -12; x <= 12; x += 3)
+  for (let x = -10; x <= 10; x += 2.5)
     box(
       root,
       [0.045, 0.08, L.canopy.depth - 0.85],
@@ -505,8 +504,8 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [x, L.canopy.height - 0.43, 0],
       'undertray-panel-joint',
     )
-  for (const x of [-9, -3, 3, 9])
-    for (const z of [-4.8, 4.8])
+  for (const x of [-7.8, -2.6, 2.6, 7.8])
+    for (const z of [-3.8, 3.8])
       box(
         root,
         [1.2, 0.035, 0.55],
@@ -547,18 +546,36 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [L.canopy.width / 2, L.canopy.height - 0.1, 0],
     'canopy-fascia-side',
   )
-  for (const x of [-7, 7]) {
+  for (const x of [-L.canopy.columnX, L.canopy.columnX]) {
     roundedBox(
       root,
       [0.88, 5.35, 0.7],
       0.06,
       steel,
-      [x, 2.9, 0],
+      [x, 2.7, L.canopy.columnZ],
       'canopy-column',
     )
-    box(root, [1.32, 0.24, 1.08], concrete, [x, 0.14, 0], 'column-foot')
-    box(root, [1.08, 0.12, 0.88], blue, [x, 5.48, 0], 'column-cap')
-    box(root, [1.8, 0.18, 1.2], steel, [x, 5.67, 0], 'column-bearing-head')
+    box(
+      root,
+      [1.32, 0.24, 1.08],
+      concrete,
+      [x, 0.14, L.canopy.columnZ],
+      'column-foot',
+    )
+    box(
+      root,
+      [1.08, 0.12, 0.88],
+      blue,
+      [x, L.canopy.height - 0.72, L.canopy.columnZ],
+      'column-cap',
+    )
+    box(
+      root,
+      [1.8, 0.18, 1.2],
+      steel,
+      [x, L.canopy.height - 0.53, L.canopy.columnZ],
+      'column-bearing-head',
+    )
   }
   // Slim silver edge trims give the canopy a constructed, layered profile.
   for (const z of [-L.canopy.depth / 2 - 0.205, L.canopy.depth / 2 + 0.205])
@@ -576,12 +593,11 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.205],
     'q8-canopy-logo',
   )
-  for (const x of [-5, 5])
-    for (const z of [L.islands.frontZ, L.islands.backZ])
-      pump(root, x, z, Math.round(x + z * 10), q8Texture)
+  for (const x of [-L.islands.pumpX, L.islands.pumpX])
+    pump(root, x, L.islands.frontZ, Math.round(x + L.islands.frontZ * 10), q8Texture)
   const islandRail = mat('#aeb6bc', 0.2, 0.82)
-  for (const x of [-5, 5])
-    for (const z of [L.islands.frontZ, L.islands.backZ])
+  for (const x of [-L.islands.pumpX, L.islands.pumpX])
+    for (const z of [L.islands.frontZ])
       for (const side of [-1, 1]) {
         const railX = x + side * 2.03
         for (const railZ of [z - 0.54, z + 0.54])
@@ -601,12 +617,28 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
           [Math.PI / 2, 0, 0],
         )
       }
+  const shopWall = mat('#dedfda', 0.72)
   box(
     root,
-    [L.shop.width, L.shop.height, L.shop.depth - 0.55],
-    mat('#dedfda', 0.72),
-    [L.shop.x, L.shop.height / 2, L.shop.z - 0.28],
-    'shop-structural-shell',
+    [L.shop.width, L.shop.height, 0.34],
+    shopWall,
+    [L.shop.x, L.shop.height / 2, L.shop.z - L.shop.depth / 2 + 0.17],
+    'shop-back-wall',
+  )
+  for (const side of [-1, 1])
+    box(
+      root,
+      [0.34, L.shop.height, L.shop.depth],
+      shopWall,
+      [L.shop.x + side * (L.shop.width / 2 - 0.17), L.shop.height / 2, L.shop.z],
+      'shop-side-wall',
+    )
+  box(
+    root,
+    [L.shop.width - 0.4, 0.12, L.shop.depth - 0.35],
+    mat('#d8d2c7', 0.82),
+    [L.shop.x, 0.06, L.shop.z],
+    'shop-interior-floor',
   )
   box(
     root,
@@ -633,7 +665,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     root,
     svoltaTexture,
     [5.8, 1.05],
-    [13, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
+    [L.shop.x, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
     'svolta-brand',
   )
   const glass = new THREE.MeshPhysicalMaterial({
@@ -655,15 +687,16 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       emissiveIntensity: 0.32,
       roughness: 0.75,
     }),
-    [L.shop.x, 2.15, L.shop.z + L.shop.depth / 2 - 0.42],
+    [L.shop.x, 2.15, L.shop.z - L.shop.depth / 2 + 0.36],
     'shop-interior-backdrop',
   )
-  for (const x of [6.2, 9.2, 16.8, 19.8]) {
+  for (const offset of [-5.2, -2.4, 2.4, 5.2]) {
+    const x = L.shop.x + offset
     box(
       root,
       [1.8, 0.08, 0.48],
       mat('#8b7253', 0.65),
-      [x, 1.15, L.shop.z + L.shop.depth / 2 - 0.18],
+      [x, 1.15, L.shop.z - L.shop.depth / 2 + 0.45],
       'shop-display-shelf',
     )
     for (let p = -0.65; p <= 0.65; p += 0.32)
@@ -671,61 +704,63 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
         root,
         [0.18, 0.4, 0.18],
         mat(p > 0 ? '#e5a72a' : '#9d3340', 0.48),
-        [x + p, 1.38, L.shop.z + L.shop.depth / 2 - 0.12],
+        [x + p, 1.38, L.shop.z - L.shop.depth / 2 + 0.52],
         'shop-product',
       )
   }
-  const windowCenters = [5.65, 8.25, 10.5, 15.5, 17.75, 20.35]
-  for (const x of windowCenters)
+  const windowOffsets = [-5.65, -3.25, -1.85, 1.85, 3.25, 5.65]
+  for (const offset of windowOffsets) {
+    const x = L.shop.x + offset
     box(
       root,
-      [x === 5.65 || x === 20.35 ? 2.35 : 1.95, 3, 0.12],
+      [Math.abs(offset) > 5 ? 1.9 : 1.35, 3, 0.12],
       glass,
       [x, 2.25, L.shop.z + L.shop.depth / 2 + 0.07],
       'shop-window',
     )
-  for (const x of [4.35, 6.95, 9.45, 11.5, 14.5, 16.55, 19.05, 21.65])
+  }
+  for (const offset of [-6.65, -4.55, -2.45, -1.5, 1.5, 2.45, 4.55, 6.65])
     box(
       root,
       [0.1, 3.35, 0.18],
       steel,
-      [x, 2.2, L.shop.z + L.shop.depth / 2 + 0.15],
+      [L.shop.x + offset, 2.2, L.shop.z + L.shop.depth / 2 + 0.15],
       'glazing-mullion',
     )
-  for (const x of [12.25, 13.75]) {
+  for (const offset of [-0.75, 0.75]) {
     box(
       root,
       [1.42, 3.2, 0.15],
       glass,
-      [x, 1.82, L.shop.z + L.shop.depth / 2 + 0.16],
+      [L.shop.x + offset, 1.82, L.shop.z + L.shop.depth / 2 + 0.16],
       'shop-entry-door',
     )
   }
-  for (const x of [11.5, 13, 14.5]) {
+  for (const offset of [-1.5, 0, 1.5]) {
     box(
       root,
       [0.08, 3.25, 0.2],
       steel,
-      [x, 1.8, L.shop.z + L.shop.depth / 2 + 0.18],
+      [L.shop.x + offset, 1.8, L.shop.z + L.shop.depth / 2 + 0.18],
       'door-frame',
     )
   }
-  for (const x of [12.72, 13.28])
+  for (const offset of [-0.28, 0.28])
     box(
       root,
       [0.055, 0.72, 0.08],
       mat('#cbd2d6', 0.16, 0.85),
-      [x, 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
+      [L.shop.x + offset, 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
       'door-handle',
     )
   // The reference has a restrained silver-panelled side elevation rather than
   // another repeated glass entrance.
-  for (let z = -13.2; z <= -7.1; z += 2.05)
+  for (let offset = -2.05; offset <= 2.05; offset += 2.05)
     box(
       root,
       [0.12, 3.65, 1.85],
       mat('#c8cdd0', 0.48, 0.32),
-      [L.shop.x + L.shop.width / 2 + 0.07, 2.25, z],
+      [L.shop.x + L.shop.width / 2 + 0.07, 2.25, L.shop.z + offset],
       'shop-side-cladding',
     )
   box(
@@ -742,22 +777,39 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [L.shop.x, 0.1, L.shop.z + L.shop.depth / 2 + 0.9],
     'shop-pavement',
   )
-  for (const x of [5.1, 8.4, 17.6, 20.9])
+  for (const offset of [-5.2, -1.8, 1.8, 5.2])
     box(
       root,
       [0.12, 0.025, 3.4],
       mat('#f5f1df', 0.74),
-      [x, 0.02, -3.15],
+      [L.shop.x + offset, 0.02, L.shop.z + L.shop.depth / 2 + 2.05],
       'parking-bay-line',
     )
-  for (const x of [10.9, 15.1])
+  for (const offset of [-2.1, 2.1])
     mesh(
       root,
       new THREE.CylinderGeometry(0.09, 0.12, 0.92, 16),
       mat('#7f8990', 0.28, 0.7),
-      [x, 0.56, -5.18],
+      [L.shop.x + offset, 0.56, L.shop.z + L.shop.depth / 2 + 0.12],
       'shop-entrance-bollard',
     )
+  // A simple interior checkout makes Journey C a real visit to Svolta rather
+  // than a stop in front of the glass facade.
+  roundedBox(
+    root,
+    [3.2, 1.05, 0.85],
+    0.08,
+    mat('#67717a', 0.46, 0.28),
+    [L.shop.x + 2.8, 0.56, L.shop.z - 1.35],
+    'shop-checkout-counter',
+  )
+  box(
+    root,
+    [0.42, 0.48, 0.1],
+    mat('#15242b', 0.2, 0.18),
+    [L.shop.x + 1.65, 1.2, L.shop.z - 0.9],
+    'shop-checkout-screen',
+  )
   const totem = new THREE.Group()
   totem.position.set(L.totem.x, 0, L.totem.z)
   totem.name = 'price-pylon'
@@ -835,30 +887,29 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [x, 0.53, L.totem.z + 0.7],
       'price-pylon-bollard',
     )
-  // Raised pedestrian edge and two restrained planting beds add scale without clutter.
-  box(root, [30, 0.2, 1.1], concrete, [-10, 0.12, 14.5], 'pedestrian-curb')
+  // Compact entrance island: the supports form one readable sequence instead
+  // of floating across an oversized empty forecourt.
+  box(root, [23, 0.2, 1.05], concrete, [-11.5, 0.12, 12.65], 'pedestrian-curb')
   box(
     root,
-    [8.5, 0.34, 1.8],
+    [11, 0.34, 2.1],
     mat('#5e6e48', 0.95),
-    [-21, 0.22, 13.7],
+    [-16.2, 0.22, 11.95],
     'landscape-bed',
   )
-  shrubRow(root, -27.5, -16.9, 39, 1.42)
-  shrubRow(root, -27.2, 13.75, 10, 0.78)
+  shrubRow(root, -20.5, -15.15, 29, 1.42)
+  shrubRow(root, -21.1, 12, 13, 0.76)
   const treePositions: Array<[number, number, number]> = [
-    [-27, -20.4, 0.92],
-    [-22, -20.1, 1.08],
-    [-16.5, -20.6, 0.88],
-    [-10.5, -20.2, 1.16],
-    [-4, -20.5, 0.96],
-    [3, -20.3, 1.12],
-    [10, -20.5, 0.9],
-    [17, -20.1, 1.08],
-    [24, -20.6, 0.94],
-    [29, -17, 0.86],
-    [-29, -12, 0.9],
-    [-29, 5, 1.02],
+    [-21, -14.5, 0.92],
+    [-16, -14.2, 1.08],
+    [-10.5, -14.6, 0.88],
+    [-4.5, -14.2, 1.16],
+    [2, -14.5, 0.96],
+    [8.5, -14.3, 1.12],
+    [15, -14.5, 0.9],
+    [21, -14.1, 1.08],
+    [-22, -8, 0.9],
+    [-22, 4, 1.02],
   ]
   for (const [index, [x, z, scale]] of treePositions.entries())
     tree(root, x, z, scale, index + 1)
@@ -885,8 +936,8 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     )
     perimeterTreeId += 1
   }
-  for (const x of [-28, 27])
-    for (const z of [-16, 15])
+  for (const x of [-22, 22])
+    for (const z of [-13, 14])
       mesh(
         root,
         new THREE.CylinderGeometry(0.09, 0.13, 7, 10),

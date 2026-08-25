@@ -83,9 +83,19 @@ Upload via drag&drop di immagini (PNG/JPEG/WebP) e video (MP4, WebM dove support
 
 Gli asset mantengono il proprio aspect ratio sul banner, con due modalità di adattamento: `contain` (tutto visibile, eventuali bande) e `cover` (riempie il banner, eventuale ritaglio). I video supportano play/pausa/loop/mute/riavvio.
 
+Prima dell'assegnazione l'app confronta il rapporto della creatività con quello
+fisico del supporto. La creatività non viene mai deformata: l'interfaccia mostra
+la differenza percentuale e rende esplicite le aree libere (`contain`) oppure la
+percentuale di ritaglio (`cover`).
+
 ## 6. Punti pubblicitari (banner)
 
 Ogni banner è un oggetto indipendente, posizionabile con un gizmo di trasformazione (posizione/rotazione/dimensioni), duplicabile ed eliminabile, con valori numerici modificabili anche da pannello. Dimensioni non valide (negative o nulle) sono impedite. Ogni banner ha tipo (`digital`/`print`), stato visibile/nascosto e note libere.
+
+Le stazioni Q8 possono inoltre usare il catalogo tipizzato dei supporti della
+distinta: Sovrapompa, Pump Leader, Pannello Colonna, Pump Ear, DSP 21 pollici,
+Sagomato Standard, Fondostazione, Stendardo, Beach Flag e Sagomato prezzo. Tipo
+di supporto e istanza fisica nella stazione restano entità distinte.
 
 ## 7. Stazione dimostrativa
 

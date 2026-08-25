@@ -5,9 +5,9 @@ MVP desktop-first per configurare creatività pubblicitarie in una stazione Q8 a
 ## Esperienza corrente
 
 - scena prospettica controllata con pensilina brandizzata, erogatori, shop vetrato, totem e piazzale;
-- 10 media point fissi, numerati e distinti tra digital e print;
+- 10 supporti Q8 tipizzati, con forma, funzione e regole di lettura derivate dalla distinta;
 - selezione dalla scena o dal pannello laterale;
-- upload JPEG/PNG (massimo 15 MB), anteprima e applicazione immediata della texture al supporto 3D;
+- upload JPEG/PNG (massimo 15 MB), controllo delle proporzioni e applicazione senza stretching (`contain`/`cover`);
 - lifecycle esplicito di object URL e texture Three.js.
 
 Il progetto include navigazione orbit, cinque hotspot guidati e una modalità first-person leggera. Non include video, analytics, TransformControls o posizionamento libero dei supporti.

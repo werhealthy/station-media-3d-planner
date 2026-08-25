@@ -7,12 +7,12 @@ vi.mock('./components/viewer/Canvas', () => ({ Canvas: () => null }))
 describe('App', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('mostra il planner single-view e i 10 media point', () => {
+  it('mostra il planner single-view e i 10 supporti Q8', () => {
     render(<App />)
     expect(screen.getByText('Station Media 3D Planner')).toBeInTheDocument()
-    expect(screen.getByText('10 media point')).toBeInTheDocument()
+    expect(screen.getByText('10 supporti')).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /Pump Topper 1/ }),
+      screen.getByRole('button', { name: /Sovrapompa \/ Cappuccio/ }),
     ).toBeInTheDocument()
   })
   it('cambia stazione e nasconde l’inventario procedurale', async () => {
@@ -35,7 +35,7 @@ describe('App', () => {
         'Questa stazione non è ancora configurata con media point.',
       ),
     ).toBeInTheDocument()
-    expect(screen.queryByText('10 media point')).not.toBeInTheDocument()
+    expect(screen.queryByText('10 supporti')).not.toBeInTheDocument()
     const setupButton = screen.getByRole('button', { name: 'Configura stazione' })
     expect(setupButton).toBeVisible()
     await userEvent.click(setupButton)

@@ -49,22 +49,7 @@ export function TopBar() {
           </p>
         </div>
       </div>
-      <div className="ml-auto flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 p-1.5">
-        {modes.map(([id, label, Icon]) => (
-          <button
-            key={id}
-            onClick={() => {
-              setMode(id)
-              if (id === 'auto') play()
-            }}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === id ? 'bg-[#1746a2] text-white shadow-md shadow-blue-900/15' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm'}`}
-          >
-            <Icon size={17} />
-            {label}
-          </button>
-        ))}
-      </div>
-      <label className="relative flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 hover:bg-slate-50">
+      <label className="relative ml-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 hover:bg-slate-50">
         <MapPin size={17} className="text-[#1954c6]" />
         <span className="sr-only">Stazione</span>
         <select
@@ -84,6 +69,21 @@ export function TopBar() {
         </span>
         <ChevronDown size={15} className="pointer-events-none text-slate-400" />
       </label>
+      <div className="ml-auto flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 p-1.5">
+        {modes.map(([id, label, Icon]) => (
+          <button
+            key={id}
+            onClick={() => {
+              setMode(id)
+              if (id === 'auto') play()
+            }}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${mode === id ? 'bg-[#1746a2] text-white shadow-md shadow-blue-900/15' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm'}`}
+          >
+            <Icon size={17} />
+            {label}
+          </button>
+        ))}
+      </div>
       {station.modelType !== 'procedural' && !setupEnabled && (
         <button
           type="button"

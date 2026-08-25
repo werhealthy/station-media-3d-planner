@@ -25,6 +25,7 @@ interface ArmProps {
   armRef: RefObject<THREE.Group | null>
   nozzleInHand: boolean
   paying: boolean
+  tapping: boolean
 }
 
 function Arm({ side, armRef, nozzleInHand, paying }: ArmProps) {
@@ -121,10 +122,16 @@ export function FirstPersonAvatar() {
   const nozzleInHand =
     mode === 'auto' &&
     step?.nozzle?.owner === 'driver' &&
-    step.nozzle.state === 'hand'
+    ['hand', 'inserting', 'inserted', 'removing', 'returning'].includes(
+      step.nozzle.state,
+    )
   const paying =
     mode === 'auto' &&
     (step?.id === 'self-insert-cash' || step?.id === 'svolta-payment')
+  const tapping =
+    mode === 'auto' &&
+    Boolean(step?.terminalScreen) &&
+    !['cash-instructions', 'cash-amount'].includes(step?.terminalScreen ?? '')
 
   useFrame((_, delta) => {
     if (!body.current || !visible) {
@@ -138,6 +145,7 @@ export function FirstPersonAvatar() {
     lastPosition.current.copy(camera.position)
     const moving = horizontalSpeed > 0.18
     if (moving) gait.current += delta * Math.min(horizontalSpeed, 2.4) * 4.6
+    else if (tapping) gait.current += delta
 
     body.current.position.copy(camera.position)
     body.current.quaternion.copy(camera.quaternion)
@@ -154,9 +162,10 @@ export function FirstPersonAvatar() {
         swing + breathe,
         settle,
       )
+      const tap = tapping ? -0.52 + Math.sin(gait.current * 5.5) * 0.1 : 0
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
-        -swing + breathe,
+        -swing + breathe + tap,
         settle,
       )
     }
@@ -169,12 +178,14 @@ export function FirstPersonAvatar() {
         armRef={leftArm}
         nozzleInHand={nozzleInHand}
         paying={paying}
+        tapping={false}
       />
       <Arm
         side={1}
         armRef={rightArm}
         nozzleInHand={nozzleInHand}
         paying={paying}
+        tapping={tapping}
       />
     </group>
   )

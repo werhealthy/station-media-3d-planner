@@ -552,8 +552,12 @@ export function NavigationRig() {
               (inContinuousArrival || inContinuousDeparture
                 ? 3.4
                 : current.motion === 'walk'
-                  ? 4.2
-                  : 5.8),
+                  ? 3.2
+                  : current.motion === 'glance'
+                    ? 1.15
+                    : current.motion === 'hold'
+                      ? 1.7
+                      : 3.1),
           ),
       )
       camera.lookAt(smoothedAutoTarget.current)

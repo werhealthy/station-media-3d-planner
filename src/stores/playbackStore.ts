@@ -6,7 +6,7 @@ import type {
 } from '@/domain/journeys'
 
 export type ServiceChoice = 'self' | 'servito'
-export type PaymentChoice = 'acceptor' | 'svolta'
+export type PaymentChoice = 'operator' | 'svolta'
 
 interface PlaybackState {
   activeRouteId: string | null

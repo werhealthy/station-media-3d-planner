@@ -39,9 +39,9 @@ export function JourneyFuelNozzle() {
   const cue = mode === 'auto' ? step?.nozzle : undefined
   const rack = cue ? RACK[cue.pump] : RACK.self
   const filler = cue ? FILLER[cue.pump] : FILLER.self
-  const worldVisible = Boolean(
-    cue && ['inserting', 'inserted', 'removing', 'returning'].includes(cue.state),
-  )
+  // The prop stays visible from the instant it is taken from the rack: this
+  // avoids the distracting "appears already in the filler" jump.
+  const worldVisible = Boolean(cue && cue.state !== 'holstered')
 
   const hoseGeometry = useMemo(() => {
     const points = [
@@ -104,12 +104,14 @@ export function JourneyFuelNozzle() {
       )
     }
 
-    if (cue.state === 'inserted') destination.copy(filler)
+    if (cue.state === 'hand') destination.copy(start)
+    else if (cue.state === 'inserted') destination.copy(filler)
     else if (cue.state === 'inserting')
       destination.copy(start).lerp(filler, amount)
     else if (cue.state === 'removing')
       destination.copy(filler).lerp(start, amount)
-    else destination.copy(start).lerp(rack, amount)
+    else if (cue.state === 'returning') destination.copy(start).lerp(rack, amount)
+    else destination.copy(start)
 
     nozzle.current.position.copy(destination)
     nozzle.current.rotation.set(
@@ -137,7 +139,7 @@ export function JourneyFuelNozzle() {
       </group>
       <mesh
         geometry={hoseGeometry}
-        visible={Boolean(cue && cue.state === 'inserted')}
+        visible={Boolean(cue && cue.state !== 'holstered')}
         castShadow
       >
         <meshStandardMaterial color="#101317" roughness={0.9} />

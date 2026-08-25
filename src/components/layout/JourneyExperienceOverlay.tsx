@@ -22,15 +22,13 @@ export function JourneyExperienceOverlay() {
   const step = journey.steps[activeStepIndex]
   const journeyHeading = !serviceChoice
     ? 'Ingresso Q8'
-    : serviceChoice === 'self' && !paymentChoice
-      ? 'Percorso Self'
-      : journey.name
+    : journey.name
 
   useEffect(() => {
     if (mode !== 'auto' || !step?.decision || pendingDecision) return
     const alreadyResolved =
       (step.decision === 'service-mode' && serviceChoice) ||
-      (step.decision === 'payment-location' && paymentChoice)
+      (step.decision === 'operator-payment' && paymentChoice)
     if (!alreadyResolved) openDecision(step.decision)
   }, [
     mode,
@@ -47,11 +45,13 @@ export function JourneyExperienceOverlay() {
     targetRouteId: JourneyId,
     choices: {
       serviceChoice?: 'self' | 'servito'
-      paymentChoice?: 'acceptor' | 'svolta'
+      paymentChoice?: 'operator' | 'svolta'
     },
   ) => {
     const target = getJourney(targetRouteId)
-    const decisionId = step.id
+    // La seconda scelta (pagamento Servito) è un disclaimer mostrato subito:
+    // si riparte comunque dal bivio comune, non dallo step corrente della corsia.
+    const decisionId = step.decision ? step.id : 'common-service-choice'
     const decisionIndex = target.steps.findIndex(
       (item) => item.id === decisionId,
     )
@@ -92,16 +92,15 @@ export function JourneyExperienceOverlay() {
                 <Zap size={25} />
                 <span>
                   <b>Self</b>
-                  <small>Scendi dall’auto e scegli dove pagare</small>
+                  <small>Paghi sempre al totem prima del rifornimento</small>
                 </span>
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  continueAfterDecision('servito', {
-                    serviceChoice: 'servito',
-                  })
-                }
+                onClick={() => {
+                  continueAfterDecision('servito', { serviceChoice: 'servito' })
+                  openDecision('operator-payment')
+                }}
               >
                 <UserRound size={25} />
                 <span>
@@ -114,39 +113,39 @@ export function JourneyExperienceOverlay() {
         </div>
       )}
 
-      {pendingDecision === 'payment-location' && (
+      {pendingDecision === 'operator-payment' && (
         <div className="journey-decision-backdrop" role="dialog" aria-modal>
           <section className="journey-decision-card">
             <span className="decision-kicker">Scelta del pagamento</span>
-            <h2>Dove vuoi pagare?</h2>
-            <p>Il percorso pedonale cambierà in base alla scelta.</p>
+            <h2>Come preferisci pagare il Servito?</h2>
+            <p>Il gestore effettua prima il rifornimento; la scelta vale per il pagamento finale.</p>
             <div className="decision-options">
               <button
                 type="button"
                 onClick={() =>
-                  continueAfterDecision('self-service', {
-                    paymentChoice: 'acceptor',
+                  continueAfterDecision('servito', {
+                    paymentChoice: 'operator',
                   })
                 }
               >
                 <CreditCard size={25} />
                 <span>
-                  <b>Accettatore Self</b>
-                  <small>Segui la sequenza sul terminale digitale</small>
+                  <b>Al gestore</b>
+                  <small>Paghi dal finestrino al termine del servizio</small>
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() =>
-                  continueAfterDecision('self-svolta', {
+                  continueAfterDecision('servito-svolta', {
                     paymentChoice: 'svolta',
                   })
                 }
               >
                 <Store size={25} />
                 <span>
-                  <b>Cassa Svolta</b>
-                  <small>Entra nello store, paga e torna alla pompa</small>
+                  <b>In Svolta</b>
+                  <small>Entra nello store e paga alla cassa</small>
                 </span>
               </button>
             </div>

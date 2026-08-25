@@ -42,7 +42,8 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   )
   const showAll = useProjectStore((state) => state.showAllMediaPoints)
   const [error, setError] = useState('')
-  const point = points.find((item) => item.id === selectedId)
+  const inventoryPoints = points.filter((item) => item.assignable)
+  const point = inventoryPoints.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
   const usesSmartOptIdle = point?.supportTypeId === '11'
@@ -115,7 +116,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               Media inventory
             </p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              {points.length} supporti
+              {inventoryPoints.length} supporti caricabili
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               Catalogo Q8 allineato alla distinta dei touchpoint.
@@ -132,7 +133,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
             )}
           </div>
           <div className="flex-1 space-y-2 overflow-y-auto p-4">
-            {points.map((item) => {
+            {inventoryPoints.map((item) => {
               const isHidden = hiddenMediaPointIds.includes(item.id)
               return (
                 <div

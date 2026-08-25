@@ -30,8 +30,8 @@ export function JourneyActors() {
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.actor : undefined
-  const operatorHasNozzle =
-    step?.nozzle?.owner === 'attendant' && step.nozzle.state === 'hand'
+  const operatorHoldsNozzle =
+    step?.nozzle?.owner === 'attendant' && step.nozzle.state !== 'holstered'
 
   useEffect(() => {
     if (!cue) {
@@ -89,7 +89,9 @@ export function JourneyActors() {
     )
     if (rightArm.current) {
       const raised =
-        cue.action === 'payment'
+        operatorHoldsNozzle
+          ? -0.68
+          : cue.action === 'payment'
           ? -1.02
           : ['take-nozzle', 'carry-nozzle', 'insert-nozzle', 'remove-nozzle', 'replace-nozzle'].includes(
                 cue.action,
@@ -166,29 +168,6 @@ export function JourneyActors() {
             <capsuleGeometry args={[0.055, 0.08, 6, 14]} />
             <meshStandardMaterial color="#c98d73" roughness={0.78} />
           </mesh>
-          {side === 1 && operatorHasNozzle && (
-            <group position={[0, -0.53, 0.08]} rotation={[0, 0, -0.18]}>
-              <RoundedBox
-                args={[0.09, 0.12, 0.24]}
-                radius={0.02}
-                smoothness={3}
-              >
-                <meshStandardMaterial
-                  color="#1b2025"
-                  metalness={0.18}
-                  roughness={0.5}
-                />
-              </RoundedBox>
-              <mesh position={[0, 0.07, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[0.015, 0.02, 0.25, 12]} />
-                <meshStandardMaterial
-                  color="#c4cbd0"
-                  metalness={0.72}
-                  roughness={0.28}
-                />
-              </mesh>
-            </group>
-          )}
         </group>
       ))}
       {([-1, 1] as const).map((side) => (

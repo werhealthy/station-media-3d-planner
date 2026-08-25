@@ -12,8 +12,8 @@ const RACK = {
   servito: new THREE.Vector3(3.57, 1.33, 2.09),
 }
 const FILLER = {
-  self: new THREE.Vector3(-3.25, 1.05, 4.75),
-  servito: new THREE.Vector3(5.95, 1.05, 4.75),
+  self: new THREE.Vector3(-3.25, 0.72, 4.75),
+  servito: new THREE.Vector3(5.95, 0.72, 4.75),
 }
 
 function belongsToPump(object: THREE.Object3D, pumpName: string) {
@@ -115,9 +115,9 @@ export function JourneyFuelNozzle() {
 
     nozzle.current.position.copy(destination)
     nozzle.current.rotation.set(
-      cue.state === 'inserted' ? -0.25 : 0.1,
-      cue.pump === 'self' ? -0.55 : 0.55,
-      cue.state === 'inserted' ? Math.PI / 2 : 0,
+      0,
+      cue.state === 'inserted' ? 0 : cue.pump === 'self' ? -0.18 : 0.18,
+      cue.state === 'inserted' ? 0 : -0.3,
     )
   })
 
@@ -128,11 +128,12 @@ export function JourneyFuelNozzle() {
           args={[0.11, 0.16, 0.28]}
           radius={0.022}
           smoothness={3}
+          position={[0.22, 0, 0]}
           castShadow
         >
           <meshStandardMaterial color="#20252b" metalness={0.2} roughness={0.48} />
         </RoundedBox>
-        <mesh position={[0, 0.07, -0.2]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh position={[0.08, 0.07, 0]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.014, 0.02, 0.3, 12]} />
           <meshStandardMaterial color="#c7cbd0" metalness={0.72} roughness={0.28} />
         </mesh>

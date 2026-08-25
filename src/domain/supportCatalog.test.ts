@@ -8,11 +8,11 @@ describe('supportCatalog', () => {
     expect(new Set(SUPPORT_CATALOG.map((support) => support.id)).size).toBe(10)
   })
 
-  it('usa la quota 1600 x 400 mm del riferimento per il sovrapompa', () => {
+  it('usa la quota 550 x 450 mm della grafica per il sovrapompa', () => {
     const support = getSupportType('1')
     expect(support?.dimensions).toMatchObject({
-      width: 1.6,
-      height: 0.4,
+      width: 0.55,
+      height: 0.45,
       source: 'reference',
     })
   })
@@ -32,7 +32,7 @@ describe('supportCatalog', () => {
     })
   })
 
-  it('mantiene nel modello le proporzioni calibrate dai riferimenti fotografici', () => {
+  it('mantiene nel modello le misure delle grafiche ricevute', () => {
     expect(
       Object.fromEntries(
         ['2', '4', '10', '6', '7', '9', '8'].map((id) => {
@@ -41,13 +41,18 @@ describe('supportCatalog', () => {
         }),
       ),
     ).toEqual({
-      '2': [0.72, 1.35],
-      '4': [0.46, 0.78],
-      '6': [0.72, 1.55],
-      '7': [0.62, 1.18],
+      '2': [0.841, 1.189],
+      '4': [0.42, 0.594],
+      '6': [0.77, 1.385],
+      '7': [0.98, 1.975],
       '8': [0.68, 1.28],
-      '9': [0.7, 2.35],
-      '10': [0.42, 0.72],
+      '9': [0.74, 0.5],
+      '10': [0.52, 0.72],
+    })
+    expect(getSupportType('5')?.dimensions).toMatchObject({
+      width: 2.88,
+      height: 1.38,
+      source: 'reference',
     })
   })
 })

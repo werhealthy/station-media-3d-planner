@@ -49,7 +49,7 @@ describe('MediaPointPanel', () => {
     ).toBeVisible()
   })
 
-  it('impedisce l’upload sul sagomato prezzo strutturale', () => {
+  it('toglie il sagomato prezzo strutturale dall’inventario caricabile', () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportTypeId === '8',
     )!
@@ -57,12 +57,8 @@ describe('MediaPointPanel', () => {
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 
-    expect(
-      screen.getByText(/non è configurabile come spazio pubblicitario/),
-    ).toBeVisible()
-    expect(
-      screen.queryByText('Carica JPEG, PNG o PDF'),
-    ).not.toBeInTheDocument()
+    expect(screen.getByText('9 supporti caricabili')).toBeVisible()
+    expect(screen.queryByText(point.name)).not.toBeInTheDocument()
   })
 
   it('consente il caricamento di una creatività PDF', () => {

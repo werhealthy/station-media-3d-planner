@@ -63,6 +63,9 @@ export function MediaSupportGeometry({
   color: string
 }) {
   const panelBottom = Math.max(0, point.position[1] - point.height / 2)
+  const stendardoPoleHeight = point.position[1] + point.height / 2 + 0.1
+  const stendardoPoleCenterY =
+    -point.position[1] + stendardoPoleHeight / 2
   const flagShape = useMemo(() => {
     const shape = new THREE.Shape()
     shape.moveTo(-point.width / 2, -point.height / 2)
@@ -263,59 +266,40 @@ export function MediaSupportGeometry({
             depth={0.055}
             color={color}
           />
-          {[-1, 1].map((side) => (
+          {/* Nelle installazioni reali il telo è appeso lateralmente al palo
+              prezzi tramite due bracci corti, senza una gabbia posteriore. */}
+          {[-0.58, 0.58].map((y) => (
             <mesh
-              key={`vertical-${side}`}
-              position={[side * (point.width / 2 + 0.055), 0, -0.045]}
+              key={y}
+              position={[-point.width / 2 - 0.1, y, -0.04]}
+              rotation={[0, 0, Math.PI / 2]}
               castShadow
             >
-              <boxGeometry args={[0.055, point.height + 0.18, 0.095]} />
+              <cylinderGeometry args={[0.025, 0.025, 0.2, 12]} />
               <meshStandardMaterial
-                color="#6f7981"
+                color="#929aa0"
                 metalness={0.82}
                 roughness={0.24}
               />
             </mesh>
           ))}
-          {[-1, 1].map((side) => (
-            <mesh
-              key={`horizontal-${side}`}
-              position={[0, side * (point.height / 2 + 0.055), -0.045]}
-              castShadow
-            >
-              <boxGeometry args={[point.width + 0.16, 0.055, 0.095]} />
-              <meshStandardMaterial
-                color="#6f7981"
-                metalness={0.82}
-                roughness={0.24}
-              />
-            </mesh>
-          ))}
-          {[-0.23, 0.23].map((x) => (
-            <mesh key={x} position={[x, 0, -0.14]} castShadow>
-              <boxGeometry args={[0.07, point.height * 0.72, 0.22]} />
-              <meshStandardMaterial
-                color="#879199"
-                metalness={0.72}
-                roughness={0.3}
-              />
-            </mesh>
-          ))}
-          {[-0.42, 0.42].map((y) => (
-            <mesh
-              key={`mount-${y}`}
-              position={[0, y, -0.3]}
-              rotation={[Math.PI / 2, 0, 0]}
-              castShadow
-            >
-              <boxGeometry args={[point.width * 0.72, 0.46, 0.065]} />
-              <meshStandardMaterial
-                color="#69747c"
-                metalness={0.84}
-                roughness={0.22}
-              />
-            </mesh>
-          ))}
+          <mesh
+            position={[
+              -point.width / 2 - 0.2,
+              stendardoPoleCenterY,
+              -0.04,
+            ]}
+            castShadow
+          >
+            <cylinderGeometry
+              args={[0.055, 0.065, stendardoPoleHeight, 16]}
+            />
+            <meshStandardMaterial
+              color="#a7adb1"
+              metalness={0.78}
+              roughness={0.28}
+            />
+          </mesh>
         </>
       )
     case 'beach-flag':

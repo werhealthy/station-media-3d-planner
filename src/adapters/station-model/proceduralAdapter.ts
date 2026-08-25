@@ -814,49 +814,46 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   totem.position.set(L.totem.x, 0, L.totem.z)
   totem.name = 'price-pylon'
   root.add(totem)
+  // Roadside Q8 sign: a narrow galvanized pole carrying the logo and price
+  // panels. The advertising stendardo is mounted beside this pole by the
+  // media-point layer, as in the supplied station photographs.
   roundedBox(
     totem,
-    [L.totem.width + 0.34, L.totem.height - 0.55, 0.92],
-    0.12,
+    [0.24, L.totem.height - 0.25, 0.24],
+    0.06,
     steel,
-    [0, L.totem.height / 2 + 0.05, 0],
+    [0, L.totem.height / 2, 0],
     'price-pylon-structural-frame',
   )
   box(
     totem,
-    [L.totem.width - 0.18, L.totem.height - 0.9, 0.97],
-    mat('#202b35', 0.34, 0.48),
-    [0, L.totem.height / 2, 0],
-    'price-pylon-deep-inset',
-  )
-  box(
-    totem,
-    [L.totem.width + 0.72, 0.22, 1.34],
+    [0.82, 0.18, 0.82],
     concrete,
     [0, 0.12, 0],
     'price-pylon-base',
   )
   box(
     totem,
-    [L.totem.width + 0.38, 0.16, 1.12],
-    steel,
-    [0, 0.31, 0],
-    'price-pylon-base-trim',
-  )
-  box(
-    totem,
-    [L.totem.width - 0.3, 2.1, 0.08],
+    [1.72, 1.42, 0.16],
     blue,
-    [0, 6.65, 0.5],
+    [0, 6.45, 0.18],
     'price-pylon-brand-panel',
   )
-  brandPlane(totem, q8Texture, [2.55, 1.3], [0, 7.05, 0.55], 'price-pylon-logo')
-  for (const y of [3.2, 4.2, 5.2]) {
+  brandPlane(totem, q8Texture, [1.46, 0.8], [0, 6.7, 0.275], 'price-pylon-logo')
+  roundedBox(
+    totem,
+    [1.72, 1.62, 0.16],
+    0.05,
+    mat('#24303c', 0.34, 0.48),
+    [0, 4.88, 0.18],
+    'price-pylon-deep-inset',
+  )
+  for (const y of [4.45, 5.02, 5.59]) {
     box(
       totem,
-      [L.totem.width - 0.35, 0.7, 0.08],
+      [1.5, 0.42, 0.06],
       mat('#111b2a', 0.2),
-      [0, y, 0.5],
+      [0, y, 0.28],
       'price-display-row',
     )
     box(
@@ -868,14 +865,14 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
         emissiveIntensity: 1.15,
         roughness: 0.22,
       }),
-      [0.72, y, 0.55],
+      [0.43, y, 0.32],
       'price-led-digits',
     )
     box(
       totem,
       [0.68, 0.09, 0.035],
       mat('#dbe3e7', 0.38),
-      [-0.65, y, 0.55],
+      [-0.42, y, 0.32],
       'fuel-label',
     )
   }

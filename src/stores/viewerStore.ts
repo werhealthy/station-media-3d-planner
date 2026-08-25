@@ -5,23 +5,32 @@ interface ViewerState {
   selectedMediaPointId: string | null
   hoveredMediaPointId: string | null
   overviewUnlocked: boolean
-  eyeHeight: number
+  personHeight: number
   focusRequestId: number
   selectMediaPoint: (id: string | null) => void
   hoverMediaPoint: (id: string | null) => void
   setNavigationMode: (mode: ViewerState['navigationMode']) => void
   setActiveHotspot: (id: string | null) => void
   setOverviewUnlocked: (unlocked: boolean) => void
-  setEyeHeight: (height: number) => void
+  setPersonHeight: (height: number) => void
   resetForStation: () => void
 }
+
+export const MIN_PERSON_HEIGHT = 1.4
+export const MAX_PERSON_HEIGHT = 2.1
+export const EYE_TOP_OFFSET = 0.11
+
+export function eyeHeightFromPersonHeight(personHeight: number) {
+  return personHeight - EYE_TOP_OFFSET
+}
+
 export const useViewerStore = create<ViewerState>((set) => ({
   navigationMode: 'overview',
   activeHotspotId: null,
   selectedMediaPointId: null,
   hoveredMediaPointId: null,
   overviewUnlocked: false,
-  eyeHeight: 1.7,
+  personHeight: 1.8,
   focusRequestId: 0,
   selectMediaPoint: (id) =>
     set((state) => ({
@@ -50,8 +59,13 @@ export const useViewerStore = create<ViewerState>((set) => ({
       navigationMode: overviewUnlocked ? 'overview' : state.navigationMode,
       activeHotspotId: overviewUnlocked ? null : state.activeHotspotId,
     })),
-  setEyeHeight: (eyeHeight) =>
-    set({ eyeHeight: Math.min(2, Math.max(1.45, eyeHeight)) }),
+  setPersonHeight: (personHeight) =>
+    set({
+      personHeight: Math.min(
+        MAX_PERSON_HEIGHT,
+        Math.max(MIN_PERSON_HEIGHT, personHeight),
+      ),
+    }),
   resetForStation: () =>
     set({
       navigationMode: 'overview',

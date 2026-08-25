@@ -32,4 +32,7 @@ I path degli asset sono centralizzati in `src/config/brandAssets.ts`. Il logo Q8
 
 ## Passaggio futuro a un modello GLB
 
+Il percorso per sostituire la scena procedurale con asset PBR approvati è
+descritto nella [visual quality roadmap](docs/VISUAL_QUALITY_ROADMAP.md).
+
 Il modello procedurale è il fallback leggero e modificabile, ma non può raggiungere da solo il fotorealismo di un asset texturizzato ad hoc. `StationModelAdapter` resta il boundary: per sostituire il fallback configurare `glbAdapter` con un GLB ottimizzato in metri, asse Y-up, origine al centro del piazzale, materiali PBR compressi e nomi nodo stabili. Il GLB deve preservare gli ingombri e le coordinate di `stationLayout.ts`, così gli ancoraggi dei media point e le viste hotspot non cambiano. Si raccomandano mesh separate per shop, pensilina, pompe e totem, UV non sovrapposte, texture 2K/4K selettive e collision volumes semplificati.

@@ -56,7 +56,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Isola anteriore',
     surface: 'Cappuccio erogatore',
     heightFromGround: 2.4,
-    position: [4, 2.36, frontZ + 0.48],
+    position: [5, 2.36, frontZ + 0.48],
     rotation: [0, 0, 0],
   }),
   supportPoint('2', {
@@ -65,7 +65,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Ingresso isola anteriore',
     surface: 'Supporto a terra',
     heightFromGround: 0,
-    position: [8.2, 0.62, frontZ + 2.2],
+    position: [5, 0.62, frontZ + 2.2],
     rotation: [0, 0, 0],
   }),
   supportPoint('4', {
@@ -83,7 +83,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Erogatore posteriore',
     surface: 'Estensione erogatore',
     heightFromGround: 1.1,
-    position: [-3.08, 1.45, backZ + 0.49],
+    position: [-4.08, 1.45, backZ + 0.49],
     rotation: [0, 0, 0],
   }),
   supportPoint('11', {
@@ -107,11 +107,11 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('5', {
     id: 'mp-07',
     number: 7,
-    location: 'Perimetro piazzale',
+    location: 'Fondale dietro le pompe',
     surface: 'Struttura 4 x 3 m',
     heightFromGround: 0.35,
-    position: [18, 1.85, 12.5],
-    rotation: [0, 180, 0],
+    position: [-11, 1.85, -6.25],
+    rotation: [0, 0, 0],
   }),
   supportPoint('7', {
     id: 'mp-08',

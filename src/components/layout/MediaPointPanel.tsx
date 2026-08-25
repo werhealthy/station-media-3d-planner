@@ -323,6 +323,12 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       )}
                       {asset.width} × {asset.height} px ·{' '}
                       {ratioLabel(asset.aspectRatio)}
+                      {asset.originalSize && (
+                        <span className="ml-1 font-semibold text-emerald-700">
+                          · compressa automaticamente da{' '}
+                          {(asset.originalSize / 1024 / 1024).toFixed(1)} MB
+                        </span>
+                      )}
                     </div>
                   </div>
                   {fit && (
@@ -421,9 +427,9 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                     </span>
                     <span className="mt-1 text-xs text-slate-500">
                       Rapporto richiesto{' '}
-                      {ratioLabel(point.width / point.height)} · massimo 15 MB
+                      {ratioLabel(point.width / point.height)} · output massimo 15 MB
                       <br />
-                      Per i PDF viene visualizzata la prima pagina
+                      Immagini fino a 100 MB compresse automaticamente; per i PDF viene visualizzata la prima pagina
                     </span>
                   </label>
                 </>

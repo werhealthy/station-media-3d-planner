@@ -12,8 +12,8 @@ const RACK = {
   servito: new THREE.Vector3(3.57, 1.33, 2.09),
 }
 const FILLER = {
-  self: new THREE.Vector3(-2.35, 1.05, 4.75),
-  servito: new THREE.Vector3(6.75, 1.05, 4.75),
+  self: new THREE.Vector3(-3.25, 1.05, 4.75),
+  servito: new THREE.Vector3(5.95, 1.05, 4.75),
 }
 
 function belongsToPump(object: THREE.Object3D, pumpName: string) {

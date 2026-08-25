@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024
+const MAX_SOURCE_IMAGE_SIZE = 100 * 1024 * 1024
+const MAX_TEXTURE_SIDE = 4096
 const PDF_MIME_TYPE = 'application/pdf'
 
 export type MediaMimeType = 'image/jpeg' | 'image/png' | 'application/pdf'
@@ -14,6 +16,7 @@ export const MediaAssetSchema = z.object({
   height: z.number(),
   aspectRatio: z.number().positive(),
   url: z.string(),
+  originalSize: z.number().positive().optional(),
 })
 export type MediaAsset = z.infer<typeof MediaAssetSchema>
 
@@ -29,6 +32,68 @@ async function getImageDimensions(url: string) {
     image.onerror = () => reject(new Error('Immagine non valida.'))
     image.src = url
   })
+}
+
+async function compressOversizedImage(file: File) {
+  if (file.size > MAX_SOURCE_IMAGE_SIZE)
+    throw new Error('L’immagine supera il limite sorgente di 100 MB.')
+
+  const sourceUrl = URL.createObjectURL(file)
+  try {
+    const source = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image()
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error('Immagine non valida.'))
+      image.src = sourceUrl
+    })
+    const scale = Math.min(
+      1,
+      MAX_TEXTURE_SIDE / Math.max(source.naturalWidth, source.naturalHeight),
+    )
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(source.naturalWidth * scale))
+    canvas.height = Math.max(1, Math.round(source.naturalHeight * scale))
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Impossibile comprimere l’immagine.')
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(source, 0, 0, canvas.width, canvas.height)
+
+    const encode = (quality: number) =>
+      new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (blob) =>
+            blob
+              ? resolve(blob)
+              : reject(new Error('Impossibile comprimere l’immagine.')),
+          'image/jpeg',
+          quality,
+        ),
+      )
+
+    let low = 0.42
+    let high = 0.9
+    let candidate = await encode(high)
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const quality = (low + high) / 2
+      const encoded = await encode(quality)
+      if (encoded.size <= MAX_FILE_SIZE) {
+        candidate = encoded
+        low = quality
+      } else high = quality
+    }
+    if (candidate.size > MAX_FILE_SIZE)
+      throw new Error(
+        'L’immagine resta troppo pesante dopo la compressione automatica.',
+      )
+    return {
+      blob: candidate,
+      width: canvas.width,
+      height: canvas.height,
+    }
+  } finally {
+    URL.revokeObjectURL(sourceUrl)
+  }
 }
 
 async function rasterizeFirstPdfPage(file: File) {
@@ -70,10 +135,9 @@ async function rasterizeFirstPdfPage(file: File) {
 }
 
 export async function readCreativeAsset(file: File): Promise<MediaAsset> {
-  if (file.size > MAX_FILE_SIZE)
-    throw new Error('Il file supera il limite di 15 MB.')
-
   if (isPdf(file)) {
+    if (file.size > MAX_FILE_SIZE)
+      throw new Error('Il PDF supera il limite di 15 MB.')
     try {
       const preview = await rasterizeFirstPdfPage(file)
       return {
@@ -96,6 +160,21 @@ export async function readCreativeAsset(file: File): Promise<MediaAsset> {
 
   if (!['image/jpeg', 'image/png'].includes(file.type))
     throw new Error('Carica un file JPEG, PNG o PDF.')
+
+  if (file.size > MAX_FILE_SIZE) {
+    const compressed = await compressOversizedImage(file)
+    return {
+      id: crypto.randomUUID(),
+      name: file.name.replace(/\.(png|jpe?g)$/i, '') + '-compresso.jpg',
+      mimeType: 'image/jpeg',
+      size: compressed.blob.size,
+      originalSize: file.size,
+      url: URL.createObjectURL(compressed.blob),
+      width: compressed.width,
+      height: compressed.height,
+      aspectRatio: compressed.width / compressed.height,
+    }
+  }
 
   const url = URL.createObjectURL(file)
   let dimensions: { width: number; height: number }

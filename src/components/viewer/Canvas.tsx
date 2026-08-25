@@ -1,5 +1,5 @@
 import { Canvas as R3FCanvas } from '@react-three/fiber'
-import { ContactShadows, Environment, Html } from '@react-three/drei'
+import { ContactShadows, Environment, Html, Sky } from '@react-three/drei'
 import { Suspense, useCallback, useEffect, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -12,9 +12,17 @@ import { useStationStore } from '@/stores/stationStore'
 import { getStation } from '@/domain/stations'
 import { selectStationAdapter } from '@/adapters/station-model/stationAdapter'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
-import { applyHiddenMeshes, boxToRuntimeBounds, calculateUsefulBox } from '@/three/stationBounds'
-import { inspectIntersection, rotationFromSurfaceNormal } from '@/three/stationPicking'
+import {
+  applyHiddenMeshes,
+  boxToRuntimeBounds,
+  calculateUsefulBox,
+} from '@/three/stationBounds'
+import {
+  inspectIntersection,
+  rotationFromSurfaceNormal,
+} from '@/three/stationPicking'
 import { StationDebugHelpers } from './StationDebugHelpers'
+import { FirstPersonAvatar } from './FirstPersonAvatar'
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -29,7 +37,9 @@ export function Canvas() {
   const config = useStationSetupStore((state) => state.config)
   const configStatus = useStationSetupStore((state) => state.configStatus)
   const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
-  const setSelectedMediaPoint = useStationSetupStore((state) => state.setSelectedMediaPoint)
+  const setSelectedMediaPoint = useStationSetupStore(
+    (state) => state.setSelectedMediaPoint,
+  )
   const setTool = useStationSetupStore((state) => state.setTool)
   const updateConfig = useStationSetupStore((state) => state.updateConfig)
   const setWarning = useStationSetupStore((state) => state.setWarning)
@@ -53,70 +63,120 @@ export function Canvas() {
   useEffect(() => {
     if (!root) return
     applyHiddenMeshes(root, config.hiddenMeshes)
-    const useful = boxToRuntimeBounds(calculateUsefulBox(root, config.hiddenMeshes))
+    const useful = boxToRuntimeBounds(
+      calculateUsefulBox(root, config.hiddenMeshes),
+    )
     if (useful) setLoadedModel(root, useful, diagnostics)
   }, [config.hiddenMeshes, diagnostics, root, setLoadedModel])
 
-  const handlePointerDown = useCallback((event: ThreeEvent<PointerEvent>) => {
-    if (!setupEnabled || !tool) return
-    event.stopPropagation()
-    const hit = event.intersections.find((item) => item.object instanceof THREE.Mesh && item.object.visible)
-    if (!hit) return
-    const inspection = inspectIntersection(hit)
-    if (!inspection) return
-    setSelectedMesh(inspection)
-    if (tool === 'ground') {
-      updateConfig((current) => ({ ...current, ground: { y: inspection.hitPoint[1], meshName: inspection.name, meshPath: inspection.path, normal: inspection.normal } }))
-      setWarning(null)
-      setTool('inspect')
-    } else if (tool === 'media') {
-      const index = config.mediaPoints.length + 1
-      const offset = new THREE.Vector3(...inspection.normal).multiplyScalar(0.012)
-      const position = new THREE.Vector3(...inspection.hitPoint).add(offset).toArray()
-      updateConfig((current) => ({
-        ...current,
-        mediaPoints: [...current.mediaPoints, {
-          id: `media-${String(index).padStart(2, '0')}`,
-          number: index,
-          name: `Media point ${index}`,
-          supportShape: 'freestanding',
-          type: 'print',
-          assignable: true,
-          width: 1,
-          height: 0.7,
-          position,
-          normal: inspection.normal,
-          rotation: rotationFromSurfaceNormal(inspection.normal),
-          attachedMeshName: inspection.name,
-          attachedMeshPath: inspection.path,
-          location: inspection.name,
-          surface: 'Superficie configurata',
-        }],
-      }))
-      setSelectedMediaPoint(`media-${String(index).padStart(2, '0')}`)
-      setTool(null)
-    } else if (tool === 'walk') {
-      const index = config.walkPath.length + 1
-      const y = config.ground?.y ?? inspection.hitPoint[1]
-      updateConfig((current) => ({ ...current, walkPath: [...current.walkPath, { id: `WALK_${String(index).padStart(2, '0')}`, position: [inspection.hitPoint[0], y, inspection.hitPoint[2]] }] }))
-    }
-  }, [config.ground?.y, config.mediaPoints.length, config.walkPath.length, setSelectedMediaPoint, setSelectedMesh, setTool, setWarning, setupEnabled, tool, updateConfig])
+  const handlePointerDown = useCallback(
+    (event: ThreeEvent<PointerEvent>) => {
+      if (!setupEnabled || !tool) return
+      event.stopPropagation()
+      const hit = event.intersections.find(
+        (item) => item.object instanceof THREE.Mesh && item.object.visible,
+      )
+      if (!hit) return
+      const inspection = inspectIntersection(hit)
+      if (!inspection) return
+      setSelectedMesh(inspection)
+      if (tool === 'ground') {
+        updateConfig((current) => ({
+          ...current,
+          ground: {
+            y: inspection.hitPoint[1],
+            meshName: inspection.name,
+            meshPath: inspection.path,
+            normal: inspection.normal,
+          },
+        }))
+        setWarning(null)
+        setTool('inspect')
+      } else if (tool === 'media') {
+        const index = config.mediaPoints.length + 1
+        const offset = new THREE.Vector3(...inspection.normal).multiplyScalar(
+          0.012,
+        )
+        const position = new THREE.Vector3(...inspection.hitPoint)
+          .add(offset)
+          .toArray()
+        updateConfig((current) => ({
+          ...current,
+          mediaPoints: [
+            ...current.mediaPoints,
+            {
+              id: `media-${String(index).padStart(2, '0')}`,
+              number: index,
+              name: `Media point ${index}`,
+              supportShape: 'freestanding',
+              type: 'print',
+              assignable: true,
+              width: 1,
+              height: 0.7,
+              position,
+              normal: inspection.normal,
+              rotation: rotationFromSurfaceNormal(inspection.normal),
+              attachedMeshName: inspection.name,
+              attachedMeshPath: inspection.path,
+              location: inspection.name,
+              surface: 'Superficie configurata',
+            },
+          ],
+        }))
+        setSelectedMediaPoint(`media-${String(index).padStart(2, '0')}`)
+        setTool(null)
+      } else if (tool === 'walk') {
+        const index = config.walkPath.length + 1
+        const y = config.ground?.y ?? inspection.hitPoint[1]
+        updateConfig((current) => ({
+          ...current,
+          walkPath: [
+            ...current.walkPath,
+            {
+              id: `WALK_${String(index).padStart(2, '0')}`,
+              position: [inspection.hitPoint[0], y, inspection.hitPoint[2]],
+            },
+          ],
+        }))
+      }
+    },
+    [
+      config.ground?.y,
+      config.mediaPoints.length,
+      config.walkPath.length,
+      setSelectedMediaPoint,
+      setSelectedMesh,
+      setTool,
+      setWarning,
+      setupEnabled,
+      tool,
+      updateConfig,
+    ],
+  )
   return (
     <R3FCanvas
       style={{ cursor: setupEnabled && tool ? 'crosshair' : 'grab' }}
       shadows
       dpr={[1, 1.75]}
-      camera={{ position: [31, 19, 34], fov: 42, near: 0.1, far: 180 }}
+      camera={{ position: [30, 16, 31], fov: 43, near: 0.1, far: 180 }}
       gl={{ antialias: true, toneMapping: 4, toneMappingExposure: 1.12 }}
     >
       <Suspense fallback={null}>
         <color attach="background" args={['#b8d6ee']} />
-        <fog attach="fog" args={['#b8d6ee', 65, 125]} />
-        <ambientLight intensity={0.22} />
-        <hemisphereLight args={['#edf8ff', '#555950', 1.35]} />
+        <fog attach="fog" args={['#bfd9ec', 72, 138]} />
+        <Sky
+          distance={450000}
+          sunPosition={[-18, 30, 22]}
+          turbidity={6.5}
+          rayleigh={1.65}
+          mieCoefficient={0.005}
+          mieDirectionalG={0.82}
+        />
+        <ambientLight intensity={0.18} />
+        <hemisphereLight args={['#edf8ff', '#555950', 1.15]} />
         <directionalLight
           position={[-18, 30, 22]}
-          intensity={2.65}
+          intensity={2.9}
           castShadow
           shadow-mapSize={[2048, 2048]}
           shadow-camera-left={-38}
@@ -136,7 +196,9 @@ export function Canvas() {
           onError={setLoadWarning}
           onPointerDown={handlePointerDown}
         />
-        {(station.mediaPointsConfigured || config.mediaPoints.length > 0) && <MediaPointsLayer points={config.mediaPoints} />}
+        {(station.mediaPointsConfigured || config.mediaPoints.length > 0) && (
+          <MediaPointsLayer points={config.mediaPoints} />
+        )}
         <ContactShadows
           position={[0, 0.05, 0]}
           opacity={0.28}
@@ -145,6 +207,7 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
+        <FirstPersonAvatar />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">
@@ -154,16 +217,19 @@ export function Canvas() {
             </div>
           </Html>
         )}
-        {import.meta.env.DEV && (
+        {import.meta.env.DEV && setupEnabled && (
           <Html fullscreen className="pointer-events-none p-3">
             <div className="w-fit rounded bg-slate-950/65 px-2 py-1 text-[11px] font-semibold text-white">
-              <div>Model:{' '}
-              {diagnostics?.source === 'external-fbx'
-                ? 'External FBX ✓'
-                : diagnostics?.source === 'procedural'
-                  ? 'Procedural ✓'
-                  : 'Loading…'}</div>
-              <div>Config:{' '}
+              <div>
+                Model:{' '}
+                {diagnostics?.source === 'external-fbx'
+                  ? 'External FBX ✓'
+                  : diagnostics?.source === 'procedural'
+                    ? 'Procedural ✓'
+                    : 'Loading…'}
+              </div>
+              <div>
+                Config:{' '}
                 {configStatus === 'valid'
                   ? 'Loaded ✓'
                   : configStatus === 'not-configured'
@@ -172,7 +238,9 @@ export function Canvas() {
                       ? 'Invalid'
                       : 'Loading…'}
               </div>
-              {setupEnabled && <span className="ml-2 text-amber-300">Setup: ON</span>}
+              {setupEnabled && (
+                <span className="ml-2 text-amber-300">Setup: ON</span>
+              )}
             </div>
           </Html>
         )}

@@ -14,8 +14,8 @@ import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
 import { orbitMinDistance } from './navigationLimits'
 
-const OVERVIEW_POSITION = new THREE.Vector3(31, 19, 34)
-const OVERVIEW_TARGET = new THREE.Vector3(1, 2, -2)
+const OVERVIEW_POSITION = new THREE.Vector3(30, 16, 31)
+const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
 const EYE_HEIGHT = 1.7
 const WALK_SPEED = 2.35
 const CAPSULE_RADIUS = 0.34
@@ -24,7 +24,7 @@ const GRAVITY = 18
 const COLLIDERS = [
   { minX: 3.2, maxX: 22.8, minZ: -14.4, maxZ: -5.3 },
   { minX: -23.9, maxX: -20.1, minZ: -10.9, maxZ: -9.1 },
-  ...[-8, -4, 0, 4, 8].flatMap((x) =>
+  ...[-5, 5].flatMap((x) =>
     [2.8, -3.2].map((z) => ({
       minX: x - 1.1,
       maxX: x + 1.1,
@@ -119,7 +119,10 @@ export function NavigationRig() {
 
   useEffect(() => {
     if (mode === 'walkthrough') {
-      if (runtimeBounds) {
+      if (config.modelType === 'procedural') {
+        camera.position.set(-18.5, EYE_HEIGHT, 14)
+        camera.lookAt(0, EYE_HEIGHT, -1.5)
+      } else if (runtimeBounds) {
         const padding = Math.max(
           2,
           Math.min(runtimeBounds.size[0], runtimeBounds.size[2]) * 0.08,
@@ -144,7 +147,7 @@ export function NavigationRig() {
       verticalVelocity.current = 0
       walkTime.current = 0
     }
-  }, [camera, mode, perspectiveCamera, runtimeBounds])
+  }, [camera, config.modelType, mode, perspectiveCamera, runtimeBounds])
 
   useEffect(() => {
     if (mode !== 'auto') return
@@ -235,7 +238,7 @@ export function NavigationRig() {
         )
           camera.position.z = nextZ.z
         else velocity.current.z = 0
-        walkTime.current += delta * velocity.current.length() * 2.2
+        walkTime.current += delta * velocity.current.length() * 4.8
       }
       verticalVelocity.current -= GRAVITY * delta
       const groundedHeight =
@@ -246,7 +249,7 @@ export function NavigationRig() {
         camera.position.y + verticalVelocity.current * delta,
       )
       if (camera.position.y <= groundedHeight) verticalVelocity.current = 0
-      const bob = Math.sin(walkTime.current * Math.PI) * 0.014
+      const bob = Math.sin(walkTime.current) * 0.026
       camera.position.y = THREE.MathUtils.lerp(
         camera.position.y,
         groundedHeight + bob,

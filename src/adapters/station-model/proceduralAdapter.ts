@@ -28,8 +28,16 @@ function box(
   material: THREE.Material,
   pos: [number, number, number],
   name: string,
+  rotation?: [number, number, number],
 ) {
-  return mesh(parent, new THREE.BoxGeometry(...size), material, pos, name)
+  return mesh(
+    parent,
+    new THREE.BoxGeometry(...size),
+    material,
+    pos,
+    name,
+    rotation,
+  )
 }
 function roundedBox(
   parent: THREE.Object3D,
@@ -56,6 +64,136 @@ function tube(
     [0, 0, 0],
     name,
   )
+}
+
+function noiseTexture(
+  size: number,
+  variation: number,
+  repeat: [number, number],
+  seed: number,
+  colorTexture: boolean,
+) {
+  const data = new Uint8Array(size * size * 4)
+  let state = seed >>> 0
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      state = (state * 1664525 + 1013904223) >>> 0
+      const random = state / 0xffffffff
+      const broad = Math.sin(x * 0.21) * Math.cos(y * 0.17) * 0.28
+      const value = THREE.MathUtils.clamp(
+        Math.round(210 + (random - 0.5 + broad) * variation),
+        0,
+        255,
+      )
+      const offset = (y * size + x) * 4
+      data[offset] = value
+      data[offset + 1] = value
+      data[offset + 2] = value
+      data[offset + 3] = 255
+    }
+  }
+  const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(...repeat)
+  texture.anisotropy = 8
+  if (colorTexture) texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
+  return texture
+}
+
+function aggregateMaterial(
+  color: string,
+  roughness: number,
+  repeat: [number, number],
+  seed: number,
+  bumpScale: number,
+) {
+  const map = noiseTexture(128, 56, repeat, seed, true)
+  const bumpMap = noiseTexture(128, 76, repeat, seed, false)
+  return new THREE.MeshStandardMaterial({
+    color,
+    map,
+    bumpMap,
+    bumpScale,
+    roughness,
+    metalness: 0.01,
+  })
+}
+
+function tree(
+  root: THREE.Object3D,
+  x: number,
+  z: number,
+  scale: number,
+  seed: number,
+) {
+  const group = new THREE.Group()
+  group.name = `landscape-tree-${seed}`
+  group.position.set(x, 0, z)
+  group.scale.setScalar(scale)
+  root.add(group)
+  const bark = mat('#72513a', 0.94)
+  const darkLeaf = mat('#315d35', 0.93)
+  const lightLeaf = mat('#4f7d44', 0.9)
+  mesh(
+    group,
+    new THREE.CylinderGeometry(0.24, 0.34, 4.6, 18),
+    bark,
+    [0, 2.3, 0],
+    'tree-trunk',
+  )
+  const branches: Array<[number, number, number, number]> = [
+    [-0.7, 3.5, 0.1, 0.72],
+    [0.65, 3.65, -0.15, -0.68],
+    [0.12, 4.05, 0.5, 0.18],
+  ]
+  for (const [index, branch] of branches.entries())
+    mesh(
+      group,
+      new THREE.CylinderGeometry(0.08, 0.14, 1.65, 12),
+      bark,
+      [branch[0], branch[1], branch[2]],
+      `tree-branch-${index}`,
+      [0, 0, branch[3]],
+    )
+  const lobes: Array<[number, number, number, number, number, number]> = [
+    [0, 5.35, 0, 1.9, 1.65, 1.72],
+    [-1.35, 4.85, 0.18, 1.35, 1.2, 1.28],
+    [1.25, 4.9, -0.18, 1.4, 1.22, 1.34],
+    [-0.55, 6.25, -0.1, 1.3, 1.15, 1.22],
+    [0.78, 6.05, 0.25, 1.28, 1.12, 1.2],
+  ]
+  for (const [index, [lx, ly, lz, sx, sy, sz]] of lobes.entries()) {
+    const crown = mesh(
+      group,
+      new THREE.SphereGeometry(1, 20, 14),
+      index % 2 ? lightLeaf : darkLeaf,
+      [lx, ly, lz],
+      `tree-crown-${index}`,
+    )
+    crown.scale.set(sx, sy, sz)
+  }
+}
+
+function shrubRow(
+  root: THREE.Object3D,
+  startX: number,
+  z: number,
+  count: number,
+  spacing: number,
+) {
+  const foliage = mat('#3d6b3d', 0.96)
+  for (let index = 0; index < count; index += 1) {
+    const shrub = mesh(
+      root,
+      new THREE.SphereGeometry(0.58, 16, 10),
+      foliage,
+      [startX + index * spacing, 0.55, z + Math.sin(index * 1.7) * 0.08],
+      'landscape-shrub',
+    )
+    shrub.scale.set(1.18, 0.82, 0.9)
+  }
 }
 function pump(root: THREE.Group, x: number, z: number, index: number) {
   const g = new THREE.Group()
@@ -246,8 +384,8 @@ function brandPlane(
 function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   const root = new THREE.Group()
   root.name = 'q8-station'
-  const asphalt = mat('#34383d', 0.92, 0.02),
-    concrete = mat('#c9c9c3', 0.82),
+  const asphalt = aggregateMaterial('#4b5055', 0.94, [18, 13], 8217, 0.035),
+    concrete = aggregateMaterial('#dad7cf', 0.86, [15, 9], 3209, 0.018),
     blue = mat('#123a88', 0.26, 0.35),
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
@@ -261,18 +399,21 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     'forecourt',
     [-Math.PI / 2, 0, 0],
   )
-  // A second, slightly lighter aggregate plane breaks up the perfectly flat asphalt.
+  const grass = aggregateMaterial('#678452', 0.98, [10, 4], 9471, 0.055)
   mesh(
     root,
-    new THREE.PlaneGeometry(
-      L.forecourt.width - 1.5,
-      L.forecourt.depth - 1.5,
-      24,
-      18,
-    ),
-    mat('#3c4145', 0.96),
-    [0, 0.012, 0],
-    'forecourt-finish',
+    new THREE.PlaneGeometry(62, 6),
+    grass,
+    [0, 0.025, -19.8],
+    'rear-landscape-lawn',
+    [-Math.PI / 2, 0, 0],
+  )
+  mesh(
+    root,
+    new THREE.PlaneGeometry(5.5, 36),
+    grass,
+    [-29.1, 0.025, -1.5],
+    'entry-landscape-lawn',
     [-Math.PI / 2, 0, 0],
   )
   box(
@@ -383,7 +524,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.205],
     'q8-canopy-logo',
   )
-  for (let x = -8; x <= 8; x += 4)
+  for (const x of [-5, 5])
     for (const z of [L.islands.frontZ, L.islands.backZ])
       pump(root, x, z, Math.round(x + z * 10))
   box(
@@ -404,7 +545,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     root,
     [L.shop.width, 0.9, 0.3],
     teal,
-    [L.shop.x, 4.35, -L.shop.depth / 2 + L.shop.z - 0.16],
+    [L.shop.x, 4.35, L.shop.z + L.shop.depth / 2 + 0.16],
     'shop-fascia',
   )
   box(
@@ -460,15 +601,16 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
         'shop-product',
       )
   }
-  for (let x = 5; x <= 20; x += 3)
+  const windowCenters = [5.65, 8.25, 10.5, 15.5, 17.75, 20.35]
+  for (const x of windowCenters)
     box(
       root,
-      [2.5, 3, 0.12],
+      [x === 5.65 || x === 20.35 ? 2.35 : 1.95, 3, 0.12],
       glass,
       [x, 2.25, L.shop.z + L.shop.depth / 2 + 0.07],
-      'shop-glazing',
+      'shop-window',
     )
-  for (let x = 3.6; x <= 22.4; x += 3)
+  for (const x of [4.35, 6.95, 9.45, 11.5, 14.5, 16.55, 19.05, 21.65])
     box(
       root,
       [0.1, 3.35, 0.18],
@@ -476,14 +618,16 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [x, 2.2, L.shop.z + L.shop.depth / 2 + 0.15],
       'glazing-mullion',
     )
-  box(
-    root,
-    [1.7, 3.25, 0.15],
-    glass,
-    [13, 1.8, L.shop.z + L.shop.depth / 2 + 0.15],
-    'shop-entry',
-  )
-  for (const x of [12.12, 13.88]) {
+  for (const x of [12.25, 13.75]) {
+    box(
+      root,
+      [1.42, 3.2, 0.15],
+      glass,
+      [x, 1.82, L.shop.z + L.shop.depth / 2 + 0.16],
+      'shop-entry-door',
+    )
+  }
+  for (const x of [11.5, 13, 14.5]) {
     box(
       root,
       [0.08, 3.25, 0.2],
@@ -491,14 +635,25 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [x, 1.8, L.shop.z + L.shop.depth / 2 + 0.18],
       'door-frame',
     )
+  }
+  for (const x of [12.72, 13.28])
     box(
       root,
       [0.055, 0.72, 0.08],
       mat('#cbd2d6', 0.16, 0.85),
-      [x + (x < 13 ? 0.48 : -0.48), 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
+      [x, 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
       'door-handle',
     )
-  }
+  // The reference has a restrained silver-panelled side elevation rather than
+  // another repeated glass entrance.
+  for (let z = -13.2; z <= -7.1; z += 2.05)
+    box(
+      root,
+      [0.12, 3.65, 1.85],
+      mat('#c8cdd0', 0.48, 0.32),
+      [L.shop.x + L.shop.width / 2 + 0.07, 2.25, z],
+      'shop-side-cladding',
+    )
   box(
     root,
     [L.shop.width + 0.25, 0.42, 0.26],
@@ -597,7 +752,6 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [x, 0.53, L.totem.z + 0.7],
       'totem-bollard',
     )
-  box(root, [22, 0.3, 3.4], concrete, [2, 0.16, 0], 'pump-platform')
   // Human-scale payment kiosk inspired by the Q8 self-service terminal reference.
   const kiosk = new THREE.Group()
   kiosk.position.set(-11.5, 0, -1.2)
@@ -628,6 +782,24 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [-21, 0.22, 13.7],
     'landscape-bed',
   )
+  shrubRow(root, -27.5, -16.9, 39, 1.42)
+  shrubRow(root, -27.2, 13.75, 10, 0.78)
+  const treePositions: Array<[number, number, number]> = [
+    [-27, -20.4, 0.92],
+    [-22, -20.1, 1.08],
+    [-16.5, -20.6, 0.88],
+    [-10.5, -20.2, 1.16],
+    [-4, -20.5, 0.96],
+    [3, -20.3, 1.12],
+    [10, -20.5, 0.9],
+    [17, -20.1, 1.08],
+    [24, -20.6, 0.94],
+    [29, -17, 0.86],
+    [-29, -12, 0.9],
+    [-29, 5, 1.02],
+  ]
+  for (const [index, [x, z, scale]] of treePositions.entries())
+    tree(root, x, z, scale, index + 1)
   for (const x of [-28, 27])
     for (const z of [-16, 15])
       mesh(
@@ -656,10 +828,33 @@ export const proceduralAdapter: StationModelAdapter = {
             new THREE.TextureLoader().loadAsync(BRAND_ASSETS.svoltaLogo),
           ])
     const root = buildStation(q8Texture, svoltaTexture)
+    const meshes = collect(root)
+    const boundingBox = new THREE.Box3().setFromObject(root)
+    const size = boundingBox.getSize(new THREE.Vector3()).toArray()
+    const center = boundingBox.getCenter(new THREE.Vector3()).toArray()
+    const materials = new Set<THREE.Material>()
+    for (const current of meshes) {
+      const currentMaterials = Array.isArray(current.material)
+        ? current.material
+        : [current.material]
+      for (const material of currentMaterials) materials.add(material)
+    }
     return {
       root,
-      occlusionMeshes: collect(root),
-      boundingBox: new THREE.Box3().setFromObject(root),
+      occlusionMeshes: meshes,
+      boundingBox,
+      diagnostics: {
+        source: 'procedural',
+        rawSize: size,
+        normalizedSize: size,
+        center,
+        meshCount: meshes.length,
+        materialCount: materials.size,
+        textureNames: ['Q8 logo', 'Svolta logo', 'aggregate surfaces'],
+        missingTextures: [],
+        scaleApplied: 1,
+        hierarchy: [],
+      },
     }
   },
   dispose(handle) {

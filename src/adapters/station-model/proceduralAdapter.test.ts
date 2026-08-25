@@ -2,15 +2,23 @@ import { describe, expect, it, vi } from 'vitest'
 import * as THREE from 'three'
 import { proceduralAdapter } from './proceduralAdapter'
 
-describe('proceduralAdapter', () => {
-  it('carica una stazione con mesh di occlusione e bounding box non vuoto', async () => {
+function names(
+  root: Awaited<ReturnType<typeof proceduralAdapter.load>>['root'],
+) {
+  const result: string[] = []
+  root.traverse((object) => result.push(object.name))
+  return result
+}
+
+describe('proceduralAdapter composition', () => {
+  it('loads occlusion meshes and a non-empty bounding box', async () => {
     const handle = await proceduralAdapter.load()
 
     expect(handle.root).toBeInstanceOf(THREE.Object3D)
     expect(handle.occlusionMeshes.length).toBeGreaterThan(0)
-    expect(handle.occlusionMeshes.every((m) => m instanceof THREE.Mesh)).toBe(
-      true
-    )
+    expect(
+      handle.occlusionMeshes.every((mesh) => mesh instanceof THREE.Mesh),
+    ).toBe(true)
 
     const size = new THREE.Vector3()
     handle.boundingBox.getSize(size)
@@ -21,29 +29,55 @@ describe('proceduralAdapter', () => {
     proceduralAdapter.dispose(handle)
   })
 
-  it('dispose() libera geometria e materiale di ogni mesh', async () => {
+  it('disposes every mesh geometry and material', async () => {
     const handle = await proceduralAdapter.load()
     const meshes = handle.occlusionMeshes.filter(
-      (m): m is THREE.Mesh => m instanceof THREE.Mesh
+      (mesh): mesh is THREE.Mesh => mesh instanceof THREE.Mesh,
     )
     const disposeSpies = meshes.map((mesh) => ({
       geometry: vi.spyOn(mesh.geometry, 'dispose'),
       material: Array.isArray(mesh.material)
-        ? mesh.material.map((m) => vi.spyOn(m, 'dispose'))
+        ? mesh.material.map((material) => vi.spyOn(material, 'dispose'))
         : [vi.spyOn(mesh.material, 'dispose')],
     }))
 
     proceduralAdapter.dispose(handle)
 
-    // Alcuni materiali sono condivisi tra piu' mesh (es. colonne, pali):
-    // dispose() puo' quindi essere invocato piu' volte sullo stesso
-    // materiale, operazione idempotente in Three.js. Verifichiamo solo che
-    // ogni geometria e materiale sia stato effettivamente disposto.
     for (const spy of disposeSpies) {
       expect(spy.geometry).toHaveBeenCalled()
-      for (const materialSpy of spy.material) {
+      for (const materialSpy of spy.material)
         expect(materialSpy).toHaveBeenCalled()
-      }
     }
+  })
+
+  it('uses four pumps and a single non-overlapping double entrance', async () => {
+    const handle = await proceduralAdapter.load()
+    const sceneNames = names(handle.root)
+
+    expect(
+      sceneNames.filter((name) => name.startsWith('fuel-dispenser-')),
+    ).toHaveLength(4)
+    expect(
+      sceneNames.filter((name) => name === 'shop-entry-door'),
+    ).toHaveLength(2)
+    expect(sceneNames).not.toContain('shop-glazing')
+    expect(
+      sceneNames.filter((name) => name.startsWith('landscape-tree-')),
+    ).toHaveLength(12)
+
+    proceduralAdapter.dispose(handle)
+  })
+
+  it('reports completed procedural diagnostics', async () => {
+    const handle = await proceduralAdapter.load()
+
+    expect(handle.diagnostics).toMatchObject({
+      source: 'procedural',
+      missingTextures: [],
+      scaleApplied: 1,
+    })
+    expect(handle.diagnostics?.meshCount).toBeGreaterThan(100)
+
+    proceduralAdapter.dispose(handle)
   })
 })

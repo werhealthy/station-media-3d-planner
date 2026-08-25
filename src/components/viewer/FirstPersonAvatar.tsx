@@ -49,11 +49,6 @@ function Arm({ side, armRef, paying }: ArmProps) {
         castShadow
         material={skin}
       />
-      {isActionHand && !paying && (
-        <mesh position={[0.02, -0.105, -0.3]} rotation={[Math.PI / 2, 0, 0]} material={skin}>
-          <cylinderGeometry args={[0.014, 0.018, 0.15, 14]} />
-        </mesh>
-      )}
       {isActionHand && paying && (
         <group
           position={[0.015, -0.095, -0.285]}
@@ -77,7 +72,7 @@ function Arm({ side, armRef, paying }: ArmProps) {
 }
 
 /**
- * Camera-local first-person viewmodel. Short segmented forearms and flat hands
+ * Camera-local first-person viewmodel. Short segmented forearms and compact fists
  * stay in the lower peripheral view at every selected user height.
  */
 export function FirstPersonAvatar() {
@@ -98,6 +93,10 @@ export function FirstPersonAvatar() {
   const paying =
     mode === 'auto' &&
     (step?.id === 'self-insert-cash' || step?.id === 'svolta-payment')
+  const holdingNozzle =
+    mode === 'auto' &&
+    step?.nozzle?.owner === 'driver' &&
+    step.nozzle.state !== 'holstered'
   const tapStep =
     mode === 'auto' &&
     Boolean(
@@ -155,7 +154,8 @@ export function FirstPersonAvatar() {
         : 0
       // One reach-and-release pulse at the end of each actionable screen.
       const tapPhase = THREE.MathUtils.clamp((local - 0.56) / 0.4, 0, 1)
-      const extension = tapStep ? Math.sin(tapPhase * Math.PI) : 0
+      const tapExtension = tapStep ? Math.sin(tapPhase * Math.PI) : 0
+      const extension = Math.max(tapExtension, holdingNozzle ? 0.72 : 0)
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
         -swing + breathe - extension * 0.08,
@@ -163,17 +163,17 @@ export function FirstPersonAvatar() {
       )
       rightArm.current.position.x = THREE.MathUtils.lerp(
         rightArm.current.position.x,
-        0.19 - extension * 0.11,
+        holdingNozzle ? 0.28 : 0.19 - extension * 0.03,
         settle,
       )
       rightArm.current.position.y = THREE.MathUtils.lerp(
         rightArm.current.position.y,
-        -0.23 + extension * 0.11,
+        holdingNozzle ? -0.28 : -0.23,
         settle,
       )
       rightArm.current.position.z = THREE.MathUtils.lerp(
         rightArm.current.position.z,
-        -0.48 - extension * 0.42,
+        -0.48 - extension * 0.5,
         settle,
       )
     }

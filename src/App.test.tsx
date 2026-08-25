@@ -10,7 +10,7 @@ describe('App', () => {
   it('mostra il planner single-view e i 10 supporti Q8', () => {
     render(<App />)
     expect(screen.getByText('Station Media 3D Planner')).toBeInTheDocument()
-    expect(screen.getByText('10 supporti')).toBeInTheDocument()
+    expect(screen.getByText('9 supporti caricabili')).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
         name: /Sovrapompa \/ Cappuccio.*ID 1/,

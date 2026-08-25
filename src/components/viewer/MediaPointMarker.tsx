@@ -61,6 +61,23 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
     select(point.id)
   }
 
+  if (!point.assignable)
+    return (
+      <group
+        position={point.position}
+        rotation={
+          point.rotation.map((value) => (value * Math.PI) / 180) as [
+            number,
+            number,
+            number,
+          ]
+        }
+        name={`structural-point-${point.number}`}
+      >
+        <MediaSupportGeometry point={point} color="#3f4a58" />
+      </group>
+    )
+
   return (
     <group
       position={point.position}

@@ -146,6 +146,16 @@ export function JourneyVehicle() {
           <boxGeometry args={[1.82, 0.08, 0.08]} />
           <meshStandardMaterial color="#1b2430" roughness={0.6} />
         </mesh>
+        <group position={[0.92, -0.56, 1.35]} rotation={[0, Math.PI / 2, 0]}>
+          <mesh>
+            <circleGeometry args={[0.12, 24]} />
+            <meshStandardMaterial color="#101419" roughness={0.7} />
+          </mesh>
+          <mesh position={[0, 0, 0.008]}>
+            <torusGeometry args={[0.105, 0.018, 10, 24]} />
+            <meshStandardMaterial color="#8b94a3" metalness={0.55} roughness={0.34} />
+          </mesh>
+        </group>
       </group>
 
       <group
@@ -181,7 +191,7 @@ export function JourneyVehicle() {
         </RoundedBox>
         {/* Sportello e bocchettone sono parte dell'auto: l'ugello animato
             raggiunge questo punto, invece di generare un secondo raccordo. */}
-        <group position={[0.92, 0.98, 1.35]} rotation={[0, Math.PI / 2, 0]}>
+        <group position={[0.92, 0.72, 1.35]} rotation={[0, Math.PI / 2, 0]}>
           <mesh>
             <circleGeometry args={[0.12, 24]} />
             <meshStandardMaterial color="#101419" roughness={0.7} />

@@ -40,15 +40,12 @@ const SupportCatalogEntrySchema = z.object({
 export type SupportCatalogEntry = z.infer<typeof SupportCatalogEntrySchema>
 
 /**
- * Q8 support rules transcribed from DISTINABASE_ELEMENTIpV.docx.
+ * Q8 support rules transcribed from DISTINABASE_ELEMENTIpV.pdf.
  *
- * Only the Fondostazione document supplies a complete physical format. The
- * pump-topper dimensions come from the supplied UI reference. The SmartOPT
- * body follows the supplied 507 x 606 x 1696 mm technical drawing; its touch
- * area is derived proportionally from that front view.
- * The remaining formats are calibrated from the document photographs against
- * known station objects (dispenser, column and price pylon). They preserve the
- * visible aspect and relative scale, but are still not production drawings.
+ * The printable formats below follow the dimensions supplied with the final
+ * creative artwork. Names remain aligned with the official PDF catalogue.
+ * The SmartOPT body follows the supplied 507 x 606 x 1696 mm technical drawing;
+ * its touch area is derived proportionally from that front view.
  */
 export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
   .array(SupportCatalogEntrySchema)
@@ -63,10 +60,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 1.6,
-        height: 0.4,
+        width: 0.55,
+        height: 0.45,
         source: 'reference',
-        note: 'Quota 1600 x 400 mm mostrata nel riferimento UI fornito.',
+        note: 'Formato grafico Sovrapompa fornito: 550 x 450 mm.',
       },
       targetDistance: '1,5-3 m',
       eyesOn: 'Variabile, nel dwell time di 60-90 s',
@@ -84,10 +81,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.72,
-        height: 1.35,
-        source: 'derived',
-        note: 'Formato verticale calibrato sulle fotografie: circa 720 x 1350 mm.',
+        width: 0.841,
+        height: 1.189,
+        source: 'reference',
+        note: 'Formato grafico Pump Leader fornito: 841 x 1189 mm.',
       },
       targetDistance: '1,5-3 m',
       eyesOn: '2-3 s',
@@ -105,10 +102,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.46,
-        height: 0.78,
-        source: 'derived',
-        note: 'Proporzione ricavata dal pannello montato sulla colonna: circa 460 x 780 mm.',
+        width: 0.42,
+        height: 0.594,
+        source: 'reference',
+        note: 'Formato grafico Pannello Colonna fornito: 420 x 594 mm.',
       },
       targetDistance: '1,5-3 m',
       eyesOn: '5-10 s',
@@ -126,10 +123,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.42,
+        width: 0.52,
         height: 0.72,
-        source: 'derived',
-        note: 'Formato Maxi ricavato dal confronto con erogatore e SmartOPT: circa 420 x 720 mm.',
+        source: 'reference',
+        note: 'Formato grafico Adesivo Colonna fornito: 520 x 720 mm, associato al supporto Mini/Maxi Pump Ear della distinta.',
       },
       targetDistance: '0,5-1 m',
       eyesOn: '10-15 s',
@@ -168,10 +165,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.72,
-        height: 1.55,
-        source: 'derived',
-        note: 'Sagoma verticale su base acqua/cemento ricavata dalle fotografie: circa 720 x 1550 mm.',
+        width: 0.77,
+        height: 1.385,
+        source: 'reference',
+        note: 'Formato grafico Cappuccio Sagomato fornito: 770 x 1385 mm.',
       },
       targetDistance: '1-3 m',
       eyesOn: '4-8 s (stima)',
@@ -189,10 +186,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 4,
-        height: 3,
-        source: 'documented',
-        note: 'Formato fisico 3 x 4 m indicato nel documento.',
+        width: 2.88,
+        height: 1.38,
+        source: 'reference',
+        note: 'Formato grafico Fondostazione fornito: 2880 x 1380 mm.',
       },
       targetDistance: '5-15 m',
       eyesOn: '5-8 s (stima)',
@@ -210,10 +207,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.62,
-        height: 1.18,
-        source: 'derived',
-        note: 'Pannello sospeso sotto il palo prezzi ricavato dalle fotografie: circa 620 x 1180 mm.',
+        width: 0.98,
+        height: 1.975,
+        source: 'reference',
+        note: 'Formato grafico Stendardo fornito: 980 x 1975 mm.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',
@@ -231,10 +228,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.7,
-        height: 2.35,
-        source: 'derived',
-        note: 'Vela e asta calibrate sulle fotografie: telo circa 700 x 2350 mm.',
+        width: 0.74,
+        height: 0.5,
+        source: 'reference',
+        note: 'Formato grafico Q8 HVO (leaf) fornito: 740 x 500 mm; nome del supporto mantenuto come Beach Flag secondo la distinta.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',

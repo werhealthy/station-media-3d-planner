@@ -3,30 +3,35 @@
 The procedural scene is a layout prototype and a fallback. It must not become
 the production source of visual truth by accumulating more primitive meshes.
 
-## Target pipeline
+## Target pipeline without mandatory Blender work
 
-1. Rebuild one approved station in Blender from a measured plan and the Q8
-   elevation references.
-2. Keep pumps, shop, canopy, totem, curbs and every media support as named,
-   modular objects with real-world metre units and clean UVs.
-3. Author physically based materials for asphalt, concrete, painted metal,
-   glass and vegetation. Provide base colour, roughness and normal maps.
-4. Export the station as GLB. Use the existing `StationModelAdapter` boundary
-   so planner features do not depend on mesh names in UI code.
-5. Use LOD and instancing for trees and repeated props. Compress geometry and
-   textures only after the reference scene is approved visually.
+1. Keep the measured station layout and every media support parametric in the
+   application. These dimensions remain the source of truth.
+2. Generate or source modular GLB assets for pump, shop, canopy and props. An
+   image-to-3D service can produce the first pump draft from several clean
+   reference views; it must not decide the support dimensions.
+3. Source PBR surface materials, HDRI and vegetation from a compatible asset
+   library and record the licence with each asset.
+4. Use an automated Blender workflow only as an optional cleanup step for UVs,
+   mesh simplification, pivots and GLB export. The product owner does not need
+   to operate Blender manually.
+5. Load the result through the existing `StationModelAdapter` boundary. Use LOD
+   and instancing for trees and repeated props, then compress only after visual
+   approval.
 
 ## First-person pipeline
 
-The procedural body proxy proves scale, visibility and gait. Production should
-replace it with a rigged, first-person-specific avatar:
+The walkthrough uses an intentionally restrained first-person proxy:
 
-- head hidden for the local player;
-- torso and legs placed in world space below the camera;
-- arms driven by an idle/walk animation blend;
+- sleeves/forearms only, without spherical hands;
+- arms driven by a subtle idle/walk animation blend;
 - footsteps synchronised to the gait cycle;
 - capsule collision and step handling kept independent from the render mesh;
-- optional height presets applied to the capsule, camera and avatar together.
+- height presets applied to camera, collision capsule and gait together.
+
+Auto tour is a separate experience: each journey is a timed scene with a
+vehicle cockpit, approach, turn, stop and natural gaze targets. Hotspots are
+not used as animation keyframes.
 
 ## Acceptance criteria for the first reference station
 
@@ -37,8 +42,10 @@ replace it with a rigged, first-person-specific avatar:
 - Asphalt, concrete, glass, metal and vegetation have visible material response
   under daylight without clipping or excessive reflections.
 - Overview composition remains close to the supplied 2D reference.
-- Walkthrough shows hands at normal gaze and torso, legs and feet when looking
-  down.
+- Walkthrough shows understated forearms, never placeholder spheres, and uses
+  the selected eye height consistently.
+- Self and Servito auto tours begin inside the vehicle and include a visible
+  approach and stop, not a sequence of teleports between hotspots.
 - Stable interactive frame rate on the agreed target laptop and tablet.
 
 ## Assets still required

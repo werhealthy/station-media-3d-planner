@@ -3,6 +3,8 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Eye,
+  EyeOff,
   ImagePlus,
   Info,
   Trash2,
@@ -12,6 +14,7 @@ import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { readImageAsset } from '@/domain/schemas/media'
 import { getSupportType } from '@/domain/supportCatalog'
 import { analyzeCreativeFit } from '@/core/creative/creativeFit'
+import { BRAND_ASSETS } from '@/config/brandAssets'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -31,12 +34,18 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const assignments = useProjectStore((state) => state.assignments)
   const assign = useProjectStore((state) => state.assignAsset)
   const clear = useProjectStore((state) => state.clearAsset)
-  const fitModes = useProjectStore((state) => state.fitModes)
-  const setFitMode = useProjectStore((state) => state.setFitMode)
+  const hiddenMediaPointIds = useProjectStore(
+    (state) => state.hiddenMediaPointIds,
+  )
+  const toggleVisibility = useProjectStore(
+    (state) => state.toggleMediaPointVisibility,
+  )
+  const showAll = useProjectStore((state) => state.showAllMediaPoints)
   const [error, setError] = useState('')
   const point = points.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
-  const fitMode = point ? (fitModes[point.id] ?? 'contain') : 'contain'
+  const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
+  const usesSmartOptIdle = point?.supportTypeId === '11'
   const support = getSupportType(point?.supportTypeId)
   const fit =
     point && asset
@@ -47,6 +56,25 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
           surfaceHeight: point.height,
         })
       : null
+  const recommendations = asset
+    ? points
+        .filter((item) => item.assignable)
+        .map((item) => ({
+          point: item,
+          fit: analyzeCreativeFit({
+            assetWidth: asset.width,
+            assetHeight: asset.height,
+            surfaceWidth: item.width,
+            surfaceHeight: item.height,
+          }),
+        }))
+        .sort(
+          (left, right) =>
+            left.fit.differencePercent - right.fit.differencePercent ||
+            left.point.number - right.point.number,
+        )
+        .slice(0, 3)
+    : []
 
   async function upload(file?: File) {
     if (!file || !point) return
@@ -92,32 +120,58 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
             <p className="mt-1 text-sm text-slate-500">
               Catalogo Q8 allineato alla distinta dei touchpoint.
             </p>
+            {hiddenMediaPointIds.length > 0 && (
+              <button
+                type="button"
+                onClick={showAll}
+                className="mt-3 flex items-center gap-2 text-xs font-bold text-[#1954c6] hover:underline"
+              >
+                <Eye size={15} /> Mostra tutti ({hiddenMediaPointIds.length}{' '}
+                nascosti)
+              </button>
+            )}
           </div>
           <div className="flex-1 space-y-2 overflow-y-auto p-4">
-            {points.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => select(item.id)}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-blue-300 hover:bg-blue-50/50"
-              >
-                <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${item.type === 'digital' ? 'bg-[#1954c6]' : item.assignable ? 'bg-[#e4a11b]' : 'bg-slate-500'}`}
+            {points.map((item) => {
+              const isHidden = hiddenMediaPointIds.includes(item.id)
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center rounded-xl border transition ${isHidden ? 'border-slate-200 bg-slate-50 opacity-65' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
                 >
-                  {item.number}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold text-slate-800">
-                    {item.name}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    ID {item.supportTypeId ?? 'custom'} · {item.location}
-                  </span>
-                </span>
-                {assignments[item.id] && (
-                  <Check size={18} className="text-emerald-600" />
-                )}
-              </button>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => select(item.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left"
+                  >
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${item.type === 'digital' ? 'bg-[#1954c6]' : item.assignable ? 'bg-[#e4a11b]' : 'bg-slate-500'}`}
+                    >
+                      {item.number}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-slate-800">
+                        {item.name}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        ID {item.supportTypeId ?? 'custom'} · {item.location}
+                      </span>
+                    </span>
+                    {assignments[item.id] && (
+                      <Check size={18} className="text-emerald-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`${isHidden ? 'Mostra' : 'Nascondi'} ${item.name}`}
+                    onClick={() => toggleVisibility(item.id)}
+                    className="mr-2 rounded-lg p-2 text-slate-400 hover:bg-white hover:text-slate-700"
+                  >
+                    {isHidden ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </>
       ) : (
@@ -144,6 +198,11 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   {point.name}
                 </h2>
                 <p className="text-sm text-slate-500">{point.location}</p>
+                {pointHidden && (
+                  <p className="mt-1 text-xs font-bold text-amber-700">
+                    Supporto nascosto nella scena
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -174,6 +233,14 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   {millimetres(point.heightFromGround ?? point.position[1])} mm
                 </dd>
               </dl>
+              <button
+                type="button"
+                onClick={() => toggleVisibility(point.id)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+              >
+                {pointHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+                {pointHidden ? 'Mostra nella scena' : 'Nascondi dalla scena'}
+              </button>
               {support && (
                 <div
                   className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${support.dimensions.source === 'estimated' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-blue-100 bg-blue-50/70 text-blue-950'}`}
@@ -249,7 +316,8 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       </button>
                     </div>
                     <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-                      {asset.width} × {asset.height} px · {ratioLabel(asset.aspectRatio)}
+                      {asset.width} × {asset.height} px ·{' '}
+                      {ratioLabel(asset.aspectRatio)}
                     </div>
                   </div>
                   {fit && (
@@ -274,34 +342,61 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       </p>
                     </div>
                   )}
-                  <fieldset className="mt-3">
-                    <legend className="mb-2 text-xs font-bold text-slate-500">
-                      Adattamento senza deformazione
-                    </legend>
-                    <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1">
-                      {(['contain', 'cover'] as const).map((mode) => (
-                        <button
-                          type="button"
-                          key={mode}
-                          aria-pressed={fitMode === mode}
-                          onClick={() => setFitMode(point.id, mode)}
-                          className={`rounded-md px-3 py-2 text-xs font-bold transition ${fitMode === mode ? 'bg-white text-[#1746a2] shadow-sm' : 'text-slate-500'}`}
-                        >
-                          {mode === 'contain' ? 'Mostra tutto' : 'Riempi e ritaglia'}
-                        </button>
-                      ))}
-                    </div>
-                    {fit && fit.status !== 'exact' && (
-                      <p className="mt-2 text-xs leading-5 text-slate-500">
-                        {fitMode === 'contain'
-                          ? `La creatività resta intera; circa ${fit.containUnusedPercent.toFixed(0)}% del supporto rimane libero.`
-                          : `Il supporto viene riempito; circa ${fit.coverCropPercent.toFixed(0)}% della creatività viene ritagliato.`}
+                  {fit && fit.status !== 'exact' && (
+                    <p className="mt-2 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                      La creatività viene mostrata interamente e non viene mai
+                      ritagliata o deformata. Circa{' '}
+                      {fit.containUnusedPercent.toFixed(0)}% del supporto rimane
+                      libero.
+                    </p>
+                  )}
+                  {recommendations.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-xs font-bold text-slate-500">
+                        Supporti consigliati per questo formato
                       </p>
-                    )}
-                  </fieldset>
+                      <div className="mt-2 space-y-1.5">
+                        {recommendations.map((recommendation) => (
+                          <button
+                            type="button"
+                            key={recommendation.point.id}
+                            onClick={() => select(recommendation.point.id)}
+                            className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-xs hover:border-blue-300 hover:bg-blue-50"
+                          >
+                            <span className="font-semibold text-slate-700">
+                              {recommendation.point.number}.{' '}
+                              {recommendation.point.name}
+                            </span>
+                            <span className="tabular-nums text-slate-400">
+                              Δ{' '}
+                              {recommendation.fit.differencePercent.toFixed(1)}%
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
+                  {usesSmartOptIdle && (
+                    <div className="mb-3 overflow-hidden rounded-xl border border-blue-100 bg-[#eef2f7]">
+                      <img
+                        src={BRAND_ASSETS.smartOptIdle}
+                        alt="Schermata idle Q8 del terminale smartOPT Maxi"
+                        className="mx-auto h-64 object-contain p-3"
+                      />
+                      <div className="border-t border-blue-100 bg-white px-3 py-2">
+                        <p className="text-xs font-bold text-[#153276]">
+                          Schermata idle Q8 predefinita
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          Visualizzata nel display verticale finché non assegni
+                          una creatività diversa.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <input
                     id={`creative-upload-${point.id}`}
                     type="file"
@@ -315,11 +410,13 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   >
                     <ImagePlus className="mb-3 text-[#1954c6]" />
                     <span className="font-semibold text-slate-800">
-                      Carica JPEG o PNG
+                      {usesSmartOptIdle
+                        ? 'Sostituisci la schermata idle'
+                        : 'Carica JPEG o PNG'}
                     </span>
                     <span className="mt-1 text-xs text-slate-500">
-                      Rapporto richiesto {ratioLabel(point.width / point.height)} ·
-                      massimo 15 MB
+                      Rapporto richiesto{' '}
+                      {ratioLabel(point.width / point.height)} · massimo 15 MB
                     </span>
                   </label>
                 </>

@@ -9,12 +9,12 @@ import { MediaPointPanel } from './MediaPointPanel'
 describe('MediaPointPanel', () => {
   beforeEach(() => {
     useViewerStore.getState().resetForStation()
-    useProjectStore.setState({ assignments: {}, fitModes: {} })
+    useProjectStore.setState({ assignments: {}, hiddenMediaPointIds: [] })
   })
 
   afterEach(() => {
     useViewerStore.getState().resetForStation()
-    useProjectStore.setState({ assignments: {}, fitModes: {} })
+    useProjectStore.setState({ assignments: {}, hiddenMediaPointIds: [] })
   })
 
   it('segnala le proporzioni errate senza proporre stretching', async () => {
@@ -38,9 +38,15 @@ describe('MediaPointPanel', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 
     expect(screen.getByText('Proporzioni diverse dal supporto')).toBeVisible()
-    expect(screen.getByText('Adattamento senza deformazione')).toBeVisible()
-    await userEvent.click(screen.getByRole('button', { name: 'Riempi e ritaglia' }))
-    expect(useProjectStore.getState().fitModes[point.id]).toBe('cover')
+    expect(
+      screen.getByText(/non viene mai ritagliata o deformata/),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: 'Riempi e ritaglia' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Supporti consigliati per questo formato'),
+    ).toBeVisible()
   })
 
   it('impedisce l’upload sul sagomato prezzo strutturale', () => {
@@ -55,5 +61,34 @@ describe('MediaPointPanel', () => {
       screen.getByText(/non è configurabile come spazio pubblicitario/),
     ).toBeVisible()
     expect(screen.queryByText('Carica JPEG o PNG')).not.toBeInTheDocument()
+  })
+
+  it('permette di nascondere e ripristinare un supporto', async () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: `Nascondi ${point.name}` }),
+    )
+    expect(useProjectStore.getState().hiddenMediaPointIds).toContain(point.id)
+    expect(
+      screen.getByRole('button', { name: `Mostra ${point.name}` }),
+    ).toBeVisible()
+  })
+
+  it('mostra la schermata idle Q8 sul terminale smartOPT Maxi', () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
+      (item) => item.supportTypeId === '11',
+    )!
+    useViewerStore.getState().selectMediaPoint(point.id)
+
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    expect(
+      screen.getByRole('img', {
+        name: 'Schermata idle Q8 del terminale smartOPT Maxi',
+      }),
+    ).toHaveAttribute('src', '/brand/q8/screens/smartopt-idle.png')
+    expect(screen.getByText('Schermata idle Q8 predefinita')).toBeVisible()
   })
 })

@@ -31,10 +31,9 @@ button {
   bottom: 24px;
   left: 24px;
   display: grid;
-  grid-template-columns: minmax(220px, 1.25fr) 46px 42px minmax(
-      260px,
-      2fr
-    ) minmax(120px, 0.6fr);
+  grid-template-columns:
+    minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr)
+    minmax(120px, 0.6fr);
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
@@ -56,6 +55,15 @@ button {
 .auto-summary strong {
   color: var(--ink);
   font-size: 14px;
+}
+.journey-select {
+  max-width: 210px;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 800;
+  outline: none;
 }
 .auto-summary > span:last-child {
   overflow: hidden;

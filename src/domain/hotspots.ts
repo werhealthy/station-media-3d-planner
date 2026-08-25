@@ -33,12 +33,12 @@ export const HOTSPOTS: StationHotspot[] = [
     associatedMediaPointId: 'mp-06',
   },
   {
-    id: 'totem',
-    name: 'Totem Q8',
-    position: [-28, 3.5, -1],
-    target: [-22, 3.8, -10],
-    fov: 40,
-    associatedMediaPointId: 'mp-07',
+    id: 'payment-terminal',
+    name: 'Totem pagamento',
+    position: [-15.5, 2.5, 4.5],
+    target: [-11.5, 1.35, -1],
+    fov: 38,
+    associatedMediaPointId: 'mp-05',
   },
   {
     id: 'forecourt',

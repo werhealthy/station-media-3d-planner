@@ -62,8 +62,15 @@ describe('proceduralAdapter composition', () => {
     ).toHaveLength(2)
     expect(sceneNames).not.toContain('shop-glazing')
     expect(
-      sceneNames.filter((name) => name.startsWith('landscape-tree-')),
-    ).toHaveLength(12)
+      sceneNames.filter((name) => name.startsWith('landscape-tree-')).length,
+    ).toBeGreaterThanOrEqual(36)
+    expect(sceneNames).toContain('price-pylon')
+    expect(sceneNames).not.toContain('price-pylon-stendardo-panel')
+    expect(sceneNames).toContain('q8-easy-main-body')
+    expect(sceneNames).toContain('q8-easy-grade-column-0')
+    expect(sceneNames).toContain('q8-easy-transaction-display')
+    expect(sceneNames).not.toContain('payment-kiosk')
+    expect(sceneNames).not.toContain('totem')
 
     proceduralAdapter.dispose(handle)
   })

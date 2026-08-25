@@ -44,7 +44,8 @@ export type SupportCatalogEntry = z.infer<typeof SupportCatalogEntrySchema>
  *
  * Only the Fondostazione document supplies a complete physical format. The
  * pump-topper dimensions come from the supplied UI reference. The DSP screen
- * is derived from a 21-inch 16:9 panel. Every other physical size is explicitly
+ * is derived from the portrait 21-inch 9:16 Fortech smartOPT Maxi reference.
+ * Every other physical size is explicitly
  * marked as estimated so it cannot be mistaken for approved production data.
  */
 export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
@@ -111,7 +112,7 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       eyesOn: '5-10 s',
       maxWords: '8-12 parole',
       qrPolicy: 'conditional',
-      qrNote: 'Da validare solo per fruizione sicura dall\'abitacolo.',
+      qrNote: "Da validare solo per fruizione sicura dall'abitacolo.",
     },
     {
       id: '10',
@@ -136,18 +137,18 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
     },
     {
       id: '11',
-      name: 'DSP / Accettatore digitale 21"',
+      name: 'Totem pagamento Fortech smartOPT Maxi',
       family: 'Terminale digitale',
       journeyPhase: 'Decisione, transazione e chiusura',
-      function: 'Interfaccia transazionale con contenuti contestuali.',
+      function: 'Terminale elettronico di pagamento con contenuti contestuali.',
       shape: 'digital-screen',
       type: 'digital',
       assignable: true,
       dimensions: {
-        width: 0.465,
-        height: 0.262,
+        width: 0.262,
+        height: 0.465,
         source: 'derived',
-        note: 'Area 16:9 derivata dalla diagonale nominale di 21 pollici.',
+        note: 'Area display verticale 9:16 derivata dalla diagonale da 21 pollici indicata da Fortech.',
       },
       targetDistance: '0,5-2 m',
       eyesOn: '15-60 s; idle loop 3-5 s',
@@ -216,7 +217,7 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       eyesOn: 'Circa 1 s',
       maxWords: '3-5 parole',
       qrPolicy: 'prohibited',
-      qrNote: 'Non leggibile in sicurezza durante l\'approccio.',
+      qrNote: "Non leggibile in sicurezza durante l'approccio.",
     },
     {
       id: '9',
@@ -262,7 +263,9 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
     },
   ])
 
-const SUPPORTS_BY_ID = new Map(SUPPORT_CATALOG.map((support) => [support.id, support]))
+const SUPPORTS_BY_ID = new Map(
+  SUPPORT_CATALOG.map((support) => [support.id, support]),
+)
 
 export function getSupportType(id?: string): SupportCatalogEntry | undefined {
   return id ? SUPPORTS_BY_ID.get(id) : undefined

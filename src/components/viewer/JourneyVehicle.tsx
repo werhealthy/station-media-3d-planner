@@ -1,3 +1,4 @@
+import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
@@ -38,6 +39,28 @@ export function JourneyVehicle() {
           roughness={0.42}
         />
       </mesh>
+      {([-1, 1] as const).map((side) => (
+        <group key={side}>
+          <mesh
+            position={[side * 0.24, -0.51, -0.59]}
+            rotation={[1.03, 0, side * -0.18]}
+            castShadow
+          >
+            <cylinderGeometry args={[0.042, 0.057, 0.29, 18]} />
+            <meshStandardMaterial color="#d99b82" roughness={0.72} />
+          </mesh>
+          <RoundedBox
+            args={[0.09, 0.06, 0.13]}
+            radius={0.022}
+            smoothness={4}
+            position={[side * 0.17, -0.34, -0.79]}
+            rotation={[0.12, 0, side * -0.3]}
+            castShadow
+          >
+            <meshStandardMaterial color="#d99b82" roughness={0.72} />
+          </RoundedBox>
+        </group>
+      ))}
       {[-1, 1].map((side) => (
         <mesh
           key={side}

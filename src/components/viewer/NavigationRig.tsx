@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { useViewerStore } from '@/stores/viewerStore'
+import { eyeHeightFromPersonHeight, useViewerStore } from '@/stores/viewerStore'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { getJourney, journeyDuration } from '@/domain/journeys'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
@@ -13,7 +13,7 @@ import { orbitMinDistance } from './navigationLimits'
 
 const OVERVIEW_POSITION = new THREE.Vector3(30, 16, 31)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
-const WALK_SPEED = 2.35
+const WALK_SPEED = 1.68
 const CAPSULE_RADIUS = 0.34
 const GRAVITY = 18
 
@@ -46,12 +46,34 @@ function canWalkTo(position: THREE.Vector3) {
   )
 }
 
+function easeJourneyMotion(
+  local: number,
+  motion: 'drive' | 'brake' | 'exit' | 'walk' | 'glance' | 'hold',
+) {
+  switch (motion) {
+    case 'drive':
+      return 1 - Math.pow(1 - local, 1.55)
+    case 'brake':
+      return 1 - Math.pow(1 - local, 2.7)
+    case 'exit':
+      return THREE.MathUtils.clamp(local * 1.18, 0, 1)
+    case 'glance':
+      return 1 - Math.pow(1 - local, 4.6)
+    case 'hold':
+      return 1 - Math.pow(1 - local, 5.5)
+    case 'walk':
+    default:
+      return local
+  }
+}
+
 export function NavigationRig() {
   const mode = useViewerStore((s) => s.navigationMode)
   const activeHotspotId = useViewerStore((s) => s.activeHotspotId)
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
-  const eyeHeight = useViewerStore((s) => s.eyeHeight)
+  const personHeight = useViewerStore((s) => s.personHeight)
+  const eyeHeight = eyeHeightFromPersonHeight(personHeight)
   const selectedMediaPointId = useViewerStore((s) => s.selectedMediaPointId)
   const { camera, gl } = useThree()
   const perspectiveCamera = camera as THREE.PerspectiveCamera
@@ -62,6 +84,8 @@ export function NavigationRig() {
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
   const verticalVelocity = useRef(0)
+  const personHeightRef = useRef(personHeight)
+  const walkthroughInitialized = useRef(false)
   const autoTime = useRef(0)
   const lastUiUpdate = useRef(0)
   const isPlaying = usePlaybackStore((s) => s.isPlaying)
@@ -99,6 +123,10 @@ export function NavigationRig() {
   }, [runtimeBounds])
 
   useEffect(() => {
+    personHeightRef.current = personHeight
+  }, [personHeight])
+
+  useEffect(() => {
     if (!requestedView || !viewRequestId) return
     camera.position.set(...requestedView.position)
     perspectiveCamera.fov = requestedView.fov
@@ -125,10 +153,18 @@ export function NavigationRig() {
   }, [mode, setMode])
 
   useEffect(() => {
-    if (mode === 'walkthrough') {
+    if (mode !== 'walkthrough') {
+      walkthroughInitialized.current = false
+      return
+    }
+    if (!walkthroughInitialized.current) {
+      walkthroughInitialized.current = true
+      const initialEyeHeight = eyeHeightFromPersonHeight(
+        personHeightRef.current,
+      )
       if (config.modelType === 'procedural') {
-        camera.position.set(-18.5, eyeHeight, 14)
-        camera.lookAt(0, eyeHeight, -1.5)
+        camera.position.set(-18.5, initialEyeHeight, 14)
+        camera.lookAt(0, initialEyeHeight, -1.5)
       } else if (runtimeBounds) {
         const padding = Math.max(
           2,
@@ -136,7 +172,7 @@ export function NavigationRig() {
         )
         camera.position.set(
           runtimeBounds.min[0] - padding,
-          runtimeBounds.min[1] + eyeHeight,
+          runtimeBounds.min[1] + initialEyeHeight,
           runtimeBounds.max[2] + padding,
         )
         camera.lookAt(
@@ -145,23 +181,16 @@ export function NavigationRig() {
           runtimeBounds.center[2],
         )
       } else {
-        camera.position.set(-15, eyeHeight, 13)
-        camera.lookAt(0, eyeHeight, 0)
+        camera.position.set(-15, initialEyeHeight, 13)
+        camera.lookAt(0, initialEyeHeight, 0)
       }
-      perspectiveCamera.fov = 58
+      perspectiveCamera.fov = 64
       perspectiveCamera.updateProjectionMatrix()
       velocity.current.set(0, 0, 0)
       verticalVelocity.current = 0
       walkTime.current = 0
     }
-  }, [
-    camera,
-    config.modelType,
-    eyeHeight,
-    mode,
-    perspectiveCamera,
-    runtimeBounds,
-  ])
+  }, [camera, config.modelType, mode, perspectiveCamera, runtimeBounds])
 
   useEffect(() => {
     if (mode !== 'auto') return
@@ -170,8 +199,9 @@ export function NavigationRig() {
       (config.modelType === 'procedural'
         ? activeJourneyDuration
         : config.walkPath.length * 4)
-    perspectiveCamera.fov = 56
+    perspectiveCamera.fov = 68
     perspectiveCamera.updateProjectionMatrix()
+    lastUiUpdate.current = 0
     if (config.modelType === 'procedural') {
       const start = activeJourney.steps[0]
       if (start) {
@@ -284,7 +314,8 @@ export function NavigationRig() {
         camera.position.y + verticalVelocity.current * delta,
       )
       if (camera.position.y <= groundedHeight) verticalVelocity.current = 0
-      const bob = Math.sin(walkTime.current) * 0.026
+      const stride = Math.sin(walkTime.current)
+      const bob = Math.abs(stride) * 0.012 - 0.006
       camera.position.y = THREE.MathUtils.lerp(
         camera.position.y,
         groundedHeight + bob,
@@ -359,19 +390,53 @@ export function NavigationRig() {
         0,
         1,
       )
-      const smooth = THREE.MathUtils.smootherstep(local, 0, 1)
+      const motionAmount = easeJourneyMotion(local, current.motion)
+      const gazeAmount =
+        current.motion === 'walk'
+          ? THREE.MathUtils.clamp(local * 1.4, 0, 1)
+          : easeJourneyMotion(local, current.motion)
       destination
         .set(...previous.position)
-        .lerp(new THREE.Vector3(...current.position), smooth)
+        .lerp(new THREE.Vector3(...current.position), motionAmount)
+      if (previous.cameraMode === 'pedestrian') destination.y = eyeHeight
+      if (current.cameraMode === 'pedestrian') {
+        const startY =
+          previous.cameraMode === 'pedestrian'
+            ? eyeHeight
+            : previous.position[1]
+        destination.y = THREE.MathUtils.lerp(startY, eyeHeight, motionAmount)
+      }
       target
         .set(...previous.gazeTarget)
-        .lerp(new THREE.Vector3(...current.gazeTarget), smooth)
-      camera.position.lerp(destination, 1 - Math.exp(-delta * 7))
+        .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
+
+      if (current.motion === 'walk') {
+        const footfalls = local * Math.max(2, current.duration * 1.9) * Math.PI
+        destination.y += Math.abs(Math.sin(footfalls)) * 0.017 - 0.006
+        target.x += Math.sin(footfalls * 0.5) * 0.025
+      } else if (current.motion === 'drive' || current.motion === 'brake') {
+        destination.y += Math.sin(autoTime.current * 17) * 0.0025
+      } else if (current.motion === 'hold') {
+        destination.y += Math.sin(autoTime.current * 1.8) * 0.004
+        target.x += Math.sin(autoTime.current * 2.15) * 0.026
+      }
+
+      camera.position.copy(destination)
       camera.lookAt(target)
+      const desiredFov = current.cameraMode === 'vehicle' ? 68 : 64
+      if (Math.abs(perspectiveCamera.fov - desiredFov) > 0.05) {
+        perspectiveCamera.fov = THREE.MathUtils.lerp(
+          perspectiveCamera.fov,
+          desiredFov,
+          1 - Math.exp(-delta * 14),
+        )
+        perspectiveCamera.updateProjectionMatrix()
+      }
+      if (usePlaybackStore.getState().activeStepIndex !== stepIndex)
+        setActiveStep(stepIndex, current.mediaPointId ?? null)
       if (autoTime.current - lastUiUpdate.current > 0.12 || !isPlaying) {
         lastUiUpdate.current = autoTime.current
         setProgress(autoTime.current / activeJourneyDuration)
-        setActiveStep(stepIndex, current.mediaPointId ?? null)
       }
       if (autoTime.current >= activeJourneyDuration && isPlaying) pause()
       return

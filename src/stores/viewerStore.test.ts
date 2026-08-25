@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useViewerStore } from './viewerStore'
+import {
+  eyeHeightFromPersonHeight,
+  MAX_PERSON_HEIGHT,
+  MIN_PERSON_HEIGHT,
+  useViewerStore,
+} from './viewerStore'
 
 describe('viewerStore', () => {
   beforeEach(() => {
@@ -8,7 +13,7 @@ describe('viewerStore', () => {
       activeHotspotId: null,
       selectedMediaPointId: null,
       overviewUnlocked: false,
-      eyeHeight: 1.7,
+      personHeight: 1.8,
     })
   })
 
@@ -29,10 +34,14 @@ describe('viewerStore', () => {
   })
 
   it('clamps the selectable human height to realistic limits', () => {
-    useViewerStore.getState().setEyeHeight(1.2)
-    expect(useViewerStore.getState().eyeHeight).toBe(1.45)
+    useViewerStore.getState().setPersonHeight(1.2)
+    expect(useViewerStore.getState().personHeight).toBe(MIN_PERSON_HEIGHT)
 
-    useViewerStore.getState().setEyeHeight(2.2)
-    expect(useViewerStore.getState().eyeHeight).toBe(2)
+    useViewerStore.getState().setPersonHeight(2.2)
+    expect(useViewerStore.getState().personHeight).toBe(MAX_PERSON_HEIGHT)
+  })
+
+  it('places the camera at eye level rather than at the top of the head', () => {
+    expect(eyeHeightFromPersonHeight(1.8)).toBeCloseTo(1.69)
   })
 })

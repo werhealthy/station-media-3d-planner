@@ -1,7 +1,12 @@
 import { TopBar } from './TopBar'
 import { MediaPointPanel } from './MediaPointPanel'
 import { Canvas } from '@/components/viewer/Canvas'
-import { useViewerStore } from '@/stores/viewerStore'
+import {
+  eyeHeightFromPersonHeight,
+  MAX_PERSON_HEIGHT,
+  MIN_PERSON_HEIGHT,
+  useViewerStore,
+} from '@/stores/viewerStore'
 import { Lock, Rotate3D } from 'lucide-react'
 import { AutoWalkthroughPanel } from './AutoWalkthroughPanel'
 import { useEffect } from 'react'
@@ -21,8 +26,8 @@ export function AppShell() {
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
   const setOverviewUnlocked = useViewerStore((s) => s.setOverviewUnlocked)
-  const eyeHeight = useViewerStore((s) => s.eyeHeight)
-  const setEyeHeight = useViewerStore((s) => s.setEyeHeight)
+  const personHeight = useViewerStore((s) => s.personHeight)
+  const setPersonHeight = useViewerStore((s) => s.setPersonHeight)
   const stationId = useStationStore((s) => s.selectedStationId)
   const resetViewer = useViewerStore((s) => s.resetForStation)
   const resetRuntime = useStationRuntimeStore((s) => s.reset)
@@ -114,19 +119,43 @@ export function AppShell() {
                 </b>
                 Click per guardare · WASD/frecce per muoverti · ESC per uscire
               </span>
-              <label className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 font-semibold text-slate-700">
-                Altezza
-                <select
-                  aria-label="Altezza persona"
-                  value={eyeHeight}
-                  onChange={(event) => setEyeHeight(Number(event.target.value))}
-                  className="bg-transparent font-bold text-[#1746a2] outline-none"
-                >
-                  <option value={1.55}>155 cm</option>
-                  <option value={1.7}>170 cm</option>
-                  <option value={1.85}>185 cm</option>
-                </select>
-              </label>
+              <div className="w-52 rounded-md bg-slate-100 px-3 py-2 text-slate-700">
+                <div className="flex items-center justify-between gap-2 font-semibold">
+                  <label htmlFor="person-height">Altezza persona</label>
+                  <span className="flex items-center gap-1 font-bold text-[#1746a2]">
+                    <input
+                      id="person-height"
+                      aria-label="Altezza persona in centimetri"
+                      type="number"
+                      min={MIN_PERSON_HEIGHT * 100}
+                      max={MAX_PERSON_HEIGHT * 100}
+                      step={1}
+                      value={Math.round(personHeight * 100)}
+                      onChange={(event) =>
+                        setPersonHeight(Number(event.target.value) / 100)
+                      }
+                      className="w-12 bg-transparent text-right outline-none"
+                    />
+                    cm
+                  </span>
+                </div>
+                <input
+                  aria-label="Regola altezza persona"
+                  type="range"
+                  min={MIN_PERSON_HEIGHT}
+                  max={MAX_PERSON_HEIGHT}
+                  step={0.01}
+                  value={personHeight}
+                  onChange={(event) =>
+                    setPersonHeight(Number(event.target.value))
+                  }
+                  className="mt-1.5 block w-full accent-[#1746a2]"
+                />
+                <span className="mt-0.5 block text-[10px] text-slate-500">
+                  Quota occhi{' '}
+                  {Math.round(eyeHeightFromPersonHeight(personHeight) * 100)} cm
+                </span>
+              </div>
               <button
                 onClick={() => setMode('overview')}
                 className="rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-800 hover:bg-slate-50"

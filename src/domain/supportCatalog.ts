@@ -43,8 +43,9 @@ export type SupportCatalogEntry = z.infer<typeof SupportCatalogEntrySchema>
  * Q8 support rules transcribed from DISTINABASE_ELEMENTIpV.docx.
  *
  * Only the Fondostazione document supplies a complete physical format. The
- * pump-topper dimensions come from the supplied UI reference. The DSP screen
- * is derived from the portrait 21-inch 9:16 Fortech smartOPT Maxi reference.
+ * pump-topper dimensions come from the supplied UI reference. The SmartOPT
+ * body follows the supplied 507 x 606 x 1696 mm technical drawing; its touch
+ * area is derived proportionally from that front view.
  * Every other physical size is explicitly
  * marked as estimated so it cannot be mistaken for approved production data.
  */
@@ -145,10 +146,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'digital',
       assignable: true,
       dimensions: {
-        width: 0.262,
-        height: 0.465,
+        width: 0.31,
+        height: 0.54,
         source: 'derived',
-        note: 'Area display verticale 9:16 derivata dalla diagonale da 21 pollici indicata da Fortech.',
+        note: 'Area display derivata dal disegno quotato del corpo 507 x 606 x 1696 mm; il supporto completo usa le quote documentate.',
       },
       targetDistance: '0,5-2 m',
       eyesOn: '15-60 s; idle loop 3-5 s',

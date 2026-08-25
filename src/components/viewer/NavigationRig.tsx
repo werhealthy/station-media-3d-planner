@@ -65,6 +65,8 @@ export function NavigationRig() {
   const destination = useMemo(() => new THREE.Vector3(), [])
   const target = useMemo(() => new THREE.Vector3(), [])
   const authoredGaze = useMemo(() => new THREE.Vector3(), [])
+  const gazeDirection = useMemo(() => new THREE.Vector3(), [])
+  const flatTangent = useMemo(() => new THREE.Vector3(), [])
   const smoothedAutoTarget = useRef(new THREE.Vector3())
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
@@ -107,6 +109,25 @@ export function NavigationRig() {
         .reduce((total, step) => total + step.duration, 0),
     [activeJourney, arrivalEndIndex],
   )
+  const departureCurve = useMemo(
+    () => createArrivalCurve(activeJourney.departurePath),
+    [activeJourney],
+  )
+  const departureStartIndex = useMemo(
+    () =>
+      activeJourney.steps.findIndex(
+        (step) => step.id === activeJourney.departureStartStepId,
+      ),
+    [activeJourney],
+  )
+  const departureStartTime = useMemo(
+    () =>
+      activeJourney.steps
+        .slice(0, Math.max(0, departureStartIndex))
+        .reduce((total, step) => total + step.duration, 0),
+    [activeJourney, departureStartIndex],
+  )
+  const departureDuration = activeJourneyDuration - departureStartTime
   const runtimeBounds = useStationRuntimeStore((s) => s.bounds)
   const config = useStationSetupStore((s) => s.config)
   const setupEnabled = useStationSetupStore((s) => s.enabled)
@@ -207,18 +228,40 @@ export function NavigationRig() {
     perspectiveCamera.updateProjectionMatrix()
     lastUiUpdate.current = 0
     if (config.modelType === 'procedural') {
-      const start = activeJourney.arrivalPath[0]
-      const firstStep = activeJourney.steps[0]
-      if (start && firstStep) {
-        camera.position.set(...start)
+      const currentProgress = usePlaybackStore.getState().progress
+      const routeTime = currentProgress * activeJourneyDuration
+      const initialStep = activeJourney.steps.find((_, index) => {
+        const elapsed = activeJourney.steps
+          .slice(0, index + 1)
+          .reduce((total, item) => total + item.duration, 0)
+        return routeTime <= elapsed
+      })
+      const start =
+        routeTime <= arrivalDuration
+          ? arrivalCurve.getPointAt(
+              THREE.MathUtils.smoothstep(
+                THREE.MathUtils.clamp(
+                  routeTime / Math.max(arrivalDuration, 0.001),
+                  0,
+                  1,
+                ),
+                0,
+                1,
+              ),
+            )
+          : new THREE.Vector3(...(initialStep?.position ?? [0, 1.28, 0]))
+      if (initialStep) {
+        camera.position.copy(start)
         lastSafeAutoPosition.current.copy(camera.position)
-        smoothedAutoTarget.current.set(...firstStep.gazeTarget)
-        camera.lookAt(...firstStep.gazeTarget)
+        smoothedAutoTarget.current.set(...initialStep.gazeTarget)
+        camera.lookAt(...initialStep.gazeTarget)
       }
     }
   }, [
     activeJourney,
     activeJourneyDuration,
+    arrivalCurve,
+    arrivalDuration,
     camera,
     config.modelType,
     config.walkPath.length,
@@ -399,6 +442,8 @@ export function NavigationRig() {
       )
       const inContinuousArrival =
         arrivalEndIndex >= 0 && stepIndex <= arrivalEndIndex
+      const inContinuousDeparture =
+        departureStartIndex >= 0 && stepIndex >= departureStartIndex
 
       if (inContinuousArrival) {
         const rawArrivalProgress = THREE.MathUtils.clamp(
@@ -423,10 +468,43 @@ export function NavigationRig() {
         target.copy(destination).addScaledVector(tangent, 9).setY(1.3)
         if (current.mediaPointId) {
           authoredGaze.set(...current.gazeTarget)
-          // The car keeps following its physical trajectory while the driver's
-          // head briefly turns toward the support relevant to this phase.
-          target.lerp(authoredGaze, 0.72)
+          gazeDirection.copy(authoredGaze).sub(destination).setY(0)
+          flatTangent.copy(tangent).setY(0).normalize()
+          if (
+            gazeDirection.lengthSq() > 0.001 &&
+            gazeDirection.normalize().dot(flatTangent) > 0.18
+          ) {
+            const angle = flatTangent.angleTo(gazeDirection)
+            const blend = Math.min(
+              0.72,
+              THREE.MathUtils.degToRad(34) / Math.max(angle, 0.001),
+            )
+            gazeDirection.lerp(flatTangent, 1 - blend).normalize()
+            target.copy(destination).addScaledVector(gazeDirection, 9)
+            target.y = THREE.MathUtils.lerp(1.3, authoredGaze.y, 0.55)
+          }
         }
+      } else if (inContinuousDeparture) {
+        const rawDepartureProgress = THREE.MathUtils.clamp(
+          (autoTime.current - departureStartTime) /
+            Math.max(departureDuration, 0.001),
+          0,
+          1,
+        )
+        const departureProgress = THREE.MathUtils.smoothstep(
+          rawDepartureProgress,
+          0,
+          1,
+        )
+        const candidate = departureCurve.getPointAt(departureProgress)
+        const tangent = departureCurve
+          .getTangentAt(departureProgress)
+          .normalize()
+        const yaw = vehicleYawFromTangent(tangent)
+        if (!vehicleCollisionAt(candidate, yaw))
+          lastSafeAutoPosition.current.copy(candidate)
+        destination.copy(lastSafeAutoPosition.current)
+        target.copy(destination).addScaledVector(tangent, 10).setY(1.3)
       } else {
         const motionAmount = easeJourneyMotion(local, current.motion)
         const gazeAmount =
@@ -468,7 +546,15 @@ export function NavigationRig() {
       camera.position.copy(destination)
       smoothedAutoTarget.current.lerp(
         target,
-        1 - Math.exp(-delta * (inContinuousArrival ? 3.4 : 7)),
+        1 -
+          Math.exp(
+            -delta *
+              (inContinuousArrival || inContinuousDeparture
+                ? 3.4
+                : current.motion === 'walk'
+                  ? 4.2
+                  : 5.8),
+          ),
       )
       camera.lookAt(smoothedAutoTarget.current)
       const desiredFov = current.cameraMode === 'vehicle' ? 68 : 64

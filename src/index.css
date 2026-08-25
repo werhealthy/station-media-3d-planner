@@ -32,8 +32,7 @@ button {
   left: 24px;
   display: grid;
   grid-template-columns:
-    minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr)
-    minmax(120px, 0.6fr);
+    minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr);
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
@@ -169,11 +168,142 @@ button {
   background: #fff9e9;
 }
 
+.journey-phase {
+  position: absolute;
+  z-index: 7;
+  top: 22px;
+  left: 50%;
+  display: flex;
+  min-width: min(540px, calc(100% - 48px));
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 11px 20px 12px;
+  border: 1px solid rgb(255 255 255 / 0.8);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 12px 38px rgb(15 31 70 / 0.16);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.journey-phase span {
+  color: var(--q8-blue);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.journey-phase strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.journey-decision-backdrop {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(10 24 54 / 0.42);
+  backdrop-filter: blur(7px);
+}
+
+.journey-decision-card {
+  width: min(680px, 100%);
+  padding: 30px;
+  border: 1px solid rgb(255 255 255 / 0.85);
+  border-radius: 26px;
+  background: rgb(255 255 255 / 0.97);
+  box-shadow: 0 30px 90px rgb(8 24 61 / 0.34);
+  text-align: center;
+}
+
+.decision-kicker {
+  color: var(--q8-blue);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.journey-decision-card h2 {
+  margin: 8px 0 4px;
+  color: var(--ink);
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -0.035em;
+}
+
+.journey-decision-card > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.decision-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.decision-options button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #dbe4f0;
+  border-radius: 18px;
+  color: var(--q8-blue);
+  background: #f8fafc;
+  text-align: left;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.decision-options button:hover {
+  transform: translateY(-2px);
+  border-color: #7ba4ee;
+  box-shadow: 0 12px 30px rgb(23 63 159 / 0.13);
+}
+
+.decision-options span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.decision-options b {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.decision-options small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @media (max-width: 1100px) {
   .auto-panel {
     grid-template-columns: 1fr 46px 42px 1.4fr;
   }
   .attention-chip {
     display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .decision-options {
+    grid-template-columns: 1fr;
+  }
+
+  .journey-decision-card {
+    padding: 22px;
   }
 }

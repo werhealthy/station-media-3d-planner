@@ -6,20 +6,33 @@ import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
 import { containedSurfaceSize } from '@/core/creative/creativeFit'
-import { BRAND_ASSETS } from '@/config/brandAssets'
+import { BRAND_ASSETS, SMARTOPT_SCREEN_SIZE } from '@/config/brandAssets'
+import { getJourney } from '@/domain/journeys'
+import { usePlaybackStore } from '@/stores/playbackStore'
 import { MediaSupportGeometry } from './MediaSupportGeometry'
 
 export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const selected = useViewerStore((s) => s.selectedMediaPointId === point.id)
   const hovered = useViewerStore((s) => s.hoveredMediaPointId === point.id)
+  const navigationMode = useViewerStore((s) => s.navigationMode)
   const select = useViewerStore((s) => s.selectMediaPoint)
   const hover = useViewerStore((s) => s.hoverMediaPoint)
   const asset = useProjectStore((s) => s.assignments[point.id])
-  const defaultIdle =
+  const routeId = usePlaybackStore((s) => s.activeRouteId)
+  const stepIndex = usePlaybackStore((s) => s.activeStepIndex)
+  const route = getJourney(routeId)
+  const smartOptScreen = route.steps[stepIndex]?.terminalScreen ?? 'idle'
+  const journeyScreen =
     point.supportTypeId === '11'
-      ? { url: BRAND_ASSETS.smartOptIdle, width: 240, height: 405 }
+      ? {
+          url: BRAND_ASSETS.smartOptScreens[smartOptScreen],
+          ...SMARTOPT_SCREEN_SIZE,
+        }
       : undefined
-  const displayedAsset = asset ?? defaultIdle
+  const displayedAsset =
+    point.supportTypeId === '11' && navigationMode === 'auto'
+      ? journeyScreen
+      : asset ?? journeyScreen
   const availableSurface = useMemo<[number, number]>(() => {
     if (point.supportShape === 'beach-flag')
       return [point.width * 0.68, point.height * 0.78]

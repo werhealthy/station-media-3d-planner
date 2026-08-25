@@ -30,9 +30,8 @@ export function JourneyActors() {
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.actor : undefined
-  const operatorHasNozzle = Boolean(
-    cue && (cue.action.includes('nozzle') || cue.action === 'refuel'),
-  )
+  const operatorHasNozzle =
+    step?.nozzle?.owner === 'attendant' && step.nozzle.state === 'hand'
 
   useEffect(() => {
     if (!cue) {
@@ -92,9 +91,13 @@ export function JourneyActors() {
       const raised =
         cue.action === 'payment'
           ? -1.02
-          : cue.action.includes('nozzle') || cue.action === 'refuel'
+          : ['take-nozzle', 'carry-nozzle', 'insert-nozzle', 'remove-nozzle', 'replace-nozzle'].includes(
+                cue.action,
+              )
             ? -0.62
-            : 0
+            : cue.action === 'refuel'
+              ? -0.2
+              : 0
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
         raised,

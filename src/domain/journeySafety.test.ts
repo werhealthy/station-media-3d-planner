@@ -25,9 +25,9 @@ describe('journey physical safety', () => {
   it.each(['servito', 'self-service', 'self-svolta'] as const)(
     'keeps the full %s vehicle footprint outside every obstacle',
     (journeyId) => {
-      expect(arrivalCurveCollisions(getJourney(journeyId).arrivalPath)).toEqual(
-        [],
-      )
+      const journey = getJourney(journeyId)
+      expect(arrivalCurveCollisions(journey.arrivalPath)).toEqual([])
+      expect(arrivalCurveCollisions(journey.departurePath)).toEqual([])
     },
   )
 

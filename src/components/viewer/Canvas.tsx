@@ -25,6 +25,7 @@ import { StationDebugHelpers } from './StationDebugHelpers'
 import { FirstPersonAvatar } from './FirstPersonAvatar'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
+import { JourneyFuelNozzle } from './JourneyFuelNozzle'
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -212,6 +213,7 @@ export function Canvas() {
         <FirstPersonAvatar />
         <JourneyVehicle />
         <JourneyActors />
+        <JourneyFuelNozzle />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">

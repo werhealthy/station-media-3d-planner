@@ -402,7 +402,35 @@ function brandPlane(
     name,
   )
 }
-function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
+function silhouettePlane(
+  root: THREE.Object3D,
+  texture: THREE.Texture,
+  size: [number, number],
+  pos: [number, number, number],
+  name: string,
+) {
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
+  return mesh(
+    root,
+    new THREE.PlaneGeometry(...size),
+    new THREE.MeshBasicMaterial({
+      color: '#ffffff',
+      alphaMap: texture,
+      transparent: true,
+      alphaTest: 0.04,
+      toneMapped: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+    }),
+    pos,
+    name,
+  )
+}
+function buildStation(
+  q8WhiteTexture: THREE.Texture,
+  svoltaTexture: THREE.Texture,
+) {
   const root = new THREE.Group()
   root.name = 'q8-station'
   const asphalt = aggregateMaterial('#4b5055', 0.94, [18, 13], 8217, 0.035),
@@ -410,7 +438,6 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     blue = mat('#123a88', 0.26, 0.35),
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
-    teal = mat('#16877d', 0.35, 0.2),
     grass = aggregateMaterial('#678452', 0.98, [28, 20], 9471, 0.055)
   const surroundings = mesh(
     root,
@@ -432,10 +459,20 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
   approachRoad.userData.stationHelper = true
   // The frontage pavement is split at the actual driveway. The previous
   // continuous slab visually and physically cut across the station entrance.
-  box(root, [116, 0.08, 1.1], concrete, [-52, 0.015, 12.55], 'roadside-footpath')
-    .userData.stationHelper = true
-  box(root, [89, 0.08, 1.1], concrete, [65.5, 0.015, 12.55], 'roadside-footpath')
-    .userData.stationHelper = true
+  box(
+    root,
+    [116, 0.08, 1.1],
+    concrete,
+    [-52, 0.015, 12.55],
+    'roadside-footpath',
+  ).userData.stationHelper = true
+  box(
+    root,
+    [89, 0.08, 1.1],
+    concrete,
+    [65.5, 0.015, 12.55],
+    'roadside-footpath',
+  ).userData.stationHelper = true
   box(
     root,
     [220, 0.08, 1.35],
@@ -588,13 +625,19 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     )
   brandPlane(
     root,
-    q8Texture,
+    q8WhiteTexture,
     [3.2, 1.55],
     [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.205],
     'q8-canopy-logo',
   )
   for (const x of [-L.islands.pumpX, L.islands.pumpX])
-    pump(root, x, L.islands.frontZ, Math.round(x + L.islands.frontZ * 10), q8Texture)
+    pump(
+      root,
+      x,
+      L.islands.frontZ,
+      Math.round(x + L.islands.frontZ * 10),
+      q8WhiteTexture,
+    )
   const islandRail = mat('#aeb6bc', 0.2, 0.82)
   for (const x of [-L.islands.pumpX, L.islands.pumpX])
     for (const z of [L.islands.frontZ])
@@ -617,7 +660,13 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
           [Math.PI / 2, 0, 0],
         )
       }
-  const shopWall = mat('#dedfda', 0.72)
+  const shopTeal = mat('#078b83', 0.4, 0.08)
+  const shopTealDark = mat('#05736e', 0.46, 0.08)
+  const shopWhite = mat('#f4f4f0', 0.42, 0.08)
+  const shopWood = mat('#c8a67e', 0.78)
+  const shopWoodLight = mat('#dec39c', 0.74)
+  const shopCharcoal = mat('#2a292b', 0.62)
+  const shopWall = mat('#e7e1d5', 0.74)
   box(
     root,
     [L.shop.width, L.shop.height, 0.34],
@@ -630,51 +679,55 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       root,
       [0.34, L.shop.height, L.shop.depth],
       shopWall,
-      [L.shop.x + side * (L.shop.width / 2 - 0.17), L.shop.height / 2, L.shop.z],
+      [
+        L.shop.x + side * (L.shop.width / 2 - 0.17),
+        L.shop.height / 2,
+        L.shop.z,
+      ],
       'shop-side-wall',
     )
   box(
     root,
     [L.shop.width - 0.4, 0.12, L.shop.depth - 0.35],
-    mat('#d8d2c7', 0.82),
+    mat('#ddd6ca', 0.82),
     [L.shop.x, 0.06, L.shop.z],
     'shop-interior-floor',
   )
   box(
     root,
     [L.shop.width + 0.3, 0.5, L.shop.depth + 0.3],
-    mat('#727c85', 0.35, 0.4),
+    shopWhite,
     [L.shop.x, L.shop.height + 0.15, L.shop.z],
     'shop-roof',
   )
   box(
     root,
     [L.shop.width, 0.9, 0.3],
-    teal,
+    shopTeal,
     [L.shop.x, 4.35, L.shop.z + L.shop.depth / 2 + 0.16],
     'shop-fascia',
   )
   box(
     root,
     [L.shop.width + 0.3, 0.12, 0.58],
-    steel,
+    shopWhite,
     [L.shop.x, 3.84, L.shop.z + L.shop.depth / 2 + 0.12],
     'shop-fascia-lower-profile',
   )
-  brandPlane(
+  silhouettePlane(
     root,
     svoltaTexture,
     [5.8, 1.05],
     [L.shop.x, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
-    'svolta-brand',
+    'svolta-brand-white',
   )
   const glass = new THREE.MeshPhysicalMaterial({
-    color: '#8ab4c3',
+    color: '#a7d2d5',
     roughness: 0.08,
     metalness: 0.05,
     transmission: 0.62,
     transparent: true,
-    opacity: 0.72,
+    opacity: 0.62,
     thickness: 0.08,
     ior: 1.46,
   })
@@ -682,31 +735,44 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     root,
     [L.shop.width - 1, 3.2, 0.08],
     new THREE.MeshStandardMaterial({
-      color: '#ead7ac',
-      emissive: '#bc8745',
-      emissiveIntensity: 0.32,
+      color: '#c5a47d',
+      emissive: '#80613c',
+      emissiveIntensity: 0.2,
       roughness: 0.75,
     }),
     [L.shop.x, 2.15, L.shop.z - L.shop.depth / 2 + 0.36],
     'shop-interior-backdrop',
   )
-  for (const offset of [-5.2, -2.4, 2.4, 5.2]) {
+  // Warm pegboard walls, layered shelves and compact products reproduce the
+  // timber-led Svolta retail language visible through the glazing.
+  for (const offset of [-5.2, -2.8, -0.4, 2.2, 4.8]) {
     const x = L.shop.x + offset
-    box(
-      root,
-      [1.8, 0.08, 0.48],
-      mat('#8b7253', 0.65),
-      [x, 1.15, L.shop.z - L.shop.depth / 2 + 0.45],
-      'shop-display-shelf',
-    )
-    for (let p = -0.65; p <= 0.65; p += 0.32)
+    for (const [shelfIndex, shelfY] of [0.82, 1.42, 2.02, 2.62].entries()) {
       box(
         root,
-        [0.18, 0.4, 0.18],
-        mat(p > 0 ? '#e5a72a' : '#9d3340', 0.48),
-        [x + p, 1.38, L.shop.z - L.shop.depth / 2 + 0.52],
-        'shop-product',
+        [1.82, 0.08, 0.48],
+        mat('#765d42', 0.68),
+        [x, shelfY, L.shop.z - L.shop.depth / 2 + 0.45],
+        'shop-display-shelf',
       )
+      const productColors = ['#d94a3f', '#efb329', '#4b7d9e', '#7d9c4c']
+      for (let productIndex = 0; productIndex < 5; productIndex += 1)
+        box(
+          root,
+          [0.2, 0.34 + (productIndex % 2) * 0.07, 0.18],
+          mat(
+            productColors[(productIndex + shelfIndex) % productColors.length] ??
+              '#d94a3f',
+            0.5,
+          ),
+          [
+            x - 0.66 + productIndex * 0.33,
+            shelfY + 0.2,
+            L.shop.z - L.shop.depth / 2 + 0.52,
+          ],
+          'shop-product',
+        )
+    }
   }
   const windowOffsets = [-5.65, -3.25, -1.85, 1.85, 3.25, 5.65]
   for (const offset of windowOffsets) {
@@ -723,7 +789,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     box(
       root,
       [0.1, 3.35, 0.18],
-      steel,
+      shopWhite,
       [L.shop.x + offset, 2.2, L.shop.z + L.shop.depth / 2 + 0.15],
       'glazing-mullion',
     )
@@ -740,7 +806,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     box(
       root,
       [0.08, 3.25, 0.2],
-      steel,
+      shopWhite,
       [L.shop.x + offset, 1.8, L.shop.z + L.shop.depth / 2 + 0.18],
       'door-frame',
     )
@@ -753,20 +819,50 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [L.shop.x + offset, 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
       'door-handle',
     )
-  // The reference has a restrained silver-panelled side elevation rather than
-  // another repeated glass entrance.
+  // Teal lower panels and white horizontal trims match the photographic
+  // storefront while keeping the glazed interior readable.
+  for (const offset of [-4.55, 4.55])
+    box(
+      root,
+      [5.25, 0.88, 0.15],
+      shopTeal,
+      [L.shop.x + offset, 0.92, L.shop.z + L.shop.depth / 2 + 0.17],
+      'shop-lower-teal-panel',
+    )
+  for (const y of [3.72, 4.03])
+    box(
+      root,
+      [L.shop.width + 0.08, 0.055, 0.12],
+      shopWhite,
+      [L.shop.x, y, L.shop.z + L.shop.depth / 2 + 0.34],
+      'shop-facade-white-stripe',
+    )
+  const facadeAccent = new THREE.Shape()
+  facadeAccent.moveTo(-1.05, -0.42)
+  facadeAccent.lineTo(0.74, -0.42)
+  facadeAccent.lineTo(1.05, 0.42)
+  facadeAccent.lineTo(-0.72, 0.42)
+  facadeAccent.closePath()
+  mesh(
+    root,
+    new THREE.ShapeGeometry(facadeAccent),
+    shopCharcoal,
+    [L.shop.x + 4.75, 1.08, L.shop.z + L.shop.depth / 2 + 0.265],
+    'shop-facade-charcoal-accent',
+  )
+  // The side elevation continues the turquoise cladding and white banding.
   for (let offset = -2.05; offset <= 2.05; offset += 2.05)
     box(
       root,
       [0.12, 3.65, 1.85],
-      mat('#c8cdd0', 0.48, 0.32),
+      offset === 0 ? shopTealDark : shopTeal,
       [L.shop.x + L.shop.width / 2 + 0.07, 2.25, L.shop.z + offset],
       'shop-side-cladding',
     )
   box(
     root,
     [L.shop.width + 0.25, 0.42, 0.26],
-    mat('#b9bdba', 0.42, 0.35),
+    shopTealDark,
     [L.shop.x, 0.48, L.shop.z + L.shop.depth / 2 + 0.02],
     'shop-metal-plinth',
   )
@@ -793,15 +889,79 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
       [L.shop.x + offset, 0.56, L.shop.z + L.shop.depth / 2 + 0.12],
       'shop-entrance-bollard',
     )
-  // A simple interior checkout makes Journey C a real visit to Svolta rather
-  // than a stop in front of the glass facade.
+  // A low central merchandising island sits left of the walking line, leaving
+  // the entrance-to-checkout route unobstructed.
   roundedBox(
     root,
+    [3.8, 0.52, 1.5],
+    0.06,
+    shopWoodLight,
+    [L.shop.x - 3.55, 0.34, L.shop.z - 0.25],
+    'shop-central-display-island',
+  )
+  roundedBox(
+    root,
+    [3.15, 0.34, 1.08],
+    0.05,
+    shopWood,
+    [L.shop.x - 3.55, 0.75, L.shop.z - 0.25],
+    'shop-central-display-tier',
+  )
+  for (let row = 0; row < 2; row += 1)
+    for (let productIndex = 0; productIndex < 7; productIndex += 1)
+      roundedBox(
+        root,
+        [0.24, 0.28, 0.22],
+        0.03,
+        mat(
+          ['#c85242', '#efb93e', '#62866d'][productIndex % 3] ?? '#c85242',
+          0.52,
+        ),
+        [
+          L.shop.x - 4.82 + productIndex * 0.42,
+          1.04,
+          L.shop.z - 0.53 + row * 0.56,
+        ],
+        'shop-island-product',
+      )
+  // Teal feature wall, white Svolta sign and screen behind the cashier.
+  box(
+    root,
+    [3.65, 2.45, 0.16],
+    shopTeal,
+    [L.shop.x + 2.65, 2.05, L.shop.z - L.shop.depth / 2 + 0.39],
+    'shop-checkout-feature-wall',
+  )
+  silhouettePlane(
+    root,
+    svoltaTexture,
+    [2.35, 0.55],
+    [L.shop.x + 2.15, 2.95, L.shop.z - L.shop.depth / 2 + 0.49],
+    'shop-interior-svolta-brand-white',
+  )
+  box(
+    root,
+    [1.55, 0.82, 0.08],
+    mat('#dce9e8', 0.18),
+    [L.shop.x + 3.15, 2.25, L.shop.z - L.shop.depth / 2 + 0.5],
+    'shop-feature-screen',
+  )
+  // Angled light-wood checkout with the teal front panel from the references.
+  box(
+    root,
     [3.2, 1.05, 0.85],
-    0.08,
-    mat('#67717a', 0.46, 0.28),
+    shopWoodLight,
     [L.shop.x + 2.8, 0.56, L.shop.z - 1.35],
     'shop-checkout-counter',
+    [0, -0.17, 0],
+  )
+  box(
+    root,
+    [1.42, 0.84, 0.06],
+    shopTeal,
+    [L.shop.x + 2.3, 0.56, L.shop.z - 0.87],
+    'shop-checkout-teal-front',
+    [0, -0.17, 0],
   )
   box(
     root,
@@ -810,6 +970,37 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [L.shop.x + 1.65, 1.2, L.shop.z - 0.9],
     'shop-checkout-screen',
   )
+  // Bright white ceiling and slim track lights make the interior feel occupied
+  // instead of reading as an empty box behind glass.
+  box(
+    root,
+    [L.shop.width - 0.5, 0.12, L.shop.depth - 0.45],
+    shopWhite,
+    [L.shop.x, L.shop.height - 0.2, L.shop.z],
+    'shop-interior-ceiling',
+  )
+  for (const x of [L.shop.x - 4.6, L.shop.x, L.shop.x + 4.6]) {
+    box(
+      root,
+      [2.6, 0.055, 0.06],
+      shopCharcoal,
+      [x, L.shop.height - 0.31, L.shop.z - 0.25],
+      'shop-track-light-rail',
+    )
+    for (const offset of [-0.78, 0, 0.78])
+      box(
+        root,
+        [0.26, 0.045, 0.18],
+        new THREE.MeshStandardMaterial({
+          color: '#fff7da',
+          emissive: '#fff0b5',
+          emissiveIntensity: 1.4,
+          roughness: 0.18,
+        }),
+        [x + offset, L.shop.height - 0.36, L.shop.z - 0.25],
+        'shop-track-light',
+      )
+  }
   const totem = new THREE.Group()
   totem.position.set(L.totem.x, 0, L.totem.z)
   totem.name = 'price-pylon'
@@ -825,13 +1016,7 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, L.totem.height / 2, 0],
     'price-pylon-structural-frame',
   )
-  box(
-    totem,
-    [0.82, 0.18, 0.82],
-    concrete,
-    [0, 0.12, 0],
-    'price-pylon-base',
-  )
+  box(totem, [0.82, 0.18, 0.82], concrete, [0, 0.12, 0], 'price-pylon-base')
   box(
     totem,
     [1.72, 1.42, 0.16],
@@ -839,7 +1024,13 @@ function buildStation(q8Texture: THREE.Texture, svoltaTexture: THREE.Texture) {
     [0, 6.45, 0.18],
     'price-pylon-brand-panel',
   )
-  brandPlane(totem, q8Texture, [1.46, 0.8], [0, 6.7, 0.275], 'price-pylon-logo')
+  brandPlane(
+    totem,
+    q8WhiteTexture,
+    [1.46, 0.8],
+    [0, 6.7, 0.275],
+    'price-pylon-logo',
+  )
   roundedBox(
     totem,
     [1.72, 1.62, 0.16],
@@ -953,14 +1144,14 @@ function collect(root: THREE.Object3D) {
 }
 export const proceduralAdapter: StationModelAdapter = {
   async load() {
-    const [q8Texture, svoltaTexture] =
+    const [q8WhiteTexture, svoltaTexture] =
       import.meta.env.MODE === 'test'
-        ? [fallbackBrandTexture('#153b8c'), fallbackBrandTexture('#13877d')]
+        ? [fallbackBrandTexture('#ffffff'), fallbackBrandTexture('#13877d')]
         : await Promise.all([
-            new THREE.TextureLoader().loadAsync(BRAND_ASSETS.q8Logo),
+            new THREE.TextureLoader().loadAsync(BRAND_ASSETS.q8LogoWhite),
             new THREE.TextureLoader().loadAsync(BRAND_ASSETS.svoltaLogo),
           ])
-    const root = buildStation(q8Texture, svoltaTexture)
+    const root = buildStation(q8WhiteTexture, svoltaTexture)
     const meshes = collect(root)
     const boundingBox = new THREE.Box3().setFromObject(root)
     const size = boundingBox.getSize(new THREE.Vector3()).toArray()

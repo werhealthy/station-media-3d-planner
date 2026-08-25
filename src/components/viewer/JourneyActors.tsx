@@ -26,7 +26,7 @@ export function JourneyActors() {
   const actorStart = useRef(new THREE.Vector3())
   const actorDestination = useRef(new THREE.Vector3())
   const actorCandidate = useRef(new THREE.Vector3())
-  const q8Logo = useTexture(BRAND_ASSETS.q8Logo)
+  const q8Logo = useTexture(BRAND_ASSETS.q8LogoWhite)
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.actor : undefined
@@ -88,14 +88,17 @@ export function JourneyActors() {
       1 - Math.exp(-delta * 8),
     )
     if (rightArm.current) {
-      const raised =
-        operatorHoldsNozzle
-          ? -0.68
-          : cue.action === 'payment'
+      const raised = operatorHoldsNozzle
+        ? -0.68
+        : cue.action === 'payment'
           ? -1.02
-          : ['take-nozzle', 'carry-nozzle', 'insert-nozzle', 'remove-nozzle', 'replace-nozzle'].includes(
-                cue.action,
-              )
+          : [
+                'take-nozzle',
+                'carry-nozzle',
+                'insert-nozzle',
+                'remove-nozzle',
+                'replace-nozzle',
+              ].includes(cue.action)
             ? -0.62
             : cue.action === 'refuel'
               ? -0.2

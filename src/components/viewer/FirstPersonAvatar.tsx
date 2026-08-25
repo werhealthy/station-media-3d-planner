@@ -54,16 +54,12 @@ function Arm({ side, armRef, paying }: ArmProps) {
           position={[0.015, -0.095, -0.285]}
           rotation={[0.18, -0.12, 0.03]}
         >
-          <RoundedBox
-            args={[0.09, 0.005, 0.145]}
-            radius={0.006}
-            smoothness={2}
-          >
-            <meshStandardMaterial color="#d9a37f" roughness={0.46} />
+          <RoundedBox args={[0.09, 0.005, 0.145]} radius={0.006} smoothness={2}>
+            <meshStandardMaterial color="#84ad72" roughness={0.46} />
           </RoundedBox>
           <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[0.034, 0.11]} />
-            <meshStandardMaterial color="#a85e47" roughness={0.5} />
+            <meshStandardMaterial color="#326d4e" roughness={0.5} />
           </mesh>
         </group>
       )}
@@ -101,15 +97,15 @@ export function FirstPersonAvatar() {
     mode === 'auto' &&
     Boolean(
       step &&
-        [
-          'self-terminal-start',
-          'self-no-payback',
-          'self-select-pump',
-          'self-select-fuel',
-          'self-select-payment',
-          'self-cash-amount',
-          'self-review',
-        ].includes(step.id),
+      [
+        'self-terminal-start',
+        'self-no-payback',
+        'self-select-pump',
+        'self-select-fuel',
+        'self-select-payment',
+        'self-cash-amount',
+        'self-review',
+      ].includes(step.id),
     )
 
   useFrame((_, delta) => {
@@ -181,16 +177,8 @@ export function FirstPersonAvatar() {
 
   return (
     <group ref={body} visible={visible}>
-      <Arm
-        side={-1}
-        armRef={leftArm}
-        paying={paying}
-      />
-      <Arm
-        side={1}
-        armRef={rightArm}
-        paying={paying}
-      />
+      <Arm side={-1} armRef={leftArm} paying={paying} />
+      <Arm side={1} armRef={rightArm} paying={paying} />
     </group>
   )
 }

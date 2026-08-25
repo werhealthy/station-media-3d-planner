@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+export type TimeOfDay = 'day' | 'night'
+
 interface ViewerState {
   navigationMode: 'overview' | 'hotspot' | 'walkthrough' | 'auto'
   activeHotspotId: string | null
@@ -6,6 +8,7 @@ interface ViewerState {
   hoveredMediaPointId: string | null
   overviewUnlocked: boolean
   personHeight: number
+  timeOfDay: TimeOfDay
   focusRequestId: number
   selectMediaPoint: (id: string | null) => void
   hoverMediaPoint: (id: string | null) => void
@@ -13,6 +16,7 @@ interface ViewerState {
   setActiveHotspot: (id: string | null) => void
   setOverviewUnlocked: (unlocked: boolean) => void
   setPersonHeight: (height: number) => void
+  setTimeOfDay: (timeOfDay: TimeOfDay) => void
   resetForStation: () => void
 }
 
@@ -31,6 +35,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   hoveredMediaPointId: null,
   overviewUnlocked: false,
   personHeight: 1.8,
+  timeOfDay: 'day',
   focusRequestId: 0,
   selectMediaPoint: (id) =>
     set((state) => ({
@@ -66,6 +71,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
         Math.max(MIN_PERSON_HEIGHT, personHeight),
       ),
     }),
+  setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
   resetForStation: () =>
     set({
       navigationMode: 'overview',

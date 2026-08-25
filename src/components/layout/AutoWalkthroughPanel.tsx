@@ -19,6 +19,7 @@ export function AutoWalkthroughPanel() {
   const setActiveStep = usePlaybackStore((s) => s.setActiveStep)
   const activeRouteId = usePlaybackStore((s) => s.activeRouteId)
   const serviceChoice = usePlaybackStore((s) => s.serviceChoice)
+  const paymentChoice = usePlaybackStore((s) => s.paymentChoice)
   const resetInteractiveJourney = usePlaybackStore(
     (s) => s.resetInteractiveJourney,
   )
@@ -27,7 +28,9 @@ export function AutoWalkthroughPanel() {
   const duration = journeyDuration(journey)
   const choiceLimit = !serviceChoice
     ? journeyElapsedAfterStep(journey, 'common-service-choice') / duration
-    : 1
+    : serviceChoice === 'servito' && !paymentChoice
+      ? journeyElapsedAfterStep(journey, 'served-payment-choice') / duration
+      : 1
   const phaseMarkers = journey.steps.reduce<
     Array<{ phase: string; stepIndex: number }>
   >((markers, item, stepIndex) => {
@@ -57,7 +60,7 @@ export function AutoWalkthroughPanel() {
           <Sparkles size={14} /> Tour interattivo
         </span>
         <strong>{journeyLabel}</strong>
-          <span>La scena si ferma quando scegli il tipo di servizio</span>
+        <span>La scena si ferma alle scelte di servizio e pagamento</span>
       </div>
       <button
         className="play-button"

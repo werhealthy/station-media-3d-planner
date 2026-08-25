@@ -717,8 +717,8 @@ function buildStation(
   silhouettePlane(
     root,
     svoltaTexture,
-    [5.8, 1.05],
-    [L.shop.x, 4.38, L.shop.z + L.shop.depth / 2 + 0.18],
+    [3.55, 0.7],
+    [L.shop.x + 2.15, 4.38, L.shop.z + L.shop.depth / 2 + 0.34],
     'svolta-brand-white',
   )
   const glass = new THREE.MeshPhysicalMaterial({
@@ -924,19 +924,39 @@ function buildStation(
         ],
         'shop-island-product',
       )
-  // Teal feature wall, white Svolta sign and screen behind the cashier.
-  box(
+  // The Svolta identity uses an asymmetric teal field with diagonal edges,
+  // rather than a generic rectangular panel.
+  const featureWallShape = new THREE.Shape()
+  featureWallShape.moveTo(-1.85, -1.18)
+  featureWallShape.lineTo(1.24, -1.18)
+  featureWallShape.lineTo(1.84, 1.18)
+  featureWallShape.lineTo(-1.85, 1.18)
+  featureWallShape.closePath()
+  mesh(
     root,
-    [3.65, 2.45, 0.16],
+    new THREE.ShapeGeometry(featureWallShape),
     shopTeal,
-    [L.shop.x + 2.65, 2.05, L.shop.z - L.shop.depth / 2 + 0.39],
-    'shop-checkout-feature-wall',
+    [L.shop.x + 2.35, 2.05, L.shop.z - L.shop.depth / 2 + 0.5],
+    'shop-checkout-oblique-feature-wall',
+  )
+  const featureWedgeShape = new THREE.Shape()
+  featureWedgeShape.moveTo(-0.42, -1.18)
+  featureWedgeShape.lineTo(0.14, -1.18)
+  featureWedgeShape.lineTo(0.74, 1.18)
+  featureWedgeShape.lineTo(0.18, 1.18)
+  featureWedgeShape.closePath()
+  mesh(
+    root,
+    new THREE.ShapeGeometry(featureWedgeShape),
+    mat('#22a89e', 0.38, 0.06),
+    [L.shop.x + 3.45, 2.05, L.shop.z - L.shop.depth / 2 + 0.515],
+    'shop-checkout-oblique-highlight',
   )
   silhouettePlane(
     root,
     svoltaTexture,
-    [2.35, 0.55],
-    [L.shop.x + 2.15, 2.95, L.shop.z - L.shop.depth / 2 + 0.49],
+    [1.35, 0.32],
+    [L.shop.x + 1.45, 3.02, L.shop.z - L.shop.depth / 2 + 0.53],
     'shop-interior-svolta-brand-white',
   )
   box(
@@ -955,13 +975,18 @@ function buildStation(
     'shop-checkout-counter',
     [0, -0.17, 0],
   )
-  box(
+  const counterFrontShape = new THREE.Shape()
+  counterFrontShape.moveTo(-0.9, -0.42)
+  counterFrontShape.lineTo(0.65, -0.42)
+  counterFrontShape.lineTo(0.9, 0.42)
+  counterFrontShape.lineTo(-0.65, 0.42)
+  counterFrontShape.closePath()
+  mesh(
     root,
-    [1.42, 0.84, 0.06],
+    new THREE.ShapeGeometry(counterFrontShape),
     shopTeal,
-    [L.shop.x + 2.3, 0.56, L.shop.z - 0.87],
-    'shop-checkout-teal-front',
-    [0, -0.17, 0],
+    [L.shop.x + 2.42, 0.56, L.shop.z - 0.87],
+    'shop-checkout-oblique-front',
   )
   box(
     root,

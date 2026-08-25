@@ -16,6 +16,19 @@ describe('App', () => {
         name: /Sovrapompa \/ Cappuccio.*ID 1/,
       }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Giorno' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('consente di passare dalla scena giorno alla scena notte', async () => {
+    render(<App />)
+    await userEvent.click(screen.getByRole('button', { name: 'Notte' }))
+    expect(screen.getByRole('button', { name: 'Notte' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
   it('cambia stazione e nasconde l’inventario procedurale', async () => {
     vi.stubGlobal(

@@ -66,8 +66,11 @@ describe('proceduralAdapter composition', () => {
     expect(sceneNames).toContain('shop-checkout-counter')
     expect(sceneNames).toContain('shop-lower-teal-panel')
     expect(sceneNames).toContain('shop-facade-charcoal-accent')
+    expect(sceneNames).toContain('svolta-brand-white')
     expect(sceneNames).toContain('shop-central-display-island')
-    expect(sceneNames).toContain('shop-checkout-feature-wall')
+    expect(sceneNames).toContain('shop-checkout-oblique-feature-wall')
+    expect(sceneNames).toContain('shop-checkout-oblique-highlight')
+    expect(sceneNames).toContain('shop-checkout-oblique-front')
     expect(sceneNames).toContain('shop-interior-svolta-brand-white')
     expect(sceneNames).toContain('shop-track-light')
     expect(

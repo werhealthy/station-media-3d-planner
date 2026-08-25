@@ -14,6 +14,7 @@ describe('viewerStore', () => {
       selectedMediaPointId: null,
       overviewUnlocked: false,
       personHeight: 1.8,
+      timeOfDay: 'day',
     })
   })
 
@@ -43,5 +44,13 @@ describe('viewerStore', () => {
 
   it('places the camera at eye level rather than at the top of the head', () => {
     expect(eyeHeightFromPersonHeight(1.8)).toBeCloseTo(1.69)
+  })
+
+  it('switches the complete scene between day and night', () => {
+    useViewerStore.getState().setTimeOfDay('night')
+    expect(useViewerStore.getState().timeOfDay).toBe('night')
+
+    useViewerStore.getState().setTimeOfDay('day')
+    expect(useViewerStore.getState().timeOfDay).toBe('day')
   })
 })

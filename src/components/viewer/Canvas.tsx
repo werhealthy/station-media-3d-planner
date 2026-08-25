@@ -1,5 +1,12 @@
-import { Canvas as R3FCanvas } from '@react-three/fiber'
-import { ContactShadows, Environment, Html, Sky } from '@react-three/drei'
+/* eslint-disable react-hooks/immutability -- R3F renderer exposure is mutable scene state. */
+import { Canvas as R3FCanvas, useThree } from '@react-three/fiber'
+import {
+  ContactShadows,
+  Environment,
+  Html,
+  Sky,
+  Stars,
+} from '@react-three/drei'
 import { Suspense, useCallback, useEffect, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -26,6 +33,97 @@ import { FirstPersonAvatar } from './FirstPersonAvatar'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
 import { JourneyFuelNozzle } from './JourneyFuelNozzle'
+import { useViewerStore } from '@/stores/viewerStore'
+
+function SceneLighting({ isNight }: { isNight: boolean }) {
+  const { gl } = useThree()
+
+  useEffect(() => {
+    gl.toneMappingExposure = isNight ? 0.78 : 1.12
+  }, [gl, isNight])
+
+  return (
+    <>
+      <color attach="background" args={[isNight ? '#07122d' : '#a9cfea']} />
+      <fog
+        attach="fog"
+        args={[isNight ? '#0b1731' : '#afcee2', isNight ? 82 : 118, 255]}
+      />
+      {isNight ? (
+        <Stars
+          radius={180}
+          depth={70}
+          count={1800}
+          factor={3}
+          fade
+          speed={0.25}
+        />
+      ) : (
+        <Sky
+          distance={450000}
+          sunPosition={[-18, 30, 22]}
+          turbidity={6.5}
+          rayleigh={1.65}
+          mieCoefficient={0.005}
+          mieDirectionalG={0.82}
+        />
+      )}
+      <ambientLight intensity={isNight ? 0.055 : 0.18} />
+      <hemisphereLight
+        args={
+          isNight ? ['#40598f', '#10151b', 0.34] : ['#edf8ff', '#555950', 1.15]
+        }
+      />
+      <directionalLight
+        position={isNight ? [18, 24, -12] : [-18, 30, 22]}
+        color={isNight ? '#a9c2ff' : '#ffffff'}
+        intensity={isNight ? 0.48 : 2.9}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-38}
+        shadow-camera-right={38}
+        shadow-camera-top={32}
+        shadow-camera-bottom={-30}
+        shadow-bias={-0.00015}
+        shadow-normalBias={0.025}
+        shadow-radius={3}
+      />
+      {isNight && (
+        <>
+          {([-7.8, -2.6, 2.6, 7.8] as const).map((x) => (
+            <pointLight
+              key={x}
+              position={[x, 5.15, 1.5]}
+              color="#fff3c4"
+              intensity={22}
+              distance={15}
+              decay={2}
+            />
+          ))}
+          <pointLight
+            position={[9.5, 3.9, -5.1]}
+            color="#fff0c7"
+            intensity={20}
+            distance={13}
+            decay={2}
+          />
+          <pointLight
+            position={[-18, 6.7, 10.4]}
+            color="#dce8ff"
+            intensity={14}
+            distance={13}
+            decay={2}
+          />
+        </>
+      )}
+      <Environment
+        preset={isNight ? 'night' : 'city'}
+        environmentIntensity={isNight ? 0.16 : 0.42}
+      />
+    </>
+  )
+}
+
 export function Canvas() {
   const stationId = useStationStore((state) => state.selectedStationId)
   const station = getStation(stationId)
@@ -39,6 +137,8 @@ export function Canvas() {
   const tool = useStationSetupStore((state) => state.tool)
   const config = useStationSetupStore((state) => state.config)
   const configStatus = useStationSetupStore((state) => state.configStatus)
+  const timeOfDay = useViewerStore((state) => state.timeOfDay)
+  const isNight = timeOfDay === 'night'
   const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
   const setSelectedMediaPoint = useStationSetupStore(
     (state) => state.setSelectedMediaPoint,
@@ -162,35 +262,14 @@ export function Canvas() {
       shadows
       dpr={[1, 1.75]}
       camera={{ position: [30, 16, 31], fov: 43, near: 0.1, far: 320 }}
-      gl={{ antialias: true, toneMapping: 4, toneMappingExposure: 1.12 }}
+      gl={{
+        antialias: true,
+        toneMapping: 4,
+        toneMappingExposure: isNight ? 0.78 : 1.12,
+      }}
     >
       <Suspense fallback={null}>
-        <color attach="background" args={['#a9cfea']} />
-        <fog attach="fog" args={['#afcee2', 118, 255]} />
-        <Sky
-          distance={450000}
-          sunPosition={[-18, 30, 22]}
-          turbidity={6.5}
-          rayleigh={1.65}
-          mieCoefficient={0.005}
-          mieDirectionalG={0.82}
-        />
-        <ambientLight intensity={0.18} />
-        <hemisphereLight args={['#edf8ff', '#555950', 1.15]} />
-        <directionalLight
-          position={[-18, 30, 22]}
-          intensity={2.9}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-38}
-          shadow-camera-right={38}
-          shadow-camera-top={32}
-          shadow-camera-bottom={-30}
-          shadow-bias={-0.00015}
-          shadow-normalBias={0.025}
-          shadow-radius={3}
-        />
-        <Environment preset="city" environmentIntensity={0.42} />
+        <SceneLighting isNight={isNight} />
         <StationModel
           key={station.id}
           adapter={selection.adapter}
@@ -204,7 +283,7 @@ export function Canvas() {
         )}
         <ContactShadows
           position={[0, 0.05, 0]}
-          opacity={0.28}
+          opacity={isNight ? 0.42 : 0.28}
           scale={65}
           blur={2.4}
           far={24}

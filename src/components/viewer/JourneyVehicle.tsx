@@ -13,6 +13,7 @@ export function JourneyVehicle() {
   const { camera } = useThree()
   const cockpit = useRef<THREE.Group>(null)
   const vehicleYaw = useRef(-Math.PI / 2)
+  const forward = useRef(new THREE.Vector3())
   const step = getJourney(activeRouteId).steps[activeStepIndex]
   const visible = mode === 'auto' && step?.cameraMode === 'vehicle'
   const parkedCarVisible =
@@ -24,12 +25,20 @@ export function JourneyVehicle() {
   useFrame((_, delta) => {
     if (!cockpit.current || !visible) return
     const carIsMoving = step.motion === 'drive' || step.motion === 'brake'
-    if (carIsMoving) cockpit.current.position.copy(camera.position)
-    else cockpit.current.position.set(...step.position)
+    let desiredYaw = step.vehicleYaw ?? vehicleYaw.current
+    if (carIsMoving) {
+      cockpit.current.position.copy(camera.position)
+      camera.getWorldDirection(forward.current)
+      forward.current.y = 0
+      if (forward.current.lengthSq() > 0.001) {
+        forward.current.normalize()
+        desiredYaw = Math.atan2(-forward.current.x, -forward.current.z)
+      }
+    } else cockpit.current.position.set(...step.position)
     vehicleYaw.current = THREE.MathUtils.lerp(
       vehicleYaw.current,
-      step.vehicleYaw ?? vehicleYaw.current,
-      1 - Math.exp(-delta * 2.8),
+      desiredYaw,
+      1 - Math.exp(-delta * (carIsMoving ? 10 : 5)),
     )
     cockpit.current.rotation.set(0, vehicleYaw.current, 0)
   })
@@ -93,8 +102,8 @@ export function JourneyVehicle() {
 
       <group
         visible={parkedCarVisible}
-        position={[-5, 0, 5.2]}
-        rotation={[0, -Math.PI / 2, 0]}
+        position={[-5, 0, 7.2]}
+        rotation={[0, Math.PI / 2, 0]}
       >
         <RoundedBox
           args={[1.82, 0.52, 4.2]}

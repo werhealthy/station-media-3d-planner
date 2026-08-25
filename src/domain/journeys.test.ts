@@ -26,7 +26,7 @@ describe('station journeys', () => {
         'self-insert-nozzle',
         'self-refuel',
         'self-enter-car',
-        'self-depart',
+        'self-finish',
       ]),
     )
     expect(
@@ -35,9 +35,12 @@ describe('station journeys', () => {
         .reduce((total, step) => total + step.duration, 0),
     ).toBe(48)
     expect(self.steps.find((step) => step.id === 'self-brake')).toMatchObject({
-      position: [-5, 1.28, 5.2],
-      vehicleYaw: -Math.PI / 2,
+      position: [-5, 1.28, 7.2],
+      vehicleYaw: Math.PI / 2,
     })
+    expect(self.steps.find((step) => step.id === 'self-payment')?.duration).toBe(
+      8,
+    )
 
     const served = getJourney('servito')
     expect(served.steps.every((step) => step.cameraMode === 'vehicle')).toBe(
@@ -49,10 +52,20 @@ describe('station journeys', () => {
     expect(served.steps.some((step) => step.actor?.action === 'refuel')).toBe(
       true,
     )
+    const servedArrivalEnd = served.steps.findIndex(
+      (step) => step.id === served.arrivalEndStepId,
+    )
+    expect(
+      served.steps
+        .slice(0, servedArrivalEnd + 1)
+        .every((step) => step.actor?.action === 'wait'),
+    ).toBe(true)
     expect(
       served.steps
         .filter((step) =>
-          ['served-refuel', 'served-look-around'].includes(step.id),
+          ['served-refuel', 'served-look-shop', 'served-look-side'].includes(
+            step.id,
+          ),
         )
         .reduce((total, step) => total + step.duration, 0),
     ).toBe(48)
@@ -61,7 +74,7 @@ describe('station journeys', () => {
       const start = served.steps.findIndex(
         (item) => item.id === 'served-settle',
       )
-      const end = served.steps.findIndex((item) => item.id === 'served-depart')
+      const end = served.steps.length
       const index = served.steps.indexOf(step)
       return index >= start && index < end
     })
@@ -69,11 +82,11 @@ describe('station journeys', () => {
     expect(
       parkedServedSteps.every(
         (step) =>
-          JSON.stringify(step.position) === JSON.stringify([5, 1.28, 5.2]),
+          JSON.stringify(step.position) === JSON.stringify([5, 1.28, 7.2]),
       ),
     ).toBe(true)
     expect(
-      parkedServedSteps.every((step) => step.vehicleYaw === -Math.PI / 2),
+      parkedServedSteps.every((step) => step.vehicleYaw === Math.PI / 2),
     ).toBe(true)
   })
 

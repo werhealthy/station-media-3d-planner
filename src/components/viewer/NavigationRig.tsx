@@ -11,6 +11,12 @@ import {
   journeyDuration,
   type JourneyMotion,
 } from '@/domain/journeys'
+import {
+  createArrivalCurve,
+  pedestrianCollisionAt,
+  vehicleCollisionAt,
+  vehicleYawFromTangent,
+} from '@/domain/journeySafety'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
 import { orbitMinDistance } from './navigationLimits'
@@ -91,6 +97,7 @@ export function NavigationRig() {
   const walkthroughInitialized = useRef(false)
   const autoTime = useRef(0)
   const lastUiUpdate = useRef(0)
+  const lastSafeAutoPosition = useRef(new THREE.Vector3())
   const isPlaying = usePlaybackStore((s) => s.isPlaying)
   const playbackSpeed = usePlaybackStore((s) => s.playbackSpeed)
   const setProgress = usePlaybackStore((s) => s.setProgress)
@@ -105,6 +112,24 @@ export function NavigationRig() {
   const activeJourneyDuration = useMemo(
     () => journeyDuration(activeJourney),
     [activeJourney],
+  )
+  const arrivalCurve = useMemo(
+    () => createArrivalCurve(activeJourney.arrivalPath),
+    [activeJourney],
+  )
+  const arrivalEndIndex = useMemo(
+    () =>
+      activeJourney.steps.findIndex(
+        (step) => step.id === activeJourney.arrivalEndStepId,
+      ),
+    [activeJourney],
+  )
+  const arrivalDuration = useMemo(
+    () =>
+      activeJourney.steps
+        .slice(0, arrivalEndIndex + 1)
+        .reduce((total, step) => total + step.duration, 0),
+    [activeJourney, arrivalEndIndex],
   )
   const runtimeBounds = useStationRuntimeStore((s) => s.bounds)
   const config = useStationSetupStore((s) => s.config)
@@ -206,14 +231,16 @@ export function NavigationRig() {
     perspectiveCamera.updateProjectionMatrix()
     lastUiUpdate.current = 0
     if (config.modelType === 'procedural') {
-      const start = activeJourney.steps[0]
-      if (start) {
-        camera.position.set(...start.position)
-        camera.lookAt(...start.gazeTarget)
+      const start = activeJourney.arrivalPath[0]
+      const firstStep = activeJourney.steps[0]
+      if (start && firstStep) {
+        camera.position.set(...start)
+        lastSafeAutoPosition.current.copy(camera.position)
+        camera.lookAt(...firstStep.gazeTarget)
       }
     }
   }, [
-    activeJourney.steps,
+    activeJourney,
     activeJourneyDuration,
     camera,
     config.modelType,
@@ -393,22 +420,56 @@ export function NavigationRig() {
         0,
         1,
       )
-      const motionAmount = easeJourneyMotion(local, current.motion)
-      const gazeAmount =
-        current.motion === 'walk'
-          ? THREE.MathUtils.clamp(local * 1.4, 0, 1)
-          : easeJourneyMotion(local, current.motion)
-      destination
-        .set(...previous.position)
-        .lerp(new THREE.Vector3(...current.position), motionAmount)
-      const startY =
-        previous.cameraMode === 'pedestrian' ? eyeHeight : previous.position[1]
-      const endY =
-        current.cameraMode === 'pedestrian' ? eyeHeight : current.position[1]
-      destination.y = THREE.MathUtils.lerp(startY, endY, motionAmount)
-      target
-        .set(...previous.gazeTarget)
-        .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
+      const inContinuousArrival =
+        arrivalEndIndex >= 0 && stepIndex <= arrivalEndIndex
+
+      if (inContinuousArrival) {
+        const rawArrivalProgress = THREE.MathUtils.clamp(
+          autoTime.current / Math.max(arrivalDuration, 0.001),
+          0,
+          1,
+        )
+        // A single acceleration/deceleration envelope: no easing reset and no
+        // artificial stop at the intermediate narrative labels.
+        const arrivalProgress = THREE.MathUtils.smoothstep(
+          rawArrivalProgress,
+          0,
+          1,
+        )
+        const candidate = arrivalCurve.getPointAt(arrivalProgress)
+        const tangent = arrivalCurve.getTangentAt(arrivalProgress).normalize()
+        const yaw = vehicleYawFromTangent(tangent)
+        if (!vehicleCollisionAt(candidate, yaw)) {
+          lastSafeAutoPosition.current.copy(candidate)
+        }
+        destination.copy(lastSafeAutoPosition.current)
+        target.copy(destination).addScaledVector(tangent, 9).setY(1.3)
+      } else {
+        const motionAmount = easeJourneyMotion(local, current.motion)
+        const gazeAmount =
+          current.motion === 'walk'
+            ? THREE.MathUtils.clamp(local * 1.4, 0, 1)
+            : easeJourneyMotion(local, current.motion)
+        destination
+          .set(...previous.position)
+          .lerp(new THREE.Vector3(...current.position), motionAmount)
+        const startY =
+          previous.cameraMode === 'pedestrian'
+            ? eyeHeight
+            : previous.position[1]
+        const endY =
+          current.cameraMode === 'pedestrian' ? eyeHeight : current.position[1]
+        destination.y = THREE.MathUtils.lerp(startY, endY, motionAmount)
+        target
+          .set(...previous.gazeTarget)
+          .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
+
+        if (current.cameraMode === 'pedestrian') {
+          if (pedestrianCollisionAt(destination))
+            destination.copy(lastSafeAutoPosition.current)
+          else lastSafeAutoPosition.current.copy(destination)
+        } else lastSafeAutoPosition.current.copy(destination)
+      }
 
       if (current.motion === 'walk') {
         const footfalls = local * Math.max(2, current.duration * 1.9) * Math.PI

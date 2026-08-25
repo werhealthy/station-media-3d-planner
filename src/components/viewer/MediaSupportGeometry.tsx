@@ -153,9 +153,9 @@ export function MediaSupportGeometry({
       return (
         <>
           <RoundedBox
-            args={[0.72, 2.05, 0.5]}
-            position={[0, -0.48, -0.24]}
-            radius={0.08}
+            args={[0.507, 1.636, 0.606]}
+            position={[0, -0.487, -0.303]}
+            radius={0.045}
             smoothness={4}
             castShadow
             receiveShadow
@@ -167,9 +167,9 @@ export function MediaSupportGeometry({
             />
           </RoundedBox>
           <RoundedBox
-            args={[point.width + 0.15, point.height + 0.15, 0.075]}
+            args={[point.width + 0.055, point.height + 0.055, 0.055]}
             position={[0, 0, 0.005]}
-            radius={0.035}
+            radius={0.022}
             smoothness={4}
             castShadow
           >
@@ -179,44 +179,36 @@ export function MediaSupportGeometry({
               roughness={0.16}
             />
           </RoundedBox>
-          <mesh position={[0, -0.53, 0.015]} castShadow>
-            <boxGeometry args={[0.5, 0.46, 0.065]} />
+          <mesh position={[0, -0.47, 0.012]} castShadow>
+            <boxGeometry args={[0.36, 0.12, 0.045]} />
             <meshStandardMaterial
-              color="#122d78"
-              metalness={0.32}
-              roughness={0.3}
+              color="#d1d6da"
+              metalness={0.62}
+              roughness={0.25}
             />
           </mesh>
-          <mesh position={[-0.13, -0.33, 0.06]} castShadow>
-            <boxGeometry args={[0.17, 0.035, 0.025]} />
+          <mesh position={[-0.09, -0.47, 0.042]} castShadow>
+            <boxGeometry args={[0.13, 0.035, 0.02]} />
             <meshStandardMaterial color="#171c24" roughness={0.22} />
           </mesh>
-          <mesh position={[0.15, -0.35, 0.065]} castShadow>
-            <boxGeometry args={[0.13, 0.18, 0.035]} />
+          <mesh position={[0.1, -0.46, 0.045]} castShadow>
+            <boxGeometry args={[0.085, 0.09, 0.025]} />
             <meshStandardMaterial
               color="#2b3038"
               metalness={0.25}
               roughness={0.26}
             />
           </mesh>
-          <mesh position={[0, -1.54, -0.19]} receiveShadow>
-            <boxGeometry args={[0.92, 0.11, 0.76]} />
+          <mesh position={[0, -1.325, -0.303]} receiveShadow>
+            <boxGeometry args={[0.62, 0.08, 0.68]} />
             <meshStandardMaterial
               color="#8d969d"
               metalness={0.62}
               roughness={0.32}
             />
           </mesh>
-          <mesh position={[-0.37, -0.88, -0.22]} castShadow>
-            <boxGeometry args={[0.055, 1.25, 0.54]} />
-            <meshStandardMaterial
-              color="#727c85"
-              metalness={0.8}
-              roughness={0.22}
-            />
-          </mesh>
-          <mesh position={[0.37, -0.88, -0.22]} castShadow>
-            <boxGeometry args={[0.055, 1.25, 0.54]} />
+          <mesh position={[-0.19, -0.92, 0.015]} castShadow>
+            <boxGeometry args={[0.035, 0.52, 0.035]} />
             <meshStandardMaterial
               color="#727c85"
               metalness={0.8}

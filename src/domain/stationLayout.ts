@@ -12,7 +12,16 @@ export const STATION_LAYOUT = {
   islands: { pumpX: 4.6, frontZ: 1.6, width: 13 },
   shop: { x: 9.5, z: -7.3, width: 14.5, depth: 6.2, height: 4.7 },
   totem: { x: -18, z: 10.4, width: 2.8, height: 7.2 },
-  terminal: { x: -9, z: 0.3 },
+  terminal: {
+    x: -9,
+    z: 0.3,
+    width: 0.507,
+    depth: 0.606,
+    height: 1.696,
+    screenWidth: 0.31,
+    screenHeight: 0.54,
+    screenCenterY: 1.365,
+  },
   entry: {
     beachFlagX: -14.5,
     beachFlagZ: 10.6,

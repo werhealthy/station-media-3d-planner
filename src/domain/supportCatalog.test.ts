@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SUPPORT_CATALOG, getSupportType } from './supportCatalog'
+import { STATION_LAYOUT } from './stationLayout'
 
 describe('supportCatalog', () => {
   it('mantiene distinti i dieci tipi di supporto Q8', () => {
@@ -20,14 +21,14 @@ describe('supportCatalog', () => {
     expect(getSupportType('8')?.assignable).toBe(false)
   })
 
-  it('usa il display verticale 9:16 del Fortech smartOPT Maxi', () => {
+  it('usa display ingrandito e quote documentate del Fortech smartOPT Maxi', () => {
     const terminal = getSupportType('11')
     expect(terminal?.name).toContain('Fortech smartOPT Maxi')
-    expect(terminal?.dimensions.width).toBeLessThan(
-      terminal?.dimensions.height ?? 0,
-    )
-    expect(
-      (terminal?.dimensions.width ?? 0) / (terminal?.dimensions.height ?? 1),
-    ).toBeCloseTo(9 / 16, 2)
+    expect(terminal?.dimensions).toMatchObject({ width: 0.31, height: 0.54 })
+    expect(STATION_LAYOUT.terminal).toMatchObject({
+      width: 0.507,
+      depth: 0.606,
+      height: 1.696,
+    })
   })
 })

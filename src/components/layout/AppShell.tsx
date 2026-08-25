@@ -19,6 +19,7 @@ import { PROCEDURAL_STATION_CONFIG } from '@/domain/stationConfigDefaults'
 import { loadStationConfig } from '@/adapters/station-config/stationConfigLoader'
 import { restoreStationConfig } from '@/adapters/station-config/stationConfigPersistence'
 import { StationSetupPanel } from './StationSetupPanel'
+import { JourneyExperienceOverlay } from './JourneyExperienceOverlay'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
@@ -109,7 +110,12 @@ export function AppShell() {
               ))}
             </nav>
           )}
-          {mode === 'auto' && <AutoWalkthroughPanel />}
+          {mode === 'auto' && (
+            <>
+              <JourneyExperienceOverlay />
+              <AutoWalkthroughPanel />
+            </>
+          )}
           {setupEnabled && <StationSetupPanel />}
           {mode === 'walkthrough' ? (
             <div className="absolute bottom-5 left-5 flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600 shadow-md">

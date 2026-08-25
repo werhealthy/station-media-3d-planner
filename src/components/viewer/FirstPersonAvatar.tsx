@@ -79,15 +79,22 @@ function Arm({ side, armRef, nozzleInHand, paying }: ArmProps) {
         </group>
       )}
       {isActionHand && paying && (
-        <RoundedBox
-          args={[0.085, 0.006, 0.13]}
-          radius={0.006}
-          smoothness={2}
+        <group
           position={[0.015, -0.095, -0.285]}
           rotation={[0.18, -0.12, 0.03]}
         >
-          <meshStandardMaterial color="#1746a2" roughness={0.4} />
-        </RoundedBox>
+          <RoundedBox
+            args={[0.09, 0.005, 0.145]}
+            radius={0.006}
+            smoothness={2}
+          >
+            <meshStandardMaterial color="#d9a37f" roughness={0.46} />
+          </RoundedBox>
+          <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.034, 0.11]} />
+            <meshStandardMaterial color="#a85e47" roughness={0.5} />
+          </mesh>
+        </group>
       )}
     </group>
   )
@@ -113,15 +120,11 @@ export function FirstPersonAvatar() {
   const visible = mode === 'walkthrough' || autoPedestrian
   const nozzleInHand =
     mode === 'auto' &&
-    Boolean(
-      step &&
-      ['take-nozzle', 'insert-nozzle', 'refuel', 'remove-nozzle', 'replace-nozzle'].some(
-        (action) => step.id.includes(action),
-      ),
-    )
+    step?.nozzle?.owner === 'driver' &&
+    step.nozzle.state === 'hand'
   const paying =
     mode === 'auto' &&
-    (step?.id === 'self-payment' || step?.id === 'svolta-payment')
+    (step?.id === 'self-insert-cash' || step?.id === 'svolta-payment')
 
   useFrame((_, delta) => {
     if (!body.current || !visible) {

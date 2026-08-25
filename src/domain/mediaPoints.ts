@@ -91,8 +91,14 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     number: 3,
     location: 'Isola Self · terminale di pagamento',
     surface: 'Display verticale touch 21 pollici',
-    heightFromGround: 1.27,
-    position: [STATION_LAYOUT.terminal.x, 1.5, STATION_LAYOUT.terminal.z],
+    heightFromGround:
+      STATION_LAYOUT.terminal.screenCenterY -
+      STATION_LAYOUT.terminal.screenHeight / 2,
+    position: [
+      STATION_LAYOUT.terminal.x,
+      STATION_LAYOUT.terminal.screenCenterY,
+      STATION_LAYOUT.terminal.z,
+    ],
     rotation: [0, 0, 0],
   }),
   supportPoint('6', {

@@ -53,7 +53,7 @@ export const JOURNEY_OBSTACLES: PlanarBounds[] = [
     maxZ: -0.6,
   },
   { id: 'canopy-column-right', minX: 5.65, maxX: 7.15, minZ: -1.9, maxZ: -0.6 },
-  { id: 'pump-leader-mp02', minX: -2.86, maxX: -2.24, minZ: 1.05, maxZ: 2.15 },
+  { id: 'pump-leader-mp02', minX: 6.46, maxX: 6.82, minZ: 1.05, maxZ: 2.15 },
   {
     id: 'smartopt-mp05',
     minX: L.terminal.x - L.terminal.width / 2 - 0.08,

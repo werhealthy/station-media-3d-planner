@@ -457,6 +457,37 @@ function buildStation(
     [-Math.PI / 2, 0, 0],
   )
   approachRoad.userData.stationHelper = true
+  // The same wide driveway has two clearly separated lanes: the eastern lane
+  // is the entrance, while the western lane gives every guided route a paved
+  // exit back to the road (no grass or landscaping is crossed).
+  box(
+    root,
+    [0.18, 0.025, 8.5],
+    mat('#f3eee0', 0.72),
+    [13.8, 0.026, 15.2],
+    'driveway-lane-divider',
+  ).userData.stationHelper = true
+  for (const [x, direction] of [
+    [9.8, -1],
+    [17.7, 1],
+  ] as const) {
+    box(
+      root,
+      [2.2, 0.02, 0.16],
+      mat('#f3eee0', 0.72),
+      [x, 0.028, 15.4],
+      direction < 0 ? 'exit-direction-marking' : 'entry-direction-marking',
+      [0, direction < 0 ? -0.45 : 0.45, 0],
+    ).userData.stationHelper = true
+    box(
+      root,
+      [0.16, 0.02, 1.25],
+      mat('#f3eee0', 0.72),
+      [x + direction * 0.8, 0.028, 15.4 + direction * 0.34],
+      direction < 0 ? 'exit-arrow-shaft' : 'entry-arrow-shaft',
+      [0, direction < 0 ? -0.45 : 0.45, 0],
+    ).userData.stationHelper = true
+  }
   // The frontage pavement is split at the actual driveway. The previous
   // continuous slab visually and physically cut across the station entrance.
   box(

@@ -146,13 +146,41 @@ export function JourneyVehicle() {
           <boxGeometry args={[1.82, 0.08, 0.08]} />
           <meshStandardMaterial color="#1b2430" roughness={0.6} />
         </mesh>
+        <mesh position={[0, 0.17, 1.08]} rotation={[0.18, 0, 0]}>
+          <planeGeometry args={[1.55, 0.8]} />
+          <meshStandardMaterial
+            color="#7698b5"
+            transparent
+            opacity={0.22}
+            roughness={0.12}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        {([-1, 1] as const).map((side) => (
+          <mesh
+            key={`rear-pillar-${side}`}
+            position={[side * 0.76, 0.2, 0.92]}
+            rotation={[0, 0, side * 0.2]}
+          >
+            <boxGeometry args={[0.14, 1.45, 0.16]} />
+            <meshStandardMaterial color="#1b2430" roughness={0.64} />
+          </mesh>
+        ))}
+        <RoundedBox
+          args={[1.48, 0.48, 0.34]}
+          radius={0.08}
+          smoothness={3}
+          position={[0, -0.28, 0.72]}
+        >
+          <meshStandardMaterial color="#222a35" roughness={0.78} />
+        </RoundedBox>
         <group position={[0.92, -0.56, 1.35]} rotation={[0, Math.PI / 2, 0]}>
           <mesh>
             <circleGeometry args={[0.12, 24]} />
             <meshStandardMaterial color="#101419" roughness={0.7} />
           </mesh>
           <mesh position={[0, 0, 0.008]}>
-            <torusGeometry args={[0.105, 0.018, 10, 24]} />
+            <ringGeometry args={[0.088, 0.118, 32]} />
             <meshStandardMaterial color="#8b94a3" metalness={0.55} roughness={0.34} />
           </mesh>
         </group>
@@ -197,7 +225,7 @@ export function JourneyVehicle() {
             <meshStandardMaterial color="#101419" roughness={0.7} />
           </mesh>
           <mesh position={[0, 0, 0.008]}>
-            <torusGeometry args={[0.105, 0.018, 10, 24]} />
+            <ringGeometry args={[0.088, 0.118, 32]} />
             <meshStandardMaterial
               color="#8b94a3"
               metalness={0.55}

@@ -11,7 +11,11 @@ function point(id: string) {
 describe('media point physical layout', () => {
   it('monta il Pump Leader sulla testata corta con due gambe', () => {
     expect(point('mp-02')).toMatchObject({
-      position: [-2.55, 0.96, STATION_LAYOUT.islands.frontZ],
+      position: [
+        STATION_LAYOUT.islands.pumpX + 2.18,
+        0.96,
+        STATION_LAYOUT.islands.frontZ,
+      ],
       rotation: [0, 90, 0],
       surface: 'Telaio bifacciale a due gambe',
     })

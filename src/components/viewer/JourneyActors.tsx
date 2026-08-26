@@ -115,19 +115,7 @@ export function JourneyActors() {
   const cue = mode === 'auto' ? step?.actor : undefined
   const operatorHoldsNozzle =
     step?.nozzle?.owner === 'attendant' && step.nozzle.state !== 'holstered'
-  const cashierVisible =
-    mode === 'auto' &&
-    routeId === 'servito-svolta' &&
-    Boolean(
-      step &&
-      [
-        'svolta-entrance',
-        'svolta-enter-store',
-        'svolta-counter',
-        'svolta-payment',
-        'svolta-exit-store',
-      ].includes(step.id),
-    )
+  const cashierVisible = true
 
   useEffect(() => {
     if (!cue) {
@@ -174,6 +162,7 @@ export function JourneyActors() {
     if (walking)
       attendant.current.position.y += Math.abs(Math.sin(walkCycle)) * 0.018
     gaze.set(...cue.lookAt)
+    if (walking) gaze.copy(actorDestination.current)
     const yaw = Math.atan2(
       gaze.x - attendant.current.position.x,
       gaze.z - attendant.current.position.z,

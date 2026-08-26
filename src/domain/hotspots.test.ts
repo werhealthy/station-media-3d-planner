@@ -7,11 +7,11 @@ describe('curated station hotspots', () => {
     expect(HOTSPOTS.map((hotspot) => hotspot.name)).toEqual([
       'Ingresso strada',
       'Fronte pompe',
-      'Da Svolta',
+      'Interno Svolta',
     ])
   })
 
-  it('posiziona la vista Da Svolta dentro lo store e la orienta sul piazzale', () => {
+  it('posiziona Interno Svolta davanti alla cassa e la orienta sulla commessa', () => {
     const hotspot = HOTSPOTS.find((item) => item.id === 'inside-svolta')
     expect(hotspot).toBeDefined()
     expect(hotspot!.position[0]).toBeGreaterThan(
@@ -23,6 +23,7 @@ describe('curated station hotspots', () => {
     expect(hotspot!.position[2]).toBeLessThan(
       STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2,
     )
-    expect(hotspot!.target[2]).toBeGreaterThan(hotspot!.position[2])
+    expect(hotspot!.target[0]).toBeGreaterThan(hotspot!.position[0])
+    expect(hotspot!.target[2]).toBeLessThan(hotspot!.position[2])
   })
 })

@@ -88,7 +88,9 @@ export function FirstPersonAvatar() {
   const visible = mode === 'walkthrough' || autoPedestrian
   const paying =
     mode === 'auto' &&
-    (step?.id === 'self-insert-cash' || step?.id === 'svolta-payment')
+    (step?.id === 'self-insert-cash' ||
+      step?.id === 'served-payment' ||
+      step?.id === 'svolta-payment')
   const holdingNozzle =
     mode === 'auto' &&
     step?.nozzle?.owner === 'driver' &&
@@ -103,7 +105,6 @@ export function FirstPersonAvatar() {
         'self-select-pump',
         'self-select-fuel',
         'self-select-payment',
-        'self-cash-amount',
         'self-review',
       ].includes(step.id),
     )
@@ -151,7 +152,15 @@ export function FirstPersonAvatar() {
       // One reach-and-release pulse at the end of each actionable screen.
       const tapPhase = THREE.MathUtils.clamp((local - 0.56) / 0.4, 0, 1)
       const tapExtension = tapStep ? Math.sin(tapPhase * Math.PI) : 0
-      const extension = Math.max(tapExtension, holdingNozzle ? 0.72 : 0)
+      const paymentPhase = THREE.MathUtils.clamp((local - 0.2) / 0.62, 0, 1)
+      const paymentExtension = paying
+        ? Math.sin(paymentPhase * Math.PI) * 0.9
+        : 0
+      const extension = Math.max(
+        tapExtension,
+        paymentExtension,
+        holdingNozzle ? 0.72 : 0,
+      )
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
         -swing + breathe - extension * 0.08,

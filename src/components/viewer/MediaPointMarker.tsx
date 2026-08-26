@@ -1,11 +1,14 @@
 import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
-import { containedSurfaceSize } from '@/core/creative/creativeFit'
+import {
+  containedSurfaceSize,
+  orientCreativeToPortrait,
+} from '@/core/creative/creativeFit'
 import { BRAND_ASSETS, SMARTOPT_SCREEN_SIZE } from '@/config/brandAssets'
 import { getJourney } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
@@ -32,22 +35,47 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const displayedAsset =
     point.supportTypeId === '11' && navigationMode === 'auto'
       ? journeyScreen
-      : asset ?? journeyScreen
+      : (asset ?? journeyScreen)
+  const orientedCreative = useMemo(() => {
+    if (!displayedAsset) return undefined
+    return point.supportShape === 'beach-flag'
+      ? orientCreativeToPortrait(displayedAsset.width, displayedAsset.height)
+      : {
+          width: displayedAsset.width,
+          height: displayedAsset.height,
+          rotationRadians: 0,
+        }
+  }, [displayedAsset, point.supportShape])
+  const rotateBeachFlagCreative = Boolean(orientedCreative?.rotationRadians)
   const availableSurface = useMemo<[number, number]>(() => {
     if (point.supportShape === 'beach-flag')
       return [point.width * 0.68, point.height * 0.78]
     return [point.width, point.height]
   }, [point.height, point.supportShape, point.width])
   const texture = useImageTexture(displayedAsset?.url)
+  const displayTexture = useMemo(() => {
+    if (!texture || !rotateBeachFlagCreative) return texture
+    const rotated = texture.clone()
+    rotated.center.set(0.5, 0.5)
+    rotated.rotation = orientedCreative?.rotationRadians ?? 0
+    rotated.needsUpdate = true
+    return rotated
+  }, [orientedCreative?.rotationRadians, rotateBeachFlagCreative, texture])
+  useEffect(
+    () => () => {
+      if (displayTexture && displayTexture !== texture) displayTexture.dispose()
+    },
+    [displayTexture, texture],
+  )
   const surfaceSize = useMemo<[number, number]>(() => {
     if (!displayedAsset) return availableSurface
     return containedSurfaceSize(
       availableSurface[0],
       availableSurface[1],
-      displayedAsset.width,
-      displayedAsset.height,
+      orientedCreative?.width ?? displayedAsset.width,
+      orientedCreative?.height ?? displayedAsset.height,
     )
-  }, [availableSurface, displayedAsset])
+  }, [availableSurface, displayedAsset, orientedCreative])
   const frameColor = selected
     ? '#55a5ff'
     : hovered
@@ -106,9 +134,9 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
       >
         <planeGeometry args={surfaceSize} />
         <meshStandardMaterial
-          map={texture}
+          map={displayTexture}
           color={
-            texture
+            displayTexture
               ? 'white'
               : point.assignable
                 ? point.type === 'digital'
@@ -118,7 +146,7 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
           }
           emissive={point.type === 'digital' ? '#092d77' : '#000000'}
           emissiveIntensity={
-            texture ? 0.12 : point.type === 'digital' ? 0.3 : 0
+            displayTexture ? 0.12 : point.type === 'digital' ? 0.3 : 0
           }
         />
       </mesh>

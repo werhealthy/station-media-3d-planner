@@ -17,7 +17,26 @@ export interface CreativeFitAnalysis {
   coverCropPercent: number
 }
 
-export function analyzeCreativeFit(input: CreativeFitInput): CreativeFitAnalysis {
+export interface OrientedCreative {
+  width: number
+  height: number
+  rotationRadians: number
+}
+
+export function orientCreativeToPortrait(
+  width: number,
+  height: number,
+): OrientedCreative {
+  if (![width, height].every((value) => Number.isFinite(value) && value > 0))
+    throw new Error('Le dimensioni della creativita devono essere positive.')
+  return width > height
+    ? { width: height, height: width, rotationRadians: -Math.PI / 2 }
+    : { width, height, rotationRadians: 0 }
+}
+
+export function analyzeCreativeFit(
+  input: CreativeFitInput,
+): CreativeFitAnalysis {
   const values = [
     input.assetWidth,
     input.assetHeight,
@@ -25,11 +44,14 @@ export function analyzeCreativeFit(input: CreativeFitInput): CreativeFitAnalysis
     input.surfaceHeight,
   ]
   if (values.some((value) => !Number.isFinite(value) || value <= 0))
-    throw new Error('Le dimensioni della creativita e del supporto devono essere positive.')
+    throw new Error(
+      'Le dimensioni della creativita e del supporto devono essere positive.',
+    )
 
   const assetRatio = input.assetWidth / input.assetHeight
   const surfaceRatio = input.surfaceWidth / input.surfaceHeight
-  const differencePercent = (Math.abs(assetRatio - surfaceRatio) / surfaceRatio) * 100
+  const differencePercent =
+    (Math.abs(assetRatio - surfaceRatio) / surfaceRatio) * 100
   const status: CreativeFitStatus =
     differencePercent <= 2
       ? 'exact'

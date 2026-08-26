@@ -228,10 +228,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.74,
-        height: 0.5,
+        width: 0.8,
+        height: 3.6,
         source: 'reference',
-        note: 'Formato grafico Q8 HVO (leaf) fornito: 740 x 500 mm; nome del supporto mantenuto come Beach Flag secondo la distinta.',
+        note: 'Formato grafico Beach Flag fornito: 800 x 3600 mm. Le creativita orizzontali vengono ruotate automaticamente senza deformazione.',
       },
       targetDistance: '20-40 m',
       eyesOn: 'Circa 1 s',

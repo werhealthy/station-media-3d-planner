@@ -45,9 +45,15 @@ export const JOURNEY_OBSTACLES: PlanarBounds[] = [
   { id: 'pedestrian-curb', minX: -23, maxX: 0, minZ: 12.1, maxZ: 13.2 },
   { id: 'pump-self', minX: -6.6, maxX: -2.6, minZ: 0.5, maxZ: 2.7 },
   { id: 'pump-served', minX: 2.6, maxX: 6.6, minZ: 0.5, maxZ: 2.7 },
-  { id: 'canopy-column-left', minX: -7.15, maxX: -5.65, minZ: -1.9, maxZ: -0.6 },
+  {
+    id: 'canopy-column-left',
+    minX: -7.15,
+    maxX: -5.65,
+    minZ: -1.9,
+    maxZ: -0.6,
+  },
   { id: 'canopy-column-right', minX: 5.65, maxX: 7.15, minZ: -1.9, maxZ: -0.6 },
-  { id: 'pump-leader-mp02', minX: -5.2, maxX: -4, minZ: 3.6, maxZ: 4.3 },
+  { id: 'pump-leader-mp02', minX: -2.86, maxX: -2.24, minZ: 1.05, maxZ: 2.15 },
   {
     id: 'smartopt-mp05',
     minX: L.terminal.x - L.terminal.width / 2 - 0.08,
@@ -55,8 +61,8 @@ export const JOURNEY_OBSTACLES: PlanarBounds[] = [
     minZ: L.terminal.z - L.terminal.depth / 2 - 0.08,
     maxZ: L.terminal.z + L.terminal.depth / 2 + 0.08,
   },
-  { id: 'shop-support-mp06', minX: 14, maxX: 15.4, minZ: -4.4, maxZ: -3.65 },
-  { id: 'backdrop-mp07', minX: -10.7, maxX: -6.5, minZ: -4.6, maxZ: -3.95 },
+  { id: 'shop-support-mp06', minX: 13.9, maxX: 15.3, minZ: -3.15, maxZ: -2.15 },
+  { id: 'backdrop-mp07', minX: -4.75, maxX: -1.45, minZ: -4.6, maxZ: -3.95 },
   { id: 'stendardo-mp08', minX: -18.6, maxX: -17.4, minZ: 10.05, maxZ: 10.95 },
   { id: 'beach-flag-mp09', minX: -15.1, maxX: -13.9, minZ: 10.25, maxZ: 10.95 },
   {

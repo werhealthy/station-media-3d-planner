@@ -2,7 +2,7 @@ import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
-import { getJourney } from '@/domain/journeys'
+import { getJourney, journeyDuration } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -12,6 +12,7 @@ export function JourneyVehicle() {
   const activeStepIndex = usePlaybackStore((state) => state.activeStepIndex)
   const { camera } = useThree()
   const cockpit = useRef<THREE.Group>(null)
+  const cash = useRef<THREE.Group>(null)
   const vehicleYaw = useRef(-Math.PI / 2)
   const forward = useRef(new THREE.Vector3())
   const previousCameraPosition = useRef(new THREE.Vector3())
@@ -58,6 +59,28 @@ export function JourneyVehicle() {
       1 - Math.exp(-delta * (carIsMoving ? 10 : 5)),
     )
     cockpit.current.rotation.set(0, vehicleYaw.current, 0)
+    if (cash.current && step.id === 'served-payment') {
+      const elapsedBefore = journey.steps
+        .slice(0, activeStepIndex)
+        .reduce((total, item) => total + item.duration, 0)
+      const local = THREE.MathUtils.clamp(
+        (usePlaybackStore.getState().progress * journeyDuration(journey) -
+          elapsedBefore) /
+          Math.max(step.duration, 0.001),
+        0,
+        1,
+      )
+      const handover = THREE.MathUtils.smoothstep(
+        THREE.MathUtils.clamp(local / 0.72, 0, 1),
+        0,
+        1,
+      )
+      cash.current.position.set(
+        THREE.MathUtils.lerp(0.28, 0.92, handover),
+        THREE.MathUtils.lerp(-0.36, -0.14, handover),
+        THREE.MathUtils.lerp(-0.55, -0.18, handover),
+      )
+    }
   })
 
   return (
@@ -109,6 +132,24 @@ export function JourneyVehicle() {
             <planeGeometry args={[0.13, 0.25]} />
             <meshStandardMaterial color="#65b7d6" emissive="#317b9d" emissiveIntensity={0.7} />
           </mesh>
+        </group>
+        <group
+          ref={cash}
+          visible={visible && step?.id === 'served-payment'}
+          position={[0.28, -0.36, -0.55]}
+          rotation={[-0.2, 0.08, -0.08]}
+        >
+          {[0, 0.012, 0.024].map((offset) => (
+            <RoundedBox
+              key={offset}
+              args={[0.2, 0.006, 0.095]}
+              radius={0.006}
+              smoothness={2}
+              position={[0, offset, 0]}
+            >
+              <meshStandardMaterial color="#76a96e" roughness={0.5} />
+            </RoundedBox>
+          ))}
         </group>
         {([-1, 1] as const).map((side) => (
           <group key={side}>

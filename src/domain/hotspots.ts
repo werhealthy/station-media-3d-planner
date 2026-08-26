@@ -26,10 +26,10 @@ export const HOTSPOTS: StationHotspot[] = [
   },
   {
     id: 'shop-side',
-    name: 'Lato shop',
-    position: [28, 4.2, 4],
-    target: [13, 2.4, -8],
-    fov: 44,
+    name: 'Interno Svolta',
+    position: [10.1, 1.69, -7.55],
+    target: [11.9, 1.35, -8.8],
+    fov: 58,
     associatedMediaPointId: 'mp-06',
   },
   {

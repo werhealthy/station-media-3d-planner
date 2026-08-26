@@ -33,6 +33,7 @@ import { FirstPersonAvatar } from './FirstPersonAvatar'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
 import { JourneyFuelNozzle } from './JourneyFuelNozzle'
+import { SvoltaDoors } from './SvoltaDoors'
 import { useViewerStore } from '@/stores/viewerStore'
 
 function SceneLighting({ isNight }: { isNight: boolean }) {
@@ -293,6 +294,7 @@ export function Canvas() {
         <JourneyVehicle />
         <JourneyActors />
         <JourneyFuelNozzle />
+        <SvoltaDoors />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (
           <Html fullscreen className="pointer-events-none p-4">

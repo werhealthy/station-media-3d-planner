@@ -40,11 +40,24 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const toggleVisibility = useProjectStore(
     (state) => state.toggleMediaPointVisibility,
   )
+  const creativeDisplay = useProjectStore((state) => state.creativeDisplay)
+  const updateCreativeDisplay = useProjectStore(
+    (state) => state.updateCreativeDisplay,
+  )
   const showAll = useProjectStore((state) => state.showAllMediaPoints)
   const [error, setError] = useState('')
   const inventoryPoints = points.filter((item) => item.assignable)
   const point = inventoryPoints.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
+  const display = point
+    ? creativeDisplay[point.id] ?? {
+        fitMode: 'contain' as const,
+        backgroundColor: '#ffffff',
+        rotation: 0,
+        offsetX: 0,
+        offsetY: 0,
+      }
+    : null
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
   const usesSmartOptIdle = point?.supportTypeId === '11'
   const support = getSupportType(point?.supportTypeId)
@@ -361,6 +374,82 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       {fit.containUnusedPercent.toFixed(0)}% del supporto rimane
                       libero.
                     </p>
+                  )}
+                  {display && (
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Posizionamento sul supporto
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {(['contain', 'cover'] as const).map((fitMode) => (
+                          <button
+                            type="button"
+                            key={fitMode}
+                            onClick={() =>
+                              updateCreativeDisplay(point.id, { fitMode })
+                            }
+                            className={`rounded-lg border px-3 py-2 text-xs font-bold ${display.fitMode === fitMode ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-600'}`}
+                          >
+                            {fitMode === 'contain' ? 'Mostra intera' : 'Ritaglia'}
+                          </button>
+                        ))}
+                      </div>
+                      <label className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-600">
+                        Sfondo
+                        <input
+                          type="color"
+                          aria-label="Colore sfondo supporto"
+                          value={display.backgroundColor}
+                          onChange={(event) =>
+                            updateCreativeDisplay(point.id, {
+                              backgroundColor: event.target.value,
+                            })
+                          }
+                          className="h-8 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1"
+                        />
+                      </label>
+                      <label className="mt-3 block text-xs font-semibold text-slate-600">
+                        Rotazione {display.rotation}°
+                        <input
+                          type="range"
+                          min={-180}
+                          max={180}
+                          step={1}
+                          value={display.rotation}
+                          onChange={(event) =>
+                            updateCreativeDisplay(point.id, {
+                              rotation: Number(event.target.value),
+                            })
+                          }
+                          className="mt-1 w-full"
+                        />
+                      </label>
+                      {display.fitMode === 'cover' && (
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          {([
+                            ['offsetX', 'Orizzontale'],
+                            ['offsetY', 'Verticale'],
+                          ] as const).map(([key, label]) => (
+                            <label key={key} className="text-xs font-semibold text-slate-600">
+                              {label}
+                              <input
+                                type="range"
+                                min={-0.5}
+                                max={0.5}
+                                step={0.01}
+                                value={display[key]}
+                                onChange={(event) =>
+                                  updateCreativeDisplay(point.id, {
+                                    [key]: Number(event.target.value),
+                                  })
+                                }
+                                className="mt-1 w-full"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                   {recommendations.length > 0 && (
                     <div className="mt-4">

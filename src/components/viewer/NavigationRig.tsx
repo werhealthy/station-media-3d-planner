@@ -525,6 +525,21 @@ export function NavigationRig() {
           .set(...previous.gazeTarget)
           .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
 
+        if (current.motion === 'walk') {
+          // During a translation the head follows the direction of travel.
+          // Authored advertising glances belong in dedicated `glance`/`hold`
+          // steps; mixing them into a walk produced visible moonwalking.
+          gazeDirection
+            .set(...current.position)
+            .sub(new THREE.Vector3(...previous.position))
+            .setY(0)
+          if (gazeDirection.lengthSq() > 0.001) {
+            gazeDirection.normalize()
+            target.copy(destination).addScaledVector(gazeDirection, 5.5)
+            target.y = eyeHeight - 0.08
+          }
+        }
+
         if (current.cameraMode === 'pedestrian') {
           if (pedestrianCollisionAt(destination))
             destination.copy(lastSafeAutoPosition.current)

@@ -57,9 +57,8 @@ describe('proceduralAdapter composition', () => {
     expect(
       sceneNames.filter((name) => name.startsWith('fuel-dispenser-')),
     ).toHaveLength(2)
-    expect(
-      sceneNames.filter((name) => name === 'shop-entry-door'),
-    ).toHaveLength(2)
+    expect(sceneNames).toContain('shop-entry-door-left')
+    expect(sceneNames).toContain('shop-entry-door-right')
     expect(sceneNames).not.toContain('shop-glazing')
     expect(sceneNames).not.toContain('shop-structural-shell')
     expect(sceneNames).toContain('shop-back-wall')

@@ -1,8 +1,10 @@
 import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
 import { useMemo } from 'react'
+import * as THREE from 'three'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { useProjectStore } from '@/stores/projectStore'
+import { DEFAULT_CREATIVE_DISPLAY } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
 import { containedSurfaceSize } from '@/core/creative/creativeFit'
@@ -18,6 +20,9 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const select = useViewerStore((s) => s.selectMediaPoint)
   const hover = useViewerStore((s) => s.hoverMediaPoint)
   const asset = useProjectStore((s) => s.assignments[point.id])
+  const display = useProjectStore(
+    (s) => s.creativeDisplay[point.id] ?? DEFAULT_CREATIVE_DISPLAY,
+  )
   const routeId = usePlaybackStore((s) => s.activeRouteId)
   const stepIndex = usePlaybackStore((s) => s.activeStepIndex)
   const route = getJourney(routeId)
@@ -38,16 +43,61 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
       return [point.width * 0.68, point.height * 0.78]
     return [point.width, point.height]
   }, [point.height, point.supportShape, point.width])
-  const texture = useImageTexture(displayedAsset?.url)
+  const flagSurface = useMemo(() => {
+    const shape = new THREE.Shape()
+    shape.moveTo(-point.width / 2, -point.height / 2)
+    shape.lineTo(-point.width / 2, point.height / 2)
+    shape.quadraticCurveTo(
+      point.width * 0.2,
+      point.height * 0.56,
+      point.width / 2,
+      point.height * 0.34,
+    )
+    shape.quadraticCurveTo(
+      point.width * 0.32,
+      -point.height * 0.12,
+      point.width * 0.12,
+      -point.height / 2,
+    )
+    shape.closePath()
+    return shape
+  }, [point.height, point.width])
+  const targetSurface = useMemo<[number, number]>(
+    () =>
+      point.supportShape === 'beach-flag' && display.fitMode === 'cover'
+        ? [point.width, point.height]
+        : availableSurface,
+    [availableSurface, display.fitMode, point.height, point.supportShape, point.width],
+  )
+  const texture = useImageTexture(
+    displayedAsset?.url,
+    displayedAsset
+      ? {
+          sourceAspectRatio: displayedAsset.width / displayedAsset.height,
+          targetAspectRatio: targetSurface[0] / targetSurface[1],
+          fitMode: display.fitMode,
+          rotation: display.rotation,
+          offsetX: display.offsetX,
+          offsetY: display.offsetY,
+        }
+      : undefined,
+  )
   const surfaceSize = useMemo<[number, number]>(() => {
     if (!displayedAsset) return availableSurface
+    if (display.fitMode === 'cover') return targetSurface
     return containedSurfaceSize(
       availableSurface[0],
       availableSurface[1],
       displayedAsset.width,
       displayedAsset.height,
     )
-  }, [availableSurface, displayedAsset])
+  }, [availableSurface, display.fitMode, displayedAsset, targetSurface])
+  const surfaceDepth =
+    point.supportShape === 'fondostazione'
+      ? 0.101
+      : point.supportShape === 'structural-sign'
+        ? 0.081
+        : 0.071
   const frameColor = selected
     ? '#55a5ff'
     : hovered
@@ -92,7 +142,7 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
     >
       <MediaSupportGeometry point={point} color={frameColor} />
       <mesh
-        position={[0, 0, 0.071]}
+        position={[0, 0, surfaceDepth]}
         onClick={stop}
         onPointerOver={(event) => {
           event.stopPropagation()
@@ -104,7 +154,12 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
           document.body.style.cursor = 'default'
         }}
       >
-        <planeGeometry args={surfaceSize} />
+        {point.supportShape === 'beach-flag' &&
+        display.fitMode === 'cover' ? (
+          <shapeGeometry args={[flagSurface]} />
+        ) : (
+          <planeGeometry args={surfaceSize} />
+        )}
         <meshStandardMaterial
           map={texture}
           color={
@@ -122,6 +177,12 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
           }
         />
       </mesh>
+      {displayedAsset && display.fitMode === 'contain' && (
+        <mesh position={[0, 0, surfaceDepth - 0.002]}>
+          <planeGeometry args={availableSurface} />
+          <meshStandardMaterial color={display.backgroundColor} />
+        </mesh>
+      )}
       <Html
         position={[point.width / 2 + 0.16, point.height / 2 + 0.16, 0.12]}
         center

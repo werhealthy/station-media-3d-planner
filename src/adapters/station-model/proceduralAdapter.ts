@@ -459,11 +459,20 @@ function buildStation(
   approachRoad.userData.stationHelper = true
   // The frontage pavement is split at the actual driveway. The previous
   // continuous slab visually and physically cut across the station entrance.
+  // Two independent driveway cuts: entrance on the right and exit on the
+  // left. Guided vehicles no longer need to cross a kerb or landscaping.
   box(
     root,
-    [116, 0.08, 1.1],
+    [88, 0.08, 1.1],
     concrete,
-    [-52, 0.015, 12.55],
+    [-66, 0.015, 12.55],
+    'roadside-footpath',
+  ).userData.stationHelper = true
+  box(
+    root,
+    [23, 0.08, 1.1],
+    concrete,
+    [-5.5, 0.015, 12.55],
     'roadside-footpath',
   ).userData.stationHelper = true
   box(
@@ -799,7 +808,7 @@ function buildStation(
       [1.42, 3.2, 0.15],
       glass,
       [L.shop.x + offset, 1.82, L.shop.z + L.shop.depth / 2 + 0.16],
-      'shop-entry-door',
+      offset < 0 ? 'shop-entry-door-left' : 'shop-entry-door-right',
     )
   }
   for (const offset of [-1.5, 0, 1.5]) {
@@ -817,7 +826,7 @@ function buildStation(
       [0.055, 0.72, 0.08],
       mat('#cbd2d6', 0.16, 0.85),
       [L.shop.x + offset, 1.55, L.shop.z + L.shop.depth / 2 + 0.27],
-      'door-handle',
+      offset < 0 ? 'door-handle-left' : 'door-handle-right',
     )
   // Teal lower panels and white horizontal trims match the photographic
   // storefront while keeping the glazed interior readable.
@@ -1102,7 +1111,8 @@ function buildStation(
     )
   // Compact entrance island: the supports form one readable sequence instead
   // of floating across an oversized empty forecourt.
-  box(root, [23, 0.2, 1.05], concrete, [-11.5, 0.12, 12.65], 'pedestrian-curb')
+  box(root, [13, 0.2, 1.05], concrete, [-16.5, 0.12, 12.65], 'pedestrian-curb')
+  box(root, [3, 0.2, 1.05], concrete, [-1.5, 0.12, 12.65], 'pedestrian-curb')
   box(
     root,
     [11, 0.34, 2.1],

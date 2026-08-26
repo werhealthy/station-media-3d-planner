@@ -2,7 +2,7 @@ import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { getJourney, journeyDuration } from '@/domain/journeys'
+import { getJourney } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useViewerStore } from '@/stores/viewerStore'
@@ -78,19 +78,6 @@ export function JourneyFuelNozzle() {
 
   useFrame(() => {
     if (!nozzle.current || !cue || !worldVisible) return
-    const elapsedBefore = journey.steps
-      .slice(0, activeStepIndex)
-      .reduce((total, item) => total + item.duration, 0)
-    const elapsed =
-      usePlaybackStore.getState().progress * journeyDuration(journey) -
-      elapsedBefore
-    const local = THREE.MathUtils.clamp(
-      elapsed / Math.max(step?.duration ?? 0.001, 0.001),
-      0,
-      1,
-    )
-    const amount = THREE.MathUtils.smoothstep(local, 0, 1)
-
     if (cue.owner === 'driver') {
       start
         .set(0.18, -0.28, -0.62)
@@ -104,20 +91,26 @@ export function JourneyFuelNozzle() {
       )
     }
 
-    if (cue.state === 'hand') destination.copy(start)
-    else if (cue.state === 'inserted') destination.copy(filler)
-    else if (cue.state === 'inserting')
-      destination.copy(start).lerp(filler, amount)
-    else if (cue.state === 'removing')
-      destination.copy(filler).lerp(start, amount)
-    else if (cue.state === 'returning') destination.copy(start).lerp(rack, amount)
+    // Deliberately discrete prop states. A low-detail procedural nozzle cannot
+    // support a convincing hand-to-filler IK animation: snapping at the authored
+    // action cut is cleaner and avoids duplicate or intersecting pistols.
+    if (cue.state === 'hand' || cue.state === 'removing') destination.copy(start)
+    else if (cue.state === 'inserted' || cue.state === 'inserting')
+      destination.copy(filler)
+    else if (cue.state === 'returning') destination.copy(rack)
     else destination.copy(start)
 
     nozzle.current.position.copy(destination)
     nozzle.current.rotation.set(
       0,
-      cue.state === 'inserted' ? 0 : cue.pump === 'self' ? -0.18 : 0.18,
-      cue.state === 'inserted' ? 0 : -0.3,
+      cue.state === 'inserted' || cue.state === 'inserting'
+        ? cue.pump === 'self'
+          ? Math.PI / 2
+          : -Math.PI / 2
+        : cue.pump === 'self'
+          ? -0.18
+          : 0.18,
+      cue.state === 'inserted' || cue.state === 'inserting' ? -0.18 : -0.3,
     )
   })
 

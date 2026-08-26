@@ -223,17 +223,36 @@ export function MediaSupportGeometry({
     case 'freestanding':
       return (
         <>
-          <Panel width={point.width} height={point.height} color={color} />
-          <GroundPost
-            x={-point.width * 0.31}
-            panelBottom={panelBottom}
-            color="#7d878f"
-          />
-          <GroundPost
-            x={point.width * 0.31}
-            panelBottom={panelBottom}
-            color="#7d878f"
-          />
+          <RoundedBox
+            args={[point.width + 0.1, point.height + 0.1, 0.11]}
+            radius={0.035}
+            smoothness={3}
+            castShadow
+          >
+            <meshStandardMaterial
+              color="#e7e9e8"
+              metalness={0.16}
+              roughness={0.58}
+            />
+          </RoundedBox>
+          <mesh
+            position={[0, -point.height / 2 - 0.18, -0.02]}
+            castShadow
+            receiveShadow
+          >
+            <boxGeometry args={[point.width * 0.78, 0.26, 0.46]} />
+            <meshStandardMaterial color="#20242a" roughness={0.72} />
+          </mesh>
+          <RoundedBox
+            args={[point.width + 0.18, 0.11, 0.55]}
+            radius={0.045}
+            smoothness={3}
+            position={[0, -point.height / 2 - 0.35, -0.02]}
+            castShadow
+            receiveShadow
+          >
+            <meshStandardMaterial color="#15191e" roughness={0.78} />
+          </RoundedBox>
         </>
       )
     case 'fondostazione':
@@ -340,21 +359,35 @@ export function MediaSupportGeometry({
     case 'structural-sign':
       return (
         <>
-          <Panel
-            width={point.width}
-            height={point.height}
-            depth={0.14}
-            color="#3f4a58"
-          />
-          <mesh
-            position={[0, -point.height / 2 - panelBottom / 2, -0.02]}
+          <RoundedBox
+            args={[point.width + 0.1, point.height + 0.1, 0.16]}
+            radius={0.035}
+            smoothness={3}
+            castShadow
+          >
+            <meshStandardMaterial color="#e6e7e3" roughness={0.5} />
+          </RoundedBox>
+          <mesh position={[0, point.height * 0.31, 0.091]}>
+            <planeGeometry args={[point.width * 0.86, point.height * 0.2]} />
+            <meshStandardMaterial color="#173b7d" roughness={0.48} />
+          </mesh>
+          <mesh position={[0, point.height * 0.02, 0.092]}>
+            <planeGeometry args={[point.width * 0.86, point.height * 0.28]} />
+            <meshStandardMaterial color="#f2b51d" roughness={0.54} />
+          </mesh>
+          <mesh position={[0, -point.height * 0.27, 0.092]}>
+            <planeGeometry args={[point.width * 0.86, point.height * 0.24]} />
+            <meshStandardMaterial color="#d94737" roughness={0.54} />
+          </mesh>
+          <RoundedBox
+            args={[point.width + 0.2, 0.16, 0.58]}
+            radius={0.05}
+            smoothness={3}
+            position={[0, -point.height / 2 - 0.13, -0.02]}
             receiveShadow
           >
-            <boxGeometry
-              args={[point.width + 0.24, Math.max(0.18, panelBottom), 0.5]}
-            />
-            <meshStandardMaterial color="#aaa9a1" roughness={0.9} />
-          </mesh>
+            <meshStandardMaterial color="#30353a" roughness={0.82} />
+          </RoundedBox>
         </>
       )
     case 'pump-topper':

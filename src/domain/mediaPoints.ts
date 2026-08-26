@@ -62,10 +62,10 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('2', {
     id: 'mp-02',
     number: 2,
-    location: 'Ingresso isola anteriore',
+    location: 'Testata esterna isola Servito',
     surface: 'Supporto a terra',
     heightFromGround: 0,
-    position: [-pumpX, 0.96, frontZ + 2.35],
+    position: [pumpX + 3.3, 0.96, frontZ + 0.4],
     rotation: [0, 0, 0],
   }),
   supportPoint('4', {

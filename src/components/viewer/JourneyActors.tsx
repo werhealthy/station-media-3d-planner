@@ -116,18 +116,19 @@ export function JourneyActors() {
   const operatorHoldsNozzle =
     step?.nozzle?.owner === 'attendant' && step.nozzle.state !== 'holstered'
   const cashierVisible =
-    mode === 'auto' &&
-    routeId === 'servito-svolta' &&
-    Boolean(
-      step &&
-      [
-        'svolta-entrance',
-        'svolta-enter-store',
-        'svolta-counter',
-        'svolta-payment',
-        'svolta-exit-store',
-      ].includes(step.id),
-    )
+    mode === 'walkthrough' ||
+    (mode === 'auto' &&
+      routeId === 'servito-svolta' &&
+      Boolean(
+        step &&
+        [
+          'svolta-entrance',
+          'svolta-enter-store',
+          'svolta-counter',
+          'svolta-payment',
+          'svolta-exit-store',
+        ].includes(step.id),
+      ))
 
   useEffect(() => {
     if (!cue) {

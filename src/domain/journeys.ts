@@ -1,13 +1,7 @@
 export type JourneyId = 'servito' | 'self-service' | 'servito-svolta'
 
 export type JourneyMotion =
-  | 'drive'
-  | 'brake'
-  | 'exit'
-  | 'enter'
-  | 'walk'
-  | 'glance'
-  | 'hold'
+  'drive' | 'brake' | 'exit' | 'enter' | 'walk' | 'glance' | 'hold'
 
 export type JourneyDecision = 'service-mode' | 'operator-payment'
 
@@ -23,12 +17,7 @@ export type SmartOptScreen =
   | 'confirmed'
 
 export type NozzleState =
-  | 'holstered'
-  | 'hand'
-  | 'inserting'
-  | 'inserted'
-  | 'removing'
-  | 'returning'
+  'holstered' | 'hand' | 'inserting' | 'inserted' | 'removing' | 'returning'
 
 export interface JourneyNozzleCue {
   owner: 'driver' | 'attendant'
@@ -145,7 +134,8 @@ function commonArrivalSteps(
     {
       id: 'common-station',
       phase: 'Ingresso · Individuazione della stazione',
-      label: 'Riconosce Q8 e controlla i prezzi senza distogliersi dalla strada',
+      label:
+        'Riconosce Q8 e controlla i prezzi senza distogliersi dalla strada',
       position: sharedArrival[0]!,
       gazeTarget: [-18, 4.4, 10.4],
       duration: 4.5,
@@ -220,8 +210,7 @@ function commonArrivalSteps(
           : 'Self · Accostamento all’erogatore',
       label: 'Individua numero, lato del bocchettone e spazio di manovra',
       position: [9, 1.28, 5.6],
-      gazeTarget:
-        service === 'servito' ? [4.6, 1.4, 2.4] : [-4.6, 1.4, 2.4],
+      gazeTarget: service === 'servito' ? [4.6, 1.4, 2.4] : [-4.6, 1.4, 2.4],
       duration: 4.5,
       cameraMode: 'vehicle',
       motion: 'drive',
@@ -285,9 +274,19 @@ function terminalFlowSteps(): JourneyStep[] {
   })
   return [
     screenStep('self-terminal-start', 'Seleziona Rifornimento', 'idle', 2),
-    screenStep('self-no-payback', 'Seleziona “No” alla carta PAYBACK', 'payback', 2.4),
+    screenStep(
+      'self-no-payback',
+      'Seleziona “No” alla carta PAYBACK',
+      'payback',
+      2.4,
+    ),
     screenStep('self-select-pump', 'Seleziona l’erogatore 1', 'pump', 2.8),
-    screenStep('self-select-fuel', 'Seleziona il tipo di carburante', 'fuel', 2.8),
+    screenStep(
+      'self-select-fuel',
+      'Seleziona il tipo di carburante',
+      'fuel',
+      2.8,
+    ),
     screenStep(
       'self-select-payment',
       'Seleziona il metodo di pagamento Contanti',
@@ -306,7 +305,12 @@ function terminalFlowSteps(): JourneyStep[] {
       'cash-instructions',
       2.5,
     ),
-    screenStep('self-cash-amount', 'Il terminale rileva 50 € inseriti', 'cash-amount', 2.4),
+    screenStep(
+      'self-cash-amount',
+      'Il terminale rileva 50 € inseriti',
+      'cash-amount',
+      2.4,
+    ),
     screenStep('self-review', 'Controlla il riepilogo e conferma', 'review', 3),
     {
       ...screenStep(
@@ -508,13 +512,14 @@ function selfFuelSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
 }
 
 function departureSteps(prefix: 'served' | 'self' | 'svolta'): JourneyStep[] {
-  const isServed = prefix === 'served'
-  const position = isServed ? SERVED_STOP : SELF_STOP
-  const phase = isServed
-    ? 'A5 · Ripartenza'
-    : prefix === 'self'
-      ? 'B9 · Ripartenza'
-      : 'C9 · Ripartenza'
+  const usesServedLane = prefix !== 'self'
+  const position = usesServedLane ? SERVED_STOP : SELF_STOP
+  const phase =
+    prefix === 'served'
+      ? 'A5 · Ripartenza'
+      : prefix === 'self'
+        ? 'B9 · Ripartenza'
+        : 'C9 · Ripartenza'
   return [
     {
       id: `${prefix}-departure-start`,
@@ -649,7 +654,8 @@ const servedSteps: JourneyStep[] = [
   {
     id: 'served-dwell-column',
     phase: 'A3 · Attesa durante il rifornimento',
-    label: 'Durante l’attesa il Pannello Colonna entra naturalmente nel campo visivo',
+    label:
+      'Durante l’attesa il Pannello Colonna entra naturalmente nel campo visivo',
     position: SERVED_STOP,
     gazeTarget: [6.4, 2.1, -0.86],
     duration: 8,
@@ -679,7 +685,8 @@ const servedSteps: JourneyStep[] = [
   {
     id: 'served-dwell-phone',
     phase: 'A3 · Attesa durante il rifornimento',
-    label: 'Durante l’attesa consulta brevemente il telefono, senza perdere il contesto',
+    label:
+      'Durante l’attesa consulta brevemente il telefono, senza perdere il contesto',
     position: SERVED_STOP,
     gazeTarget: [4.55, 0.58, 4.7],
     duration: 5,
@@ -728,6 +735,19 @@ const servedSteps: JourneyStep[] = [
     vehicleYaw: WESTBOUND,
     actor: attendant([3.6, 0, 3.15], [3.57, 1.33, 2.09], 'replace-nozzle'),
     nozzle: { owner: 'attendant', pump: 'servito', state: 'returning' },
+  },
+  {
+    id: 'served-payment-choice',
+    phase: 'A4 · Scelta del pagamento',
+    label: 'Conclusa l’erogazione, sceglie se pagare al gestore o in Svolta',
+    position: SERVED_STOP,
+    gazeTarget: [4.6, 1.3, 4.15],
+    duration: 0.6,
+    cameraMode: 'vehicle',
+    motion: 'hold',
+    vehicleYaw: WESTBOUND,
+    decision: 'operator-payment',
+    actor: attendant([3.6, 0, 3.15], SERVED_STOP, 'return'),
   },
   {
     id: 'served-return-window',
@@ -833,24 +853,27 @@ const selfServiceSteps: JourneyStep[] = [
   ...departureSteps('self'),
 ]
 
-const selfSvoltaSteps: JourneyStep[] = [
-  ...commonArrivalSteps('self', SELF_STOP),
-  selfFirstContactStep(),
+const servedPaymentChoiceIndex = servedSteps.findIndex(
+  (step) => step.id === 'served-payment-choice',
+)
+
+const servedSvoltaSteps: JourneyStep[] = [
+  ...servedSteps.slice(0, servedPaymentChoiceIndex + 1),
   {
     id: 'svolta-exit',
-    phase: 'C2 · Orientamento verso Svolta',
-    label: 'Esce dal lato conducente e cerca l’ingresso dello store',
-    position: [-4.6, 1.69, 7],
-    gazeTarget: [-1.9, 1.4, 7],
+    phase: 'C1 · Uscita dall’auto dopo il rifornimento',
+    label: 'Dopo la scelta esce dal lato conducente e individua Svolta',
+    position: [4.6, 1.69, 7],
+    gazeTarget: [1.9, 1.4, 7],
     duration: 2.5,
     cameraMode: 'pedestrian',
     motion: 'exit',
   },
   {
     id: 'svolta-clear-car',
-    phase: 'C2 · Orientamento verso Svolta',
-    label: 'Lascia l’ingombro dell’auto e imbocca la corsia centrale',
-    position: [-1.9, 1.69, 7],
+    phase: 'C1 · Orientamento verso Svolta',
+    label: 'Lascia l’ingombro dell’auto e imbocca il percorso pedonale',
+    position: [1.9, 1.69, 7],
     gazeTarget: [0, 1.45, 4],
     duration: 2.8,
     cameraMode: 'pedestrian',
@@ -858,7 +881,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-center-aisle',
-    phase: 'C2 · Orientamento verso Svolta',
+    phase: 'C1 · Orientamento verso Svolta',
     label: 'Sagomato e Fondostazione guidano fisicamente verso lo store',
     position: [0, 1.69, 4],
     gazeTarget: [0, 1.4, -2.9],
@@ -869,7 +892,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-behind-pumps',
-    phase: 'C2 · Orientamento verso Svolta',
+    phase: 'C1 · Orientamento verso Svolta',
     label: 'Il Fondostazione entra nel campo visivo lungo il percorso',
     position: [0, 1.69, -2.9],
     gazeTarget: [5, 1.6, -3.7],
@@ -880,7 +903,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-frontage',
-    phase: 'C3 · Avvicinamento e ingresso in Svolta',
+    phase: 'C2 · Avvicinamento e ingresso in Svolta',
     label: 'Procede lentamente verso l’ingresso leggendo lo Sagomato',
     position: [4, 1.69, -3.7],
     gazeTarget: [9.5, 1.8, -4.1],
@@ -891,7 +914,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-entrance',
-    phase: 'C3 · Avvicinamento e ingresso in Svolta',
+    phase: 'C2 · Avvicinamento e ingresso in Svolta',
     label: 'Raggiunge le porte dello store',
     position: [9.5, 1.69, -3.7],
     gazeTarget: [9.5, 1.8, -5.8],
@@ -902,7 +925,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-enter-store',
-    phase: 'C3 · Avvicinamento e ingresso in Svolta',
+    phase: 'C2 · Avvicinamento e ingresso in Svolta',
     label: 'Entra nell’ambiente retail Svolta',
     position: [9.5, 1.69, -5.6],
     gazeTarget: [10.3, 1.35, -7.7],
@@ -912,8 +935,8 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-counter',
-    phase: 'C4 · Pagamento in Svolta',
-    label: 'Raggiunge la cassa mantenendo il pagamento come compito primario',
+    phase: 'C3 · Pagamento in Svolta',
+    label: 'Raggiunge la commessa alla cassa',
     position: [10.3, 1.69, -7.7],
     gazeTarget: [11.45, 1.2, -8.2],
     duration: 3,
@@ -922,8 +945,8 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-payment',
-    phase: 'C4 · Pagamento in Svolta',
-    label: 'Paga alla cassa nel contesto retail',
+    phase: 'C3 · Pagamento in Svolta',
+    label: 'Conclude il pagamento con la commessa',
     position: [10.3, 1.69, -7.7],
     gazeTarget: [11.45, 1.2, -8.2],
     duration: 8,
@@ -933,7 +956,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-exit-store',
-    phase: 'C5 · Uscita da Svolta e ritorno alla pompa',
+    phase: 'C4 · Uscita da Svolta e ritorno all’auto',
     label: 'Esce dallo store e ritrova lo Sagomato',
     position: [9.5, 1.69, -3.7],
     gazeTarget: [4, 1.4, -3.7],
@@ -944,7 +967,7 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-return-behind-pumps',
-    phase: 'C5 · Uscita da Svolta e ritorno alla pompa',
+    phase: 'C4 · Uscita da Svolta e ritorno all’auto',
     label: 'Sagomato e Fondostazione producono la seconda esposizione',
     position: [0, 1.69, -2.9],
     gazeTarget: [-8.6, 1.85, -4.28],
@@ -955,8 +978,8 @@ const selfSvoltaSteps: JourneyStep[] = [
   },
   {
     id: 'svolta-return-center',
-    phase: 'C5 · Uscita da Svolta e ritorno alla pompa',
-    label: 'Rientra nella corsia centrale verso l’erogatore',
+    phase: 'C4 · Uscita da Svolta e ritorno all’auto',
+    label: 'Rientra nella corsia centrale verso l’auto parcheggiata',
     position: [0, 1.69, 5.2],
     gazeTarget: [-7.3, 1.4, 3.2],
     duration: 4,
@@ -965,16 +988,26 @@ const selfSvoltaSteps: JourneyStep[] = [
     mediaPointId: 'mp-01',
   },
   {
-    id: 'svolta-return-rack-left',
-    phase: 'C6 · Ritorno all’erogatore e avvio rifornimento',
-    label: 'Raggiunge il lato libero dell’isola',
-    position: [-7.3, 1.69, 5.2],
-    gazeTarget: [-5.65, 1.33, 2.09],
+    id: 'svolta-return-car',
+    phase: 'C4 · Uscita da Svolta e ritorno all’auto',
+    label: 'Raggiunge il lato conducente',
+    position: [4.6, 1.69, 7],
+    gazeTarget: [4.6, 1.3, 5.6],
     duration: 4,
     cameraMode: 'pedestrian',
     motion: 'walk',
   },
-  ...selfFuelSteps('svolta'),
+  {
+    id: 'svolta-enter-car',
+    phase: 'C4 · Rientro in auto',
+    label: 'Rientra in auto dopo aver pagato',
+    position: SERVED_STOP,
+    gazeTarget: [-12, 1.3, 5.6],
+    duration: 2.5,
+    cameraMode: 'vehicle',
+    motion: 'enter',
+    vehicleYaw: WESTBOUND,
+  },
   ...departureSteps('svolta'),
 ]
 
@@ -1004,12 +1037,12 @@ export const STATION_JOURNEYS: StationJourney[] = [
     id: 'servito-svolta',
     name: 'C · Servito con pagamento in Svolta',
     description: 'Auto → servizio del gestore → Svolta → auto.',
-    arrivalPath: selfArrival,
-    arrivalEndStepId: 'self-stop',
-    departurePath: selfDeparture,
+    arrivalPath: servedArrival,
+    arrivalEndStepId: 'servito-stop',
+    departurePath: servedDeparture,
     departureStartStepId: 'svolta-departure-start',
-    parkedVehicle: { position: [-4.6, 0, 5.6], yaw: WESTBOUND },
-    steps: selfSvoltaSteps,
+    parkedVehicle: { position: [4.6, 0, 5.6], yaw: WESTBOUND },
+    steps: servedSvoltaSteps,
   },
 ]
 

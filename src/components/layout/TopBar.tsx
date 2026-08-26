@@ -6,6 +6,8 @@ import {
   Route,
   ChevronDown,
   Settings,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
@@ -19,6 +21,8 @@ export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
   const mode = useViewerStore((s) => s.navigationMode)
   const setMode = useViewerStore((s) => s.setNavigationMode)
+  const timeOfDay = useViewerStore((s) => s.timeOfDay)
+  const setTimeOfDay = useViewerStore((s) => s.setTimeOfDay)
   const play = usePlaybackStore((s) => s.play)
   const activeRouteId = usePlaybackStore((s) => s.activeRouteId)
   const setActiveRouteId = usePlaybackStore((s) => s.setActiveRouteId)
@@ -97,6 +101,35 @@ export function TopBar() {
           Configura stazione
         </button>
       )}
+      <div
+        className="flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-1"
+        aria-label="Orario della scena"
+      >
+        {(
+          [
+            ['day', 'Giorno', Sun],
+            ['night', 'Notte', Moon],
+          ] as const
+        ).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            aria-label={label}
+            aria-pressed={timeOfDay === id}
+            title={label}
+            onClick={() => setTimeOfDay(id)}
+            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
+              timeOfDay === id
+                ? id === 'night'
+                  ? 'bg-[#10265f] text-white shadow-sm'
+                  : 'bg-amber-300 text-amber-950 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-900'
+            }`}
+          >
+            <Icon size={17} />
+          </button>
+        ))}
+      </div>
       <button
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
         aria-label="Guida"

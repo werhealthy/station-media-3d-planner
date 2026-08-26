@@ -20,9 +20,7 @@ export function JourneyExperienceOverlay() {
   const continueOnRoute = usePlaybackStore((state) => state.continueOnRoute)
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
-  const journeyHeading = !serviceChoice
-    ? 'Ingresso Q8'
-    : journey.name
+  const journeyHeading = !serviceChoice ? 'Ingresso Q8' : journey.name
 
   useEffect(() => {
     if (mode !== 'auto' || !step?.decision || pendingDecision) return
@@ -49,8 +47,6 @@ export function JourneyExperienceOverlay() {
     },
   ) => {
     const target = getJourney(targetRouteId)
-    // La seconda scelta (pagamento Servito) è un disclaimer mostrato subito:
-    // si riparte comunque dal bivio comune, non dallo step corrente della corsia.
     const decisionId = step.decision ? step.id : 'common-service-choice'
     const decisionIndex = target.steps.findIndex(
       (item) => item.id === decisionId,
@@ -97,10 +93,11 @@ export function JourneyExperienceOverlay() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  continueAfterDecision('servito', { serviceChoice: 'servito' })
-                  openDecision('operator-payment')
-                }}
+                onClick={() =>
+                  continueAfterDecision('servito', {
+                    serviceChoice: 'servito',
+                  })
+                }
               >
                 <UserRound size={25} />
                 <span>
@@ -117,8 +114,11 @@ export function JourneyExperienceOverlay() {
         <div className="journey-decision-backdrop" role="dialog" aria-modal>
           <section className="journey-decision-card">
             <span className="decision-kicker">Scelta del pagamento</span>
-            <h2>Come preferisci pagare il Servito?</h2>
-            <p>Il gestore effettua prima il rifornimento; la scelta vale per il pagamento finale.</p>
+            <h2>Il rifornimento è terminato. Come vuoi pagare?</h2>
+            <p>
+              La pistola è stata riagganciata: ora puoi pagare al gestore oppure
+              entrare in Svolta.
+            </p>
             <div className="decision-options">
               <button
                 type="button"

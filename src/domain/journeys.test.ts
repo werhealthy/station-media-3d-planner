@@ -30,8 +30,9 @@ describe('station journeys', () => {
         commonIds,
       )
       expect(journey.steps[5]?.decision).toBe('service-mode')
-      expect(journey.steps.find((step) => step.id === journey.arrivalEndStepId))
-        .toBeDefined()
+      expect(
+        journey.steps.find((step) => step.id === journey.arrivalEndStepId),
+      ).toBeDefined()
       expect(
         journey.steps.find((step) => step.id === journey.departureStartStepId),
       ).toBeDefined()
@@ -42,6 +43,14 @@ describe('station journeys', () => {
         (step) => step.decision === 'operator-payment',
       ),
     ).toBe(false)
+    for (const id of ['servito', 'servito-svolta'] as const)
+      expect(
+        getJourney(id).steps.some(
+          (step) =>
+            step.id === 'served-payment-choice' &&
+            step.decision === 'operator-payment',
+        ),
+      ).toBe(true)
   })
 
   it('keeps Journey A in the vehicle and returns the nozzle before payment', () => {
@@ -77,8 +86,13 @@ describe('station journeys', () => {
     const paymentIndex = served.steps.findIndex(
       (step) => step.id === 'served-payment',
     )
+    const paymentChoiceIndex = served.steps.findIndex(
+      (step) => step.id === 'served-payment-choice',
+    )
     expect(replaceIndex).toBeGreaterThan(removeIndex)
+    expect(paymentChoiceIndex).toBeGreaterThan(replaceIndex)
     expect(paymentIndex).toBeGreaterThan(replaceIndex)
+    expect(paymentIndex).toBeGreaterThan(paymentChoiceIndex)
     expect(
       served.steps
         .slice(removeIndex, replaceIndex + 1)
@@ -120,6 +134,15 @@ describe('station journeys', () => {
 
   it('enters Svolta, pays inside and exposes the store supports on return', () => {
     const svolta = getJourney('servito-svolta')
+    const refuelIndex = svolta.steps.findIndex(
+      (step) => step.id === 'served-refuel',
+    )
+    const replaceIndex = svolta.steps.findIndex(
+      (step) => step.id === 'served-replace-nozzle',
+    )
+    const choiceIndex = svolta.steps.findIndex(
+      (step) => step.id === 'served-payment-choice',
+    )
     const entranceIndex = svolta.steps.findIndex(
       (step) => step.id === 'svolta-enter-store',
     )
@@ -129,13 +152,20 @@ describe('station journeys', () => {
     const exitIndex = svolta.steps.findIndex(
       (step) => step.id === 'svolta-exit-store',
     )
-    expect(entranceIndex).toBeGreaterThan(0)
+    expect(svolta.parkedVehicle?.position).toEqual([4.6, 0, 5.6])
+    expect(refuelIndex).toBeGreaterThan(0)
+    expect(replaceIndex).toBeGreaterThan(refuelIndex)
+    expect(choiceIndex).toBeGreaterThan(replaceIndex)
+    expect(entranceIndex).toBeGreaterThan(choiceIndex)
     expect(paymentIndex).toBeGreaterThan(entranceIndex)
     expect(exitIndex).toBeGreaterThan(paymentIndex)
     expect(
       svolta.steps.filter((step) => step.mediaPointId === 'mp-06').length,
     ).toBeGreaterThanOrEqual(2)
     expect(dwellSeconds(svolta.steps.filter((step) => step.nozzle))).toBe(60)
+    expect(svolta.steps.some((step) => step.id === 'svolta-take-nozzle')).toBe(
+      false,
+    )
   })
 
   it('falls back to Journey B', () => {

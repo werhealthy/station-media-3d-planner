@@ -46,7 +46,7 @@ describe('supportCatalog', () => {
       '6': [0.77, 1.385],
       '7': [0.98, 1.975],
       '8': [0.68, 1.28],
-      '9': [0.74, 0.5],
+      '9': [0.8, 3.6],
       '10': [0.52, 0.72],
     })
     expect(getSupportType('5')?.dimensions).toMatchObject({

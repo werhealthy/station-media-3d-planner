@@ -1,7 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { analyzeCreativeFit, containedSurfaceSize } from './creativeFit'
+import {
+  analyzeCreativeFit,
+  containedSurfaceSize,
+  orientCreativeToPortrait,
+} from './creativeFit'
 
 describe('creativeFit', () => {
+  it('ruota solo le creativita orizzontali destinate a supporti verticali', () => {
+    expect(orientCreativeToPortrait(1920, 1080)).toEqual({
+      width: 1080,
+      height: 1920,
+      rotationRadians: -Math.PI / 2,
+    })
+    expect(orientCreativeToPortrait(1080, 1920)).toEqual({
+      width: 1080,
+      height: 1920,
+      rotationRadians: 0,
+    })
+  })
   it('riconosce una creativita con il rapporto esatto del supporto', () => {
     const fit = analyzeCreativeFit({
       assetWidth: 1600,

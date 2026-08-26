@@ -61,6 +61,31 @@ describe('MediaPointPanel', () => {
     expect(screen.queryByText(point.name)).not.toBeInTheDocument()
   })
 
+  it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
+      (item) => item.supportShape === 'beach-flag',
+    )!
+    useViewerStore.getState().selectMediaPoint(point.id)
+    useProjectStore.setState({
+      assignments: {
+        [point.id]: {
+          id: 'flag-landscape',
+          name: 'flag-landscape.png',
+          mimeType: 'image/png',
+          size: 100,
+          width: 1920,
+          height: 1080,
+          aspectRatio: 16 / 9,
+          url: 'blob:flag-landscape',
+        },
+      },
+    })
+
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    expect(screen.getByText(/ruotata automaticamente di 90°/)).toBeVisible()
+  })
+
   it('consente il caricamento di una creatività PDF', () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
     useViewerStore.getState().selectMediaPoint(point.id)

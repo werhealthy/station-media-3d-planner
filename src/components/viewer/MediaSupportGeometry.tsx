@@ -64,22 +64,21 @@ export function MediaSupportGeometry({
 }) {
   const panelBottom = Math.max(0, point.position[1] - point.height / 2)
   const stendardoPoleHeight = point.position[1] + point.height / 2 + 0.1
-  const stendardoPoleCenterY =
-    -point.position[1] + stendardoPoleHeight / 2
+  const stendardoPoleCenterY = -point.position[1] + stendardoPoleHeight / 2
   const flagShape = useMemo(() => {
     const shape = new THREE.Shape()
-    shape.moveTo(-point.width / 2, -point.height / 2)
-    shape.lineTo(-point.width / 2, point.height / 2)
+    shape.moveTo(-point.width * 0.42, -point.height / 2)
+    shape.lineTo(-point.width / 2, point.height * 0.38)
     shape.quadraticCurveTo(
-      point.width * 0.2,
+      -point.width * 0.18,
       point.height * 0.56,
       point.width / 2,
-      point.height * 0.34,
+      point.height * 0.38,
     )
     shape.quadraticCurveTo(
-      point.width * 0.32,
-      -point.height * 0.12,
-      point.width * 0.12,
+      point.width * 0.36,
+      -point.height * 0.08,
+      -point.width * 0.42,
       -point.height / 2,
     )
     shape.closePath()
@@ -91,22 +90,16 @@ export function MediaSupportGeometry({
       return (
         <>
           <Panel width={point.width} height={point.height} color={color} />
-          <mesh position={[0, -point.height / 2 - 0.16, -0.03]} castShadow>
-            <boxGeometry args={[point.width * 0.72, 0.28, 0.14]} />
-            <meshStandardMaterial
-              color="#848d95"
-              metalness={0.55}
-              roughness={0.35}
-            />
-          </mesh>
-          <mesh position={[0, -point.height / 2 - 0.33, -0.03]} receiveShadow>
-            <boxGeometry args={[point.width + 0.22, 0.08, 0.42]} />
-            <meshStandardMaterial
-              color="#a7adb1"
-              metalness={0.3}
-              roughness={0.6}
-            />
-          </mesh>
+          <GroundPost
+            x={-point.width * 0.42}
+            panelBottom={panelBottom}
+            color="#848d95"
+          />
+          <GroundPost
+            x={point.width * 0.42}
+            panelBottom={panelBottom}
+            color="#848d95"
+          />
         </>
       )
     case 'column-panel':
@@ -142,8 +135,11 @@ export function MediaSupportGeometry({
             depth={0.08}
             color={color}
           />
-          <mesh position={[-point.width / 2 - 0.12, 0, -0.1]}>
-            <boxGeometry args={[0.22, 0.1, 0.28]} />
+          <mesh
+            name="pump-ear-rear-bracket"
+            position={[-point.width / 2 - 0.02, 0, -0.18]}
+          >
+            <boxGeometry args={[0.1, 0.12, 0.36]} />
             <meshStandardMaterial
               color="#9ca4aa"
               metalness={0.75}
@@ -266,16 +262,17 @@ export function MediaSupportGeometry({
             depth={0.055}
             color={color}
           />
-          {/* Nelle installazioni reali il telo è appeso lateralmente al palo
-              prezzi tramite due bracci corti, senza una gabbia posteriore. */}
+          {/* Il telo e centrato sul palo prezzi: i due distanziali lavorano
+              dietro al pannello e non lo fanno sporgere da un solo lato. */}
           {[-0.58, 0.58].map((y) => (
             <mesh
               key={y}
-              position={[-point.width / 2 - 0.1, y, -0.04]}
-              rotation={[0, 0, Math.PI / 2]}
+              name="stendardo-central-bracket"
+              position={[0, y, -0.12]}
+              rotation={[Math.PI / 2, 0, 0]}
               castShadow
             >
-              <cylinderGeometry args={[0.025, 0.025, 0.2, 12]} />
+              <cylinderGeometry args={[0.025, 0.025, 0.28, 12]} />
               <meshStandardMaterial
                 color="#929aa0"
                 metalness={0.82}
@@ -284,16 +281,11 @@ export function MediaSupportGeometry({
             </mesh>
           ))}
           <mesh
-            position={[
-              -point.width / 2 - 0.2,
-              stendardoPoleCenterY,
-              -0.04,
-            ]}
+            name="stendardo-central-pole"
+            position={[0, stendardoPoleCenterY, -0.24]}
             castShadow
           >
-            <cylinderGeometry
-              args={[0.055, 0.065, stendardoPoleHeight, 16]}
-            />
+            <cylinderGeometry args={[0.055, 0.065, stendardoPoleHeight, 16]} />
             <meshStandardMaterial
               color="#a7adb1"
               metalness={0.78}
@@ -305,7 +297,12 @@ export function MediaSupportGeometry({
     case 'beach-flag':
       return (
         <>
-          <mesh position={[0, 0, -0.02]} castShadow>
+          <mesh
+            name="beach-flag-tensioned-fabric"
+            position={[0.025, 0.015, -0.02]}
+            rotation={[0, 0, -0.025]}
+            castShadow
+          >
             <shapeGeometry args={[flagShape]} />
             <meshStandardMaterial
               color={color}
@@ -313,8 +310,13 @@ export function MediaSupportGeometry({
               roughness={0.72}
             />
           </mesh>
-          <mesh position={[-point.width / 2 - 0.055, -0.02, -0.06]} castShadow>
-            <cylinderGeometry args={[0.035, 0.045, point.height + 0.4, 12]} />
+          <mesh
+            name="beach-flag-pole"
+            position={[-point.width / 2 - 0.055, 0.1, -0.06]}
+            rotation={[0, 0, -0.018]}
+            castShadow
+          >
+            <cylinderGeometry args={[0.035, 0.045, point.height + 0.2, 12]} />
             <meshStandardMaterial
               color="#424b53"
               metalness={0.72}
@@ -324,7 +326,7 @@ export function MediaSupportGeometry({
           <mesh
             position={[
               -point.width / 2 - 0.055,
-              -point.height / 2 - 0.2,
+              -point.height / 2 + 0.035,
               -0.06,
             ]}
           >
@@ -358,6 +360,30 @@ export function MediaSupportGeometry({
         </>
       )
     case 'pump-topper':
+      return (
+        <>
+          <Panel width={point.width} height={point.height} color={color} />
+          {[-1, 1].map((side) => (
+            <mesh
+              key={side}
+              name="pump-topper-mount"
+              position={[
+                side * point.width * 0.34,
+                -point.height / 2 - 0.08,
+                -0.04,
+              ]}
+              castShadow
+            >
+              <boxGeometry args={[0.045, 0.16, 0.08]} />
+              <meshStandardMaterial
+                color="#8d969d"
+                metalness={0.72}
+                roughness={0.28}
+              />
+            </mesh>
+          ))}
+        </>
+      )
     default:
       return <Panel width={point.width} height={point.height} color={color} />
   }

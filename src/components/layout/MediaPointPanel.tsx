@@ -13,7 +13,10 @@ import { useState } from 'react'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
 import { readCreativeAsset } from '@/domain/schemas/media'
 import { getSupportType } from '@/domain/supportCatalog'
-import { analyzeCreativeFit } from '@/core/creative/creativeFit'
+import {
+  analyzeCreativeFit,
+  orientCreativeToPortrait,
+} from '@/core/creative/creativeFit'
 import { BRAND_ASSETS } from '@/config/brandAssets'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
@@ -48,11 +51,17 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
   const usesSmartOptIdle = point?.supportTypeId === '11'
   const support = getSupportType(point?.supportTypeId)
+  const orientedAsset =
+    point && asset && point.supportShape === 'beach-flag'
+      ? orientCreativeToPortrait(asset.width, asset.height)
+      : asset
+        ? { width: asset.width, height: asset.height, rotationRadians: 0 }
+        : undefined
   const fit =
-    point && asset
+    point && orientedAsset
       ? analyzeCreativeFit({
-          assetWidth: asset.width,
-          assetHeight: asset.height,
+          assetWidth: orientedAsset.width,
+          assetHeight: orientedAsset.height,
           surfaceWidth: point.width,
           surfaceHeight: point.height,
         })
@@ -60,15 +69,21 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const recommendations = asset
     ? points
         .filter((item) => item.assignable)
-        .map((item) => ({
-          point: item,
-          fit: analyzeCreativeFit({
-            assetWidth: asset.width,
-            assetHeight: asset.height,
-            surfaceWidth: item.width,
-            surfaceHeight: item.height,
-          }),
-        }))
+        .map((item) => {
+          const oriented =
+            item.supportShape === 'beach-flag'
+              ? orientCreativeToPortrait(asset.width, asset.height)
+              : { width: asset.width, height: asset.height }
+          return {
+            point: item,
+            fit: analyzeCreativeFit({
+              assetWidth: oriented.width,
+              assetHeight: oriented.height,
+              surfaceWidth: item.width,
+              surfaceHeight: item.height,
+            }),
+          }
+        })
         .sort(
           (left, right) =>
             left.fit.differencePercent - right.fit.differencePercent ||
@@ -332,6 +347,12 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       )}
                     </div>
                   </div>
+                  {orientedAsset?.rotationRadians !== 0 && (
+                    <p className="mt-2 rounded-lg bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
+                      La creatività orizzontale viene ruotata automaticamente di
+                      90° sulla Beach Flag, senza stretching.
+                    </p>
+                  )}
                   {fit && (
                     <div
                       role="status"
@@ -428,9 +449,11 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                     </span>
                     <span className="mt-1 text-xs text-slate-500">
                       Rapporto richiesto{' '}
-                      {ratioLabel(point.width / point.height)} · output massimo 15 MB
+                      {ratioLabel(point.width / point.height)} · output massimo
+                      15 MB
                       <br />
-                      Immagini fino a 100 MB compresse automaticamente; per i PDF viene visualizzata la prima pagina
+                      Immagini fino a 100 MB compresse automaticamente; per i
+                      PDF viene visualizzata la prima pagina
                     </span>
                   </label>
                 </>

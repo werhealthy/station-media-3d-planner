@@ -19,17 +19,18 @@ describe('station journeys', () => {
     ])
     const commonIds = [
       'common-station',
-      'common-stendardo',
       'common-beach-flag',
+      'common-stendardo',
       'common-open',
       'common-differential',
+      'common-standard-sign',
       'common-service-choice',
     ]
     for (const journey of STATION_JOURNEYS) {
-      expect(journey.steps.slice(0, 6).map((step) => step.id)).toEqual(
+      expect(journey.steps.slice(0, 7).map((step) => step.id)).toEqual(
         commonIds,
       )
-      expect(journey.steps[5]?.decision).toBe('service-mode')
+      expect(journey.steps[6]?.decision).toBe('service-mode')
       expect(
         journey.steps.find((step) => step.id === journey.arrivalEndStepId),
       ).toBeDefined()
@@ -67,12 +68,12 @@ describe('station journeys', () => {
     expect(nozzleStates).toEqual([
       'hand',
       'hand',
-      'inserting',
-      'inserted',
-      'inserted',
-      'inserted',
-      'inserted',
-      'removing',
+      'hand',
+      'hand',
+      'hand',
+      'hand',
+      'hand',
+      'hand',
       'hand',
       'returning',
       'holstered',
@@ -138,7 +139,7 @@ describe('station journeys', () => {
     )
   })
 
-  it('enters Svolta, pays inside and exposes the store supports on return', () => {
+  it('enters Svolta diagonally, pays inside and returns without forced media gazes', () => {
     const svolta = getJourney('servito-svolta')
     const refuelIndex = svolta.steps.findIndex(
       (step) => step.id === 'served-refuel',
@@ -166,8 +167,19 @@ describe('station journeys', () => {
     expect(paymentIndex).toBeGreaterThan(entranceIndex)
     expect(exitIndex).toBeGreaterThan(paymentIndex)
     expect(
-      svolta.steps.filter((step) => step.mediaPointId === 'mp-06').length,
-    ).toBeGreaterThanOrEqual(2)
+      svolta.steps.filter(
+        (step) =>
+          step.id.startsWith('svolta-') && step.mediaPointId === 'mp-06',
+      ),
+    ).toHaveLength(0)
+    const clearCar = svolta.steps.find(
+      (step) => step.id === 'svolta-clear-car',
+    )!
+    const centerAisle = svolta.steps.find(
+      (step) => step.id === 'svolta-center-aisle',
+    )!
+    expect(centerAisle.position[0]).not.toBe(clearCar.position[0])
+    expect(centerAisle.position[2]).not.toBe(clearCar.position[2])
     expect(
       dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
     ).toBeGreaterThanOrEqual(40)
@@ -181,5 +193,20 @@ describe('station journeys', () => {
 
   it('falls back to Journey B', () => {
     expect(getJourney('unknown').id).toBe('self-service')
+  })
+
+  it('publishes named checkpoints for exact, pausable journey moments', () => {
+    const checkpoints = getJourney('self-service')
+      .steps.map((step) => step.checkpoint)
+      .filter(Boolean)
+    expect(checkpoints).toEqual(
+      expect.arrayContaining([
+        'Ingresso dalla corsia destra',
+        'Auto accostata alla pompa',
+        'Pagamento al totem',
+        'Rifornimento in corso',
+        'Ripartenza verso l’uscita',
+      ]),
+    )
   })
 })

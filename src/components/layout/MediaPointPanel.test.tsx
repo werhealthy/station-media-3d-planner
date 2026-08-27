@@ -58,15 +58,14 @@ describe('MediaPointPanel', () => {
   })
 
   it('toglie il sagomato prezzo strutturale dall’inventario caricabile', () => {
-    const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
-      (item) => item.supportTypeId === '8',
-    )!
-    useViewerStore.getState().selectMediaPoint(point.id)
-
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 
+    expect(
+      PROCEDURAL_STATION_CONFIG.mediaPoints.some(
+        (item) => item.supportTypeId === '8',
+      ),
+    ).toBe(false)
     expect(screen.getByText('9 supporti caricabili')).toBeVisible()
-    expect(screen.queryByText(point.name)).not.toBeInTheDocument()
   })
 
   it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', () => {

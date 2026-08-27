@@ -52,7 +52,7 @@ function supportPoint(
 export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('1', {
     id: 'mp-01',
-    number: 5,
+    number: 7,
     location: 'Isola anteriore',
     surface: 'Cappuccio erogatore',
     heightFromGround: 2.595,
@@ -79,7 +79,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('10', {
     id: 'mp-04',
-    number: 7,
+    number: 5,
     location: 'Erogatore Servito',
     surface: 'Estensione erogatore',
     heightFromGround: 1.1,
@@ -103,12 +103,16 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('6', {
     id: 'mp-06',
-    number: 10,
-    location: 'Piazzale davanti a Svolta',
+    number: 3,
+    location: 'Lato destro del percorso di ingresso',
     surface: 'Sagomato autoportante',
     heightFromGround: 0.25,
-    position: [14.6, 0.9425, -2.65],
-    rotation: [0, -10, 0],
+    position: [
+      STATION_LAYOUT.entry.standardSignX,
+      0.9425,
+      STATION_LAYOUT.entry.standardSignZ,
+    ],
+    rotation: [0, STATION_LAYOUT.entry.standardSignYaw, 0],
   }),
   supportPoint('5', {
     id: 'mp-07',
@@ -121,17 +125,21 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('7', {
     id: 'mp-08',
-    number: 1,
-    location: 'Palo bandiera',
+    number: 2,
+    location: 'Lato destro dell’ingresso, accanto all’insegna Q8',
     surface: 'Pannello bifacciale sospeso',
     heightFromGround: 1.9,
-    position: [STATION_LAYOUT.totem.x, 2.8875, STATION_LAYOUT.totem.z + 0.28],
-    rotation: [0, 0, 0],
+    position: [
+      STATION_LAYOUT.entry.stendardoX,
+      2.8875,
+      STATION_LAYOUT.entry.stendardoZ,
+    ],
+    rotation: [0, STATION_LAYOUT.entry.stendardoYaw, 0],
   }),
   supportPoint('9', {
     id: 'mp-09',
-    number: 2,
-    location: 'Ingresso piazzale',
+    number: 1,
+    location: 'Primo supporto sul lato destro dell’ingresso',
     surface: 'Vela mobile',
     heightFromGround: 0,
     position: [
@@ -139,19 +147,6 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
       1.8,
       STATION_LAYOUT.entry.beachFlagZ,
     ],
-    rotation: [0, 0, 0],
-  }),
-  supportPoint('8', {
-    id: 'mp-10',
-    number: 3,
-    location: 'Ingresso isola',
-    surface: 'Base fissa in cemento',
-    heightFromGround: 0,
-    position: [
-      STATION_LAYOUT.entry.concreteSignX,
-      0.72,
-      STATION_LAYOUT.entry.concreteSignZ,
-    ],
-    rotation: [0, 90, 0],
+    rotation: [0, STATION_LAYOUT.entry.beachFlagYaw, 0],
   }),
 ])

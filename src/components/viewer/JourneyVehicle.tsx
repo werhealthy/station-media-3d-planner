@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { getJourney } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
+import { dampAngle } from '@/three/angles'
 
 export function JourneyVehicle() {
   const mode = useViewerStore((state) => state.navigationMode)
@@ -52,10 +53,11 @@ export function JourneyVehicle() {
       cockpit.current.position.set(...step.position)
       movementReady.current = false
     }
-    vehicleYaw.current = THREE.MathUtils.lerp(
+    vehicleYaw.current = dampAngle(
       vehicleYaw.current,
       desiredYaw,
-      1 - Math.exp(-delta * (carIsMoving ? 10 : 5)),
+      carIsMoving ? 10 : 5,
+      delta,
     )
     cockpit.current.rotation.set(0, vehicleYaw.current, 0)
   })
@@ -71,7 +73,12 @@ export function JourneyVehicle() {
             keep the in-car POV consistent with the visible hatchback. */}
         <mesh position={[0, 0.16, -1.28]} rotation={[-0.26, 0, 0]}>
           <planeGeometry args={[1.66, 1.04]} />
-          <meshStandardMaterial color="#a9c8de" transparent opacity={0.18} roughness={0.08} />
+          <meshStandardMaterial
+            color="#a9c8de"
+            transparent
+            opacity={0.18}
+            roughness={0.08}
+          />
         </mesh>
         <mesh position={[0, 1.02, -0.22]}>
           <boxGeometry args={[1.78, 0.14, 2.05]} />
@@ -79,11 +86,22 @@ export function JourneyVehicle() {
         </mesh>
         {([-1, 1] as const).map((side) => (
           <group key={`window-${side}`}>
-            <mesh position={[side * 0.88, 0.18, -0.18]} rotation={[0, side * Math.PI / 2, 0]}>
+            <mesh
+              position={[side * 0.88, 0.18, -0.18]}
+              rotation={[0, (side * Math.PI) / 2, 0]}
+            >
               <planeGeometry args={[1.7, 0.8]} />
-              <meshStandardMaterial color="#9fc4de" transparent opacity={0.12} roughness={0.1} />
+              <meshStandardMaterial
+                color="#9fc4de"
+                transparent
+                opacity={0.12}
+                roughness={0.1}
+              />
             </mesh>
-            <mesh position={[side * 0.8, 0.22, -1.05]} rotation={[0, 0, side * -0.24]}>
+            <mesh
+              position={[side * 0.8, 0.22, -1.05]}
+              rotation={[0, 0, side * -0.24]}
+            >
               <boxGeometry args={[0.11, 1.5, 0.12]} />
               <meshStandardMaterial color="#1b2430" roughness={0.6} />
             </mesh>
@@ -101,13 +119,21 @@ export function JourneyVehicle() {
             roughness={0.42}
           />
         </mesh>
-        <group visible={phoneVisible} position={[0.28, -0.43, -0.54]} rotation={[-0.68, -0.12, 0.08]}>
+        <group
+          visible={phoneVisible}
+          position={[0.28, -0.43, -0.54]}
+          rotation={[-0.68, -0.12, 0.08]}
+        >
           <RoundedBox args={[0.17, 0.025, 0.31]} radius={0.025} smoothness={3}>
             <meshStandardMaterial color="#171a20" roughness={0.36} />
           </RoundedBox>
           <mesh position={[0, 0.014, 0]} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={[0.13, 0.25]} />
-            <meshStandardMaterial color="#65b7d6" emissive="#317b9d" emissiveIntensity={0.7} />
+            <meshStandardMaterial
+              color="#65b7d6"
+              emissive="#317b9d"
+              emissiveIntensity={0.7}
+            />
           </mesh>
         </group>
         {([-1, 1] as const).map((side) => (
@@ -181,7 +207,11 @@ export function JourneyVehicle() {
           </mesh>
           <mesh position={[0, 0, 0.008]}>
             <ringGeometry args={[0.088, 0.118, 32]} />
-            <meshStandardMaterial color="#8b94a3" metalness={0.55} roughness={0.34} />
+            <meshStandardMaterial
+              color="#8b94a3"
+              metalness={0.55}
+              roughness={0.34}
+            />
           </mesh>
         </group>
       </group>

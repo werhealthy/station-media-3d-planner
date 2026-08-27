@@ -363,14 +363,14 @@ function pump(
     'q8-easy-cabinet-logo',
   )
 }
-function brandedMaterial(texture: THREE.Texture) {
+function brandedMaterial(texture: THREE.Texture, emissiveIntensity = 0.08) {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 8
   return new THREE.MeshStandardMaterial({
     map: texture,
     emissive: '#ffffff',
     emissiveMap: texture,
-    emissiveIntensity: 0.28,
+    emissiveIntensity,
     transparent: true,
     alphaTest: 0.04,
     roughness: 0.38,
@@ -396,6 +396,7 @@ function brandPlane(
   size: [number, number],
   pos: [number, number, number],
   name: string,
+  emissiveIntensity = 0.08,
 ) {
   const image = texture.image as { width?: number; height?: number } | undefined
   const sourceWidth = image?.width ?? size[0]
@@ -409,7 +410,7 @@ function brandPlane(
   return mesh(
     root,
     new THREE.PlaneGeometry(...containedSize),
-    brandedMaterial(texture),
+    brandedMaterial(texture, emissiveIntensity),
     pos,
     name,
   )
@@ -469,51 +470,27 @@ function buildStation(
     [-Math.PI / 2, 0, 0],
   )
   approachRoad.userData.stationHelper = true
-  // The same wide driveway has two clearly separated lanes: the eastern lane
-  // is the entrance, while the western lane gives every guided route a paved
-  // exit back to the road (no grass or landscaping is crossed).
+  // Two independent curb cuts create a one-way flow: entrance on the right,
+  // exit on the left. No ambiguous T-shaped road markings are used.
   box(
     root,
-    [0.18, 0.025, 8.5],
-    mat('#f3eee0', 0.72),
-    [13.8, 0.026, 15.2],
-    'driveway-lane-divider',
-  ).userData.stationHelper = true
-  for (const [x, direction] of [
-    [9.8, -1],
-    [17.7, 1],
-  ] as const) {
-    box(
-      root,
-      [2.2, 0.02, 0.16],
-      mat('#f3eee0', 0.72),
-      [x, 0.028, 15.4],
-      direction < 0 ? 'exit-direction-marking' : 'entry-direction-marking',
-      [0, direction < 0 ? -0.45 : 0.45, 0],
-    ).userData.stationHelper = true
-    box(
-      root,
-      [0.16, 0.02, 1.25],
-      mat('#f3eee0', 0.72),
-      [x + direction * 0.8, 0.028, 15.4 + direction * 0.34],
-      direction < 0 ? 'exit-arrow-shaft' : 'entry-arrow-shaft',
-      [0, direction < 0 ? -0.45 : 0.45, 0],
-    ).userData.stationHelper = true
-  }
-  // The frontage pavement is split at the actual driveway. The previous
-  // continuous slab visually and physically cut across the station entrance.
-  box(
-    root,
-    [116, 0.08, 1.1],
+    [91, 0.08, 1.1],
     concrete,
-    [-52, 0.015, 12.55],
+    [-64.5, 0.015, 12.55],
     'roadside-footpath',
   ).userData.stationHelper = true
   box(
     root,
-    [89, 0.08, 1.1],
+    [22.5, 0.08, 1.1],
     concrete,
-    [65.5, 0.015, 12.55],
+    [-0.25, 0.015, 12.55],
+    'roadside-footpath',
+  ).userData.stationHelper = true
+  box(
+    root,
+    [91, 0.08, 1.1],
+    concrete,
+    [64.5, 0.015, 12.55],
     'roadside-footpath',
   ).userData.stationHelper = true
   box(
@@ -672,6 +649,7 @@ function buildStation(
     [3.2, 1.55],
     [0, L.canopy.height - 0.05, L.canopy.depth / 2 + 0.205],
     'q8-canopy-logo',
+    1.15,
   )
   for (const x of [-L.islands.pumpX, L.islands.pumpX])
     pump(
@@ -1100,6 +1078,7 @@ function buildStation(
     [1.46, 0.8],
     [0, 6.7, 0.275],
     'price-pylon-logo',
+    1.3,
   )
   roundedBox(
     totem,
@@ -1137,6 +1116,58 @@ function buildStation(
       'fuel-label',
     )
   }
+  const differentialSign = new THREE.Group()
+  differentialSign.position.set(L.entry.concreteSignX, 0, L.entry.concreteSignZ)
+  differentialSign.rotation.y = THREE.MathUtils.degToRad(
+    L.entry.concreteSignYaw,
+  )
+  differentialSign.name = 'structural-price-differential-sign'
+  root.add(differentialSign)
+  roundedBox(
+    differentialSign,
+    [0.82, 0.2, 0.54],
+    0.07,
+    mat('#252a31', 0.84),
+    [0, 0.13, 0],
+    'structural-price-sign-rubber-base',
+  )
+  roundedBox(
+    differentialSign,
+    [0.72, 1.34, 0.14],
+    0.045,
+    mat('#d9dde0', 0.36, 0.42),
+    [0, 0.88, 0],
+    'structural-price-sign-frame',
+  )
+  box(
+    differentialSign,
+    [0.62, 0.37, 0.035],
+    mat('#16367f', 0.34),
+    [0, 1.29, 0.09],
+    'structural-price-sign-heading',
+  )
+  box(
+    differentialSign,
+    [0.62, 0.34, 0.035],
+    mat('#16805d', 0.42),
+    [0, 0.91, 0.09],
+    'structural-price-sign-self-row',
+  )
+  box(
+    differentialSign,
+    [0.62, 0.34, 0.035],
+    mat('#b73535', 0.42),
+    [0, 0.54, 0.09],
+    'structural-price-sign-served-row',
+  )
+  for (const y of [0.54, 0.91, 1.29])
+    box(
+      differentialSign,
+      [0.38, 0.035, 0.018],
+      mat('#f5f1df', 0.28),
+      [0, y, 0.115],
+      'structural-price-sign-copy-line',
+    )
   for (const x of [L.totem.x - 1.7, L.totem.x + 1.7])
     mesh(
       root,
@@ -1147,16 +1178,16 @@ function buildStation(
     )
   // Compact entrance island: the supports form one readable sequence instead
   // of floating across an oversized empty forecourt.
-  box(root, [23, 0.2, 1.05], concrete, [-11.5, 0.12, 12.65], 'pedestrian-curb')
+  box(root, [21, 0.2, 1.05], concrete, [0, 0.12, 12.65], 'pedestrian-curb')
   box(
     root,
-    [11, 0.34, 2.1],
+    [18, 0.34, 2.1],
     mat('#5e6e48', 0.95),
-    [-16.2, 0.22, 11.95],
+    [0, 0.22, 11.95],
     'landscape-bed',
   )
   shrubRow(root, -20.5, -15.15, 29, 1.42)
-  shrubRow(root, -21.1, 12, 13, 0.76)
+  shrubRow(root, -8.45, 12, 12, 1.52)
   const treePositions: Array<[number, number, number]> = [
     [-21, -14.5, 0.92],
     [-16, -14.2, 1.08],

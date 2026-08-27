@@ -214,8 +214,6 @@ describe('station journeys', () => {
       'self-exit',
       'self-enter-car',
       'svolta-exit',
-      'svolta-enter-store',
-      'svolta-exit-store',
       'svolta-enter-car',
     ]) {
       const journey = id.startsWith('self-')
@@ -223,6 +221,15 @@ describe('station journeys', () => {
         : getJourney('servito-svolta')
       expect(
         journey.steps.find((step) => step.id === id)?.cameraTransition,
+      ).toBe('character-cut')
+    }
+    for (const id of [
+      'svolta-enter-store',
+      'svolta-exit-store',
+    ]) {
+      expect(
+        getJourney('servito-svolta').steps.find((step) => step.id === id)
+          ?.cameraTransition,
       ).toBe('fade-cut')
     }
   })

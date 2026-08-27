@@ -65,7 +65,7 @@ export interface JourneyStep {
    * Nasconde con un breve nero i cambi di assetto che il prototipo non può
    * ancora animare in modo credibile (auto/persona e soglie dello store).
    */
-  cameraTransition?: 'fade-cut'
+  cameraTransition?: 'fade-cut' | 'character-cut'
 }
 
 export interface StationJourney {
@@ -522,7 +522,7 @@ function selfFuelSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
       cameraMode: 'vehicle',
       motion: 'enter',
       vehicleYaw: WESTBOUND,
-      cameraTransition: 'fade-cut',
+      cameraTransition: 'character-cut',
     },
   ]
 }
@@ -810,7 +810,7 @@ const selfServiceSteps: JourneyStep[] = [
     cameraMode: 'pedestrian',
     motion: 'exit',
     terminalScreen: 'idle',
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   {
     id: 'self-around-car',
@@ -889,7 +889,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'exit',
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   {
     id: 'svolta-clear-car',
@@ -1027,7 +1027,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     cameraMode: 'vehicle',
     motion: 'enter',
     vehicleYaw: WESTBOUND,
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   ...departureSteps('svolta'),
 ]

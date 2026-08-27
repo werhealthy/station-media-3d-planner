@@ -22,15 +22,14 @@ describe('station journeys', () => {
       'common-beach-flag',
       'common-stendardo',
       'common-open',
-      'common-differential',
       'common-standard-sign',
       'common-service-choice',
     ]
     for (const journey of STATION_JOURNEYS) {
-      expect(journey.steps.slice(0, 7).map((step) => step.id)).toEqual(
+      expect(journey.steps.slice(0, 6).map((step) => step.id)).toEqual(
         commonIds,
       )
-      expect(journey.steps[6]?.decision).toBe('service-mode')
+      expect(journey.steps[5]?.decision).toBe('service-mode')
       expect(
         journey.steps.find((step) => step.id === journey.arrivalEndStepId),
       ).toBeDefined()
@@ -208,5 +207,23 @@ describe('station journeys', () => {
         'Ripartenza verso l’uscita',
       ]),
     )
+  })
+
+  it('uses cinematic cuts instead of crossing the car or the Svolta glazing', () => {
+    for (const id of [
+      'self-exit',
+      'self-enter-car',
+      'svolta-exit',
+      'svolta-enter-store',
+      'svolta-exit-store',
+      'svolta-enter-car',
+    ]) {
+      const journey = id.startsWith('self-')
+        ? getJourney('self-service')
+        : getJourney('servito-svolta')
+      expect(
+        journey.steps.find((step) => step.id === id)?.cameraTransition,
+      ).toBe('fade-cut')
+    }
   })
 })

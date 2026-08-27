@@ -68,6 +68,16 @@ describe('MediaPointPanel', () => {
     expect(screen.getByText('9 supporti caricabili')).toBeVisible()
   })
 
+  it('ordina l’inventario secondo la sequenza numerica della journey', () => {
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    const inventoryItems = screen
+      .getAllByRole('button', { name: /ID / })
+      .map((button) => Number(button.textContent?.match(/^\s*(\d+)/)?.[1]))
+
+    expect(inventoryItems).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
+  })
+
   it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportShape === 'beach-flag',

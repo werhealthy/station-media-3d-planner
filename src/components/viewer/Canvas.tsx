@@ -133,10 +133,10 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
             decay={2}
           />
           <pointLight
-            position={[22.7, 6.7, 10.7]}
+            position={[23.7, 6.45, 10.1]}
             color="#dce8ff"
-            intensity={22}
-            distance={16}
+            intensity={6}
+            distance={10}
             decay={2}
           />
         </>

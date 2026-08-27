@@ -89,13 +89,6 @@ export const JOURNEY_OBSTACLES: PlanarBounds[] = [
     minZ: L.entry.beachFlagZ - 0.45,
     maxZ: L.entry.beachFlagZ + 0.45,
   },
-  {
-    id: 'structural-price-differential-sign',
-    minX: L.entry.concreteSignX - 0.85,
-    maxX: L.entry.concreteSignX + 0.85,
-    minZ: L.entry.concreteSignZ - 0.45,
-    maxZ: L.entry.concreteSignZ + 0.45,
-  },
 ]
 
 export function createArrivalCurve(

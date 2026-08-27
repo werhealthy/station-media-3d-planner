@@ -58,7 +58,9 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   )
   const [error, setError] = useState('')
   const [referenceIndex, setReferenceIndex] = useState<number | null>(null)
-  const inventoryPoints = points.filter((item) => item.assignable)
+  const inventoryPoints = points
+    .filter((item) => item.assignable)
+    .sort((left, right) => left.number - right.number)
   const point = inventoryPoints.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false

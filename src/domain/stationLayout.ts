@@ -37,15 +37,12 @@ export const STATION_LAYOUT = {
   entry: {
     beachFlagX: 26,
     beachFlagZ: 9.25,
-    beachFlagYaw: 58,
+    beachFlagYaw: 90,
     stendardoX: 24.65,
     stendardoZ: 9.65,
-    stendardoYaw: 58,
+    stendardoYaw: 90,
     standardSignX: 15.9,
     standardSignZ: 2.9,
-    standardSignYaw: 38,
-    concreteSignX: 8.7,
-    concreteSignZ: 13.25,
-    concreteSignYaw: 90,
+    standardSignYaw: 90,
   },
 } as const

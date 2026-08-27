@@ -50,7 +50,7 @@ export function SvoltaDoorController() {
     )
     if (isNight) isOpen.current = false
     else if (distance < 3.15) isOpen.current = true
-    else if (distance > 3.75) isOpen.current = false
+    else if (distance > 3.4) isOpen.current = false
     const desired = isOpen.current ? 1 : 0
     openAmount.current = THREE.MathUtils.lerp(
       openAmount.current,

@@ -58,9 +58,11 @@ function GroundPost({
 export function MediaSupportGeometry({
   point,
   color,
+  surfaceColor,
 }: {
   point: ConfigMediaPoint
   color: string
+  surfaceColor?: string
 }) {
   const panelBottom = Math.max(0, point.position[1] - point.height / 2)
   const stendardoPoleHeight = point.position[1] + point.height / 2 + 0.1
@@ -219,17 +221,21 @@ export function MediaSupportGeometry({
     case 'freestanding':
       return (
         <>
-          <Panel width={point.width} height={point.height} color={color} />
-          <GroundPost
-            x={-point.width * 0.31}
-            panelBottom={panelBottom}
-            color="#7d878f"
-          />
-          <GroundPost
-            x={point.width * 0.31}
-            panelBottom={panelBottom}
-            color="#7d878f"
-          />
+          <Panel width={point.width} height={point.height} depth={0.08} color={color} />
+          <mesh position={[0, -point.height / 2 - 0.095, -0.025]} castShadow>
+            <boxGeometry args={[point.width * 0.82, 0.16, 0.22]} />
+            <meshStandardMaterial color="#d7dcdf" metalness={0.65} roughness={0.28} />
+          </mesh>
+          <RoundedBox
+            args={[point.width * 0.9, 0.2, 0.48]}
+            radius={0.06}
+            smoothness={4}
+            position={[0, -point.height / 2 - panelBottom + 0.1, -0.06]}
+            castShadow
+            receiveShadow
+          >
+            <meshStandardMaterial color="#20252b" roughness={0.82} />
+          </RoundedBox>
         </>
       )
     case 'fondostazione':
@@ -305,7 +311,7 @@ export function MediaSupportGeometry({
           >
             <shapeGeometry args={[flagShape]} />
             <meshStandardMaterial
-              color={color}
+              color={surfaceColor ?? color}
               side={THREE.DoubleSide}
               roughness={0.72}
             />

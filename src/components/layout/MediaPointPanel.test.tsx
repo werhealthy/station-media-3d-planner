@@ -9,12 +9,20 @@ import { MediaPointPanel } from './MediaPointPanel'
 describe('MediaPointPanel', () => {
   beforeEach(() => {
     useViewerStore.getState().resetForStation()
-    useProjectStore.setState({ assignments: {}, hiddenMediaPointIds: [] })
+    useProjectStore.setState({
+      assignments: {},
+      hiddenMediaPointIds: [],
+      creativeDisplay: {},
+    })
   })
 
   afterEach(() => {
     useViewerStore.getState().resetForStation()
-    useProjectStore.setState({ assignments: {}, hiddenMediaPointIds: [] })
+    useProjectStore.setState({
+      assignments: {},
+      hiddenMediaPointIds: [],
+      creativeDisplay: {},
+    })
   })
 
   it('segnala le proporzioni errate senza proporre stretching', async () => {

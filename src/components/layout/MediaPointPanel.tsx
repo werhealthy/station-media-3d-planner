@@ -44,11 +44,18 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
     (state) => state.toggleMediaPointVisibility,
   )
   const showAll = useProjectStore((state) => state.showAllMediaPoints)
+  const creativeDisplay = useProjectStore((state) => state.creativeDisplay)
+  const updateCreativeDisplay = useProjectStore(
+    (state) => state.updateCreativeDisplay,
+  )
   const [error, setError] = useState('')
   const inventoryPoints = points.filter((item) => item.assignable)
   const point = inventoryPoints.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
+  const displaySettings = point
+    ? creativeDisplay[point.id]
+    : undefined
   const usesSmartOptIdle = point?.supportTypeId === '11'
   const support = getSupportType(point?.supportTypeId)
   const orientedAsset =
@@ -377,11 +384,90 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   )}
                   {fit && fit.status !== 'exact' && (
                     <p className="mt-2 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                      La creatività viene mostrata interamente e non viene mai
-                      ritagliata o deformata. Circa{' '}
-                      {fit.containUnusedPercent.toFixed(0)}% del supporto rimane
-                      libero.
+                      {point.supportShape === 'beach-flag' &&
+                      (displaySettings?.fitMode ?? 'contain') === 'cover'
+                        ? 'La creatività riempie la bandiera senza deformazioni; la parte eccedente viene ritagliata.'
+                        : `La creatività viene mostrata interamente e non viene mai ritagliata o deformata. Circa ${fit.containUnusedPercent.toFixed(0)}% del supporto rimane libero.`}
                     </p>
+                  )}
+                  {point.supportShape === 'beach-flag' && (
+                    <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Posizionamento sulla bandiera
+                        </p>
+                        <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                          “Ritaglia” riempie l’area senza deformare la grafica.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['contain', 'cover'] as const).map((fitMode) => (
+                          <button
+                            key={fitMode}
+                            type="button"
+                            onClick={() =>
+                              updateCreativeDisplay(point.id, { fitMode })
+                            }
+                            className={`rounded-lg border px-3 py-2 text-xs font-bold ${
+                              (displaySettings?.fitMode ?? 'contain') === fitMode
+                                ? 'border-[#1954c6] bg-blue-50 text-[#1954c6]'
+                                : 'border-slate-200 bg-white text-slate-600'
+                            }`}
+                          >
+                            {fitMode === 'contain' ? 'Mostra intera' : 'Ritaglia'}
+                          </button>
+                        ))}
+                      </div>
+                      <label className="flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+                        Sfondo supporto
+                        <input
+                          type="color"
+                          value={displaySettings?.backgroundColor ?? '#ffffff'}
+                          onChange={(event) =>
+                            updateCreativeDisplay(point.id, {
+                              backgroundColor: event.target.value,
+                            })
+                          }
+                          className="h-8 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1"
+                        />
+                      </label>
+                      {[
+                        ['Zoom', 'zoom', 0.75, 2, 0.05],
+                        ['Rotazione', 'rotation', -20, 20, 1],
+                        ['Orizzontale', 'offsetX', -1, 1, 0.05],
+                        ['Verticale', 'offsetY', -1, 1, 0.05],
+                      ].map(([label, key, min, max, step]) => (
+                        <label key={String(key)} className="block text-xs font-semibold text-slate-600">
+                          <span className="mb-1 flex justify-between">
+                            {label}
+                            <span className="tabular-nums text-slate-400">
+                              {(displaySettings?.[
+                                key as keyof typeof displaySettings
+                              ] as number | undefined) ??
+                                (key === 'zoom' ? 1 : 0)}
+                            </span>
+                          </span>
+                          <input
+                            type="range"
+                            min={Number(min)}
+                            max={Number(max)}
+                            step={Number(step)}
+                            value={
+                              (displaySettings?.[
+                                key as keyof typeof displaySettings
+                              ] as number | undefined) ??
+                              (key === 'zoom' ? 1 : 0)
+                            }
+                            onChange={(event) =>
+                              updateCreativeDisplay(point.id, {
+                                [String(key)]: Number(event.target.value),
+                              })
+                            }
+                            className="w-full accent-[#1954c6]"
+                          />
+                        </label>
+                      ))}
+                    </div>
                   )}
                   {recommendations.length > 0 && (
                     <div className="mt-4">

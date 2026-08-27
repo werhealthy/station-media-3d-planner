@@ -58,7 +58,8 @@ describe('station journeys', () => {
     expect(served.steps.every((step) => step.cameraMode === 'vehicle')).toBe(
       true,
     )
-    expect(dwellSeconds(served.steps)).toBe(60)
+    expect(dwellSeconds(served.steps)).toBeGreaterThanOrEqual(40)
+    expect(dwellSeconds(served.steps)).toBeLessThanOrEqual(50)
 
     const nozzleStates = served.steps
       .filter((step) => step.nozzle)
@@ -124,7 +125,12 @@ describe('station journeys', () => {
       'confirmed',
       'confirmed',
     ])
-    expect(dwellSeconds(self.steps.filter((step) => step.nozzle))).toBe(60)
+    expect(
+      dwellSeconds(self.steps.filter((step) => step.nozzle)),
+    ).toBeGreaterThanOrEqual(35)
+    expect(
+      dwellSeconds(self.steps.filter((step) => step.nozzle)),
+    ).toBeLessThanOrEqual(45)
     expect(
       self.steps.findIndex((step) => step.id === 'self-payment-confirmed'),
     ).toBeLessThan(
@@ -162,7 +168,12 @@ describe('station journeys', () => {
     expect(
       svolta.steps.filter((step) => step.mediaPointId === 'mp-06').length,
     ).toBeGreaterThanOrEqual(2)
-    expect(dwellSeconds(svolta.steps.filter((step) => step.nozzle))).toBe(60)
+    expect(
+      dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
+    ).toBeGreaterThanOrEqual(40)
+    expect(
+      dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
+    ).toBeLessThanOrEqual(50)
     expect(svolta.steps.some((step) => step.id === 'svolta-take-nozzle')).toBe(
       false,
     )

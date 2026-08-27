@@ -62,10 +62,10 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('2', {
     id: 'mp-02',
     number: 2,
-    location: 'Testata corta isola Self',
+    location: 'Testata corta esterna isola Servito',
     surface: 'Telaio bifacciale a due gambe',
     heightFromGround: 0.3655,
-    position: [-pumpX + 2.05, 0.96, frontZ],
+    position: [pumpX + 2.18, 0.96, frontZ],
     rotation: [0, 90, 0],
   }),
   supportPoint('4', {
@@ -106,8 +106,8 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     number: 6,
     location: 'Piazzale davanti a Svolta',
     surface: 'Sagomato autoportante',
-    heightFromGround: 0.1275,
-    position: [14.6, 0.82, -2.65],
+    heightFromGround: 0.25,
+    position: [14.6, 0.9425, -2.65],
     rotation: [0, -10, 0],
   }),
   supportPoint('5', {

@@ -525,6 +525,18 @@ export function NavigationRig() {
           .set(...previous.gazeTarget)
           .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
 
+        if (current.motion === 'walk') {
+          const walkingDirection = new THREE.Vector3(...current.position).sub(
+            new THREE.Vector3(...previous.position),
+          )
+          walkingDirection.y = 0
+          if (walkingDirection.lengthSq() > 0.001)
+            target
+              .copy(destination)
+              .addScaledVector(walkingDirection.normalize(), 4.5)
+              .setY(destination.y - 0.08)
+        }
+
         if (current.cameraMode === 'pedestrian') {
           if (pedestrianCollisionAt(destination))
             destination.copy(lastSafeAutoPosition.current)

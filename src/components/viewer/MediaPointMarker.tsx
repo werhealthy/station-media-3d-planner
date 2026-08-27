@@ -1,8 +1,12 @@
 import { Html } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
+import * as THREE from 'three'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
-import { useProjectStore } from '@/stores/projectStore'
+import {
+  DEFAULT_CREATIVE_DISPLAY,
+  useProjectStore,
+} from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
 import {
@@ -21,6 +25,9 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const select = useViewerStore((s) => s.selectMediaPoint)
   const hover = useViewerStore((s) => s.hoverMediaPoint)
   const asset = useProjectStore((s) => s.assignments[point.id])
+  const creativeDisplay = useProjectStore(
+    (s) => s.creativeDisplay[point.id] ?? DEFAULT_CREATIVE_DISPLAY,
+  )
   const routeId = usePlaybackStore((s) => s.activeRouteId)
   const stepIndex = usePlaybackStore((s) => s.activeStepIndex)
   const route = getJourney(routeId)
@@ -52,15 +59,56 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
       return [point.width * 0.68, point.height * 0.78]
     return [point.width, point.height]
   }, [point.height, point.supportShape, point.width])
-  const texture = useImageTexture(displayedAsset?.url)
+  const texture = useImageTexture(
+    displayedAsset?.url,
+    displayedAsset
+      ? {
+          sourceAspectRatio:
+            (orientedCreative?.width ?? displayedAsset.width) /
+            (orientedCreative?.height ?? displayedAsset.height),
+          targetAspectRatio: availableSurface[0] / availableSurface[1],
+          fitMode: creativeDisplay.fitMode,
+        }
+      : undefined,
+  )
   const displayTexture = useMemo(() => {
-    if (!texture || !rotateBeachFlagCreative) return texture
+    if (!texture) return texture
+    const hasCustomTransform =
+      creativeDisplay.rotation !== 0 ||
+      creativeDisplay.zoom !== 1 ||
+      creativeDisplay.offsetX !== 0 ||
+      creativeDisplay.offsetY !== 0
+    if (!rotateBeachFlagCreative && !hasCustomTransform) return texture
     const rotated = texture.clone()
     rotated.center.set(0.5, 0.5)
-    rotated.rotation = orientedCreative?.rotationRadians ?? 0
+    rotated.rotation =
+      (orientedCreative?.rotationRadians ?? 0) +
+      THREE.MathUtils.degToRad(creativeDisplay.rotation)
+    const baseRepeatX = texture.repeat.x
+    const baseRepeatY = texture.repeat.y
+    rotated.repeat.set(
+      baseRepeatX / creativeDisplay.zoom,
+      baseRepeatY / creativeDisplay.zoom,
+    )
+    rotated.offset.set(
+      texture.offset.x +
+        (baseRepeatX - rotated.repeat.x) / 2 +
+        creativeDisplay.offsetX * 0.25,
+      texture.offset.y +
+        (baseRepeatY - rotated.repeat.y) / 2 +
+        creativeDisplay.offsetY * 0.25,
+    )
     rotated.needsUpdate = true
     return rotated
-  }, [orientedCreative?.rotationRadians, rotateBeachFlagCreative, texture])
+  }, [
+    creativeDisplay.offsetX,
+    creativeDisplay.offsetY,
+    creativeDisplay.rotation,
+    creativeDisplay.zoom,
+    orientedCreative?.rotationRadians,
+    rotateBeachFlagCreative,
+    texture,
+  ])
   useEffect(
     () => () => {
       if (displayTexture && displayTexture !== texture) displayTexture.dispose()
@@ -83,6 +131,7 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
       : point.type === 'digital'
         ? '#132d64'
         : '#6c737a'
+  const creativeDepth = point.supportShape === 'fondostazione' ? 0.101 : 0.071
 
   const stop = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation()
@@ -103,6 +152,21 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
         name={`structural-point-${point.number}`}
       >
         <MediaSupportGeometry point={point} color="#3f4a58" />
+        {point.supportShape === 'structural-sign' && (
+          <Html position={[0, 0.02, 0.09]} transform distanceFactor={1.45}>
+            <div className="w-36 overflow-hidden rounded-sm border-2 border-slate-200 bg-[#153276] text-center font-sans text-white shadow-lg">
+              <div className="bg-white px-2 py-1 text-[11px] font-black text-[#153276]">
+                DIFFERENZIALE
+              </div>
+              <div className="bg-[#17845c] px-2 py-1 text-xs font-black">
+                SELF −0,20 €/L
+              </div>
+              <div className="bg-[#c83a32] px-2 py-1 text-xs font-black">
+                SERVITO +0,20 €/L
+              </div>
+            </div>
+          </Html>
+        )}
       </group>
     )
 
@@ -118,9 +182,17 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
       }
       name={`media-point-${point.number}`}
     >
-      <MediaSupportGeometry point={point} color={frameColor} />
+      <MediaSupportGeometry
+        point={point}
+        color={frameColor}
+        surfaceColor={
+          point.supportShape === 'beach-flag'
+            ? creativeDisplay.backgroundColor
+            : undefined
+        }
+      />
       <mesh
-        position={[0, 0, 0.071]}
+        position={[0, 0, creativeDepth]}
         onClick={stop}
         onPointerOver={(event) => {
           event.stopPropagation()

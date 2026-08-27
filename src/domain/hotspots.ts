@@ -26,10 +26,9 @@ export const HOTSPOTS: StationHotspot[] = [
   },
   {
     id: 'inside-svolta',
-    name: 'Da Svolta',
-    position: [9.5, 1.7, -6.1],
-    target: [0.5, 1.85, 1.8],
-    fov: 52,
-    associatedMediaPointId: 'mp-04',
+    name: 'Interno Svolta',
+    position: [10.25, 1.7, -7.65],
+    target: [12.05, 1.48, -8.88],
+    fov: 48,
   },
 ]

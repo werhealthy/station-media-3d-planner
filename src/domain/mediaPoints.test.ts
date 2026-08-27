@@ -14,7 +14,8 @@ describe('media point physical layout', () => {
       [...MEDIA_POINTS]
         .sort((left, right) => left.number - right.number)
         .map((item) => item.supportTypeId),
-    ).toEqual(['7', '9', '8', '2', '1', '4', '10', '11', '5', '6'])
+    ).toEqual(['9', '7', '6', '2', '10', '4', '1', '11', '5'])
+    expect(MEDIA_POINTS.some((item) => item.supportTypeId === '8')).toBe(false)
   })
 
   it('monta il Pump Leader sulla testata corta con due gambe', () => {
@@ -53,10 +54,16 @@ describe('media point physical layout', () => {
     })
   })
 
-  it('centra lo Stendardo sul palo prezzi e porta lo Sagomato fuori dal muro', () => {
-    expect(point('mp-08').position[0]).toBe(STATION_LAYOUT.totem.x)
-    expect(point('mp-06').position[2]).toBeGreaterThan(
-      STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2 + 1,
-    )
+  it('raggruppa Stendardo e Beach Flag sul lato destro e li orienta verso la strada', () => {
+    expect(point('mp-08')).toMatchObject({
+      position: [
+        STATION_LAYOUT.entry.stendardoX,
+        2.8875,
+        STATION_LAYOUT.entry.stendardoZ,
+      ],
+      rotation: [0, STATION_LAYOUT.entry.stendardoYaw, 0],
+    })
+    expect(point('mp-09').rotation[1]).toBeGreaterThan(45)
+    expect(point('mp-06').rotation[1]).toBeGreaterThan(25)
   })
 })

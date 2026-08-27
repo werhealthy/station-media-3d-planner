@@ -176,7 +176,7 @@ export function AppShell() {
                   Esplora la stazione
                 </b>
                 {overviewUnlocked
-                  ? 'Trascina per ruotare · scorri per avvicinare'
+                  ? 'Trascina per orbitare · Ctrl/Cmd + trascina o tasto destro per spostare · rotella per zoom'
                   : 'Scegli un hotspot o attiva Vista libera per esplorare'}
               </div>
             )

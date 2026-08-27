@@ -41,9 +41,9 @@ function easeJourneyMotion(local: number, motion: JourneyMotion) {
     case 'enter':
       return THREE.MathUtils.smoothstep(local, 0, 1)
     case 'glance':
-      return 1 - Math.pow(1 - local, 4.6)
+      return THREE.MathUtils.smootherstep(local, 0, 1)
     case 'hold':
-      return 1 - Math.pow(1 - local, 5.5)
+      return THREE.MathUtils.smootherstep(local, 0, 1)
     case 'walk':
     default:
       return local
@@ -656,11 +656,18 @@ export function NavigationRig() {
     <OrbitControls
       ref={orbit}
       makeDefault
-      enablePan={setupEnabled}
+      enablePan={overviewUnlocked || setupEnabled}
       enableDamping
       dampingFactor={0.07}
       rotateSpeed={0.55}
       zoomSpeed={0.7}
+      panSpeed={0.78}
+      screenSpacePanning
+      mouseButtons={{
+        LEFT: THREE.MOUSE.ROTATE,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.PAN,
+      }}
       enabled={mode === 'overview' && (overviewUnlocked || setupEnabled)}
       maxDistance={modelFrame ? modelFrame.radius * 3 : 52}
       minDistance={orbitMinDistance(setupEnabled, modelFrame?.radius)}

@@ -31,8 +31,7 @@ button {
   bottom: 24px;
   left: 24px;
   display: grid;
-  grid-template-columns:
-    minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr);
+  grid-template-columns: minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr);
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
@@ -119,21 +118,56 @@ button {
   font-variant-numeric: tabular-nums;
 }
 .timeline-wrap input {
+  display: block;
   width: 100%;
   accent-color: var(--q8-blue);
 }
+.timeline-rail {
+  position: relative;
+  padding-top: 2px;
+}
 .step-dots {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 4px;
+  position: absolute;
+  inset: 50% 7px auto;
+  height: 0;
+  pointer-events: none;
 }
 .step-dots button {
-  width: 5px;
-  height: 5px;
+  position: absolute;
+  top: 0;
+  width: 13px;
+  height: 13px;
   padding: 0;
-  border: 0;
+  transform: translate(-50%, -50%);
+  border: 2px solid white;
   border-radius: 50%;
-  background: #b8c2d1;
+  background: #7d8ca4;
+  box-shadow: 0 1px 5px rgb(15 23 42 / 0.28);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.step-dots button span {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  width: max-content;
+  max-width: 190px;
+  padding: 5px 8px;
+  transform: translateX(-50%) translateY(4px);
+  border-radius: 7px;
+  background: #132d64;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.16s ease;
+}
+.step-dots button:hover span,
+.step-dots button:focus-visible span {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 .step-dots button.active {
   background: #e6a51c;
@@ -199,6 +233,62 @@ button {
 .journey-phase strong {
   color: var(--ink);
   font-size: 15px;
+}
+
+.fuel-progress {
+  position: absolute;
+  z-index: 8;
+  top: 102px;
+  left: 50%;
+  width: min(360px, calc(100% - 48px));
+  transform: translateX(-50%);
+  padding: 10px 14px 12px;
+  border: 1px solid rgb(255 255 255 / 0.78);
+  border-radius: 14px;
+  background: rgb(13 30 66 / 0.88);
+  box-shadow: 0 12px 34px rgb(8 20 48 / 0.2);
+  color: white;
+  backdrop-filter: blur(14px);
+}
+
+.fuel-progress > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+
+.fuel-progress span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 750;
+}
+
+.fuel-progress progress {
+  display: block;
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.2);
+}
+
+.fuel-progress progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.2);
+}
+
+.fuel-progress progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #f1b52f;
+}
+
+.fuel-progress progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: #f1b52f;
 }
 
 .journey-decision-backdrop {

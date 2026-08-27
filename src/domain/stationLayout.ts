@@ -1,6 +1,16 @@
 export const STATION_LAYOUT = {
   forecourt: { width: 46, depth: 32 },
-  road: { centerZ: 19, depth: 12, entryMinX: 6, entryMaxX: 21 },
+  road: {
+    centerZ: 19,
+    depth: 12,
+    nearLaneZ: 16.45,
+    entryX: 15,
+    exitX: -15.5,
+    entryMinX: 11,
+    entryMaxX: 19,
+    exitMinX: -19.5,
+    exitMaxX: -11.5,
+  },
   canopy: {
     width: 23,
     depth: 12,
@@ -13,7 +23,7 @@ export const STATION_LAYOUT = {
   shop: { x: 9.5, z: -7.3, width: 14.5, depth: 6.2, height: 4.7 },
   // With the tour approaching from the Italian right-hand lane, the roadside
   // sequence lives on the driver's right before the turn into the forecourt.
-  totem: { x: 22.4, z: 10.1, width: 2.8, height: 7.2 },
+  totem: { x: 22.7, z: 10.1, width: 2.8, height: 7.2 },
   terminal: {
     x: -9,
     z: 0.3,
@@ -25,9 +35,17 @@ export const STATION_LAYOUT = {
     screenCenterY: 1.365,
   },
   entry: {
-    beachFlagX: 20.7,
-    beachFlagZ: 7.2,
-    concreteSignX: 13.4,
-    concreteSignZ: 13.15,
+    beachFlagX: 26,
+    beachFlagZ: 9.25,
+    beachFlagYaw: 58,
+    stendardoX: 24.65,
+    stendardoZ: 9.65,
+    stendardoYaw: 58,
+    standardSignX: 15.9,
+    standardSignZ: 2.9,
+    standardSignYaw: 38,
+    concreteSignX: 8.7,
+    concreteSignZ: 13.25,
+    concreteSignYaw: 90,
   },
 } as const

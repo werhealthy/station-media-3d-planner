@@ -31,17 +31,19 @@ export function AutoWalkthroughPanel() {
     : serviceChoice === 'servito' && !paymentChoice
       ? journeyElapsedAfterStep(journey, 'served-payment-choice') / duration
       : 1
-  const phaseMarkers = journey.steps.reduce<
-    Array<{ phase: string; stepIndex: number }>
+  const checkpoints = journey.steps.reduce<
+    Array<{ label: string; stepIndex: number; progress: number }>
   >((markers, item, stepIndex) => {
     const elapsed = journey.steps
       .slice(0, stepIndex)
       .reduce((total, step) => total + step.duration, 0)
-    if (
-      elapsed / duration <= choiceLimit &&
-      markers.at(-1)?.phase !== item.phase
-    )
-      markers.push({ phase: item.phase, stepIndex })
+    const markerProgress = elapsed / duration
+    if (item.checkpoint && markerProgress <= choiceLimit)
+      markers.push({
+        label: item.checkpoint,
+        stepIndex,
+        progress: markerProgress,
+      })
     return markers
   }, [])
 
@@ -51,6 +53,7 @@ export function AutoWalkthroughPanel() {
       .reduce((total, item) => total + item.duration, 0)
     seekTo(seconds / duration)
     setActiveStep(index, journey.steps[index]!.mediaPointId ?? null)
+    pause()
   }
 
   return (
@@ -85,28 +88,32 @@ export function AutoWalkthroughPanel() {
           <span>{formatTime(progress * duration)}</span>
           <span>{formatTime(duration)}</span>
         </div>
-        <input
-          aria-label="Progresso walkthrough"
-          type="range"
-          min="0"
-          max={choiceLimit}
-          step="0.001"
-          value={progress}
-          onChange={(event) => seekTo(Number(event.target.value))}
-        />
-        <div className="step-dots" aria-label="Macro-fasi della journey">
-          {phaseMarkers.map((marker) => (
-            <button
-              key={`${marker.phase}-${marker.stepIndex}`}
-              aria-label={`Vai a ${marker.phase}`}
-              className={
-                journey.steps[activeStepIndex]?.phase === marker.phase
-                  ? 'active'
-                  : ''
-              }
-              onClick={() => seekStep(marker.stepIndex)}
-            />
-          ))}
+        <div className="timeline-rail">
+          <input
+            aria-label="Progresso walkthrough"
+            type="range"
+            min="0"
+            max={choiceLimit}
+            step="0.001"
+            value={progress}
+            onChange={(event) => seekTo(Number(event.target.value))}
+          />
+          <div className="step-dots" aria-label="Checkpoint della journey">
+            {checkpoints.map((marker) => (
+              <button
+                key={`${marker.label}-${marker.stepIndex}`}
+                aria-label={`Vai a ${marker.label} e metti in pausa`}
+                title={marker.label}
+                style={{
+                  left: `${(marker.progress / Math.max(choiceLimit, 0.001)) * 100}%`,
+                }}
+                className={activeStepIndex === marker.stepIndex ? 'active' : ''}
+                onClick={() => seekStep(marker.stepIndex)}
+              >
+                <span>{marker.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>

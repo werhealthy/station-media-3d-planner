@@ -40,15 +40,15 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMappingExposure = isNight ? 0.96 : 1.12
+    gl.toneMappingExposure = isNight ? 1.08 : 1.12
   }, [gl, isNight])
 
   return (
     <>
-      <color attach="background" args={[isNight ? '#07122d' : '#a9cfea']} />
+      <color attach="background" args={[isNight ? '#111e38' : '#a9cfea']} />
       <fog
         attach="fog"
-        args={[isNight ? '#0b1731' : '#afcee2', isNight ? 82 : 118, 255]}
+        args={[isNight ? '#192844' : '#afcee2', isNight ? 88 : 118, 255]}
       />
       {isNight ? (
         <Stars
@@ -69,16 +69,16 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           mieDirectionalG={0.82}
         />
       )}
-      <ambientLight intensity={isNight ? 0.13 : 0.18} />
+      <ambientLight intensity={isNight ? 0.25 : 0.18} />
       <hemisphereLight
         args={
-          isNight ? ['#6e87b8', '#151b22', 0.56] : ['#edf8ff', '#555950', 1.15]
+          isNight ? ['#8299c8', '#202733', 0.78] : ['#edf8ff', '#555950', 1.15]
         }
       />
       <directionalLight
         position={isNight ? [18, 24, -12] : [-18, 30, 22]}
         color={isNight ? '#a9c2ff' : '#ffffff'}
-        intensity={isNight ? 0.7 : 2.9}
+        intensity={isNight ? 0.92 : 2.9}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-38}
@@ -104,8 +104,8 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           <pointLight
             position={[9.5, 3.9, -5.1]}
             color="#fff0c7"
-            intensity={28}
-            distance={16}
+            intensity={38}
+            distance={19}
             decay={2}
           />
           {[5.8, 9.5, 13.2].map((x) => (
@@ -113,11 +113,18 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
               key={`svolta-interior-${x}`}
               position={[x, 2.7, -4.85]}
               color="#ffe7b5"
-              intensity={18}
-              distance={11}
+              intensity={24}
+              distance={13}
               decay={2}
             />
           ))}
+          <pointLight
+            position={[9.5, 2.8, -3.55]}
+            color="#ffe3ad"
+            intensity={26}
+            distance={12}
+            decay={2}
+          />
           <pointLight
             position={[0, 5.75, 5.8]}
             color="#dfe9ff"
@@ -126,17 +133,17 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
             decay={2}
           />
           <pointLight
-            position={[-18, 6.7, 10.4]}
+            position={[22.7, 6.7, 10.7]}
             color="#dce8ff"
-            intensity={14}
-            distance={13}
+            intensity={22}
+            distance={16}
             decay={2}
           />
         </>
       )}
       <Environment
         preset={isNight ? 'night' : 'city'}
-        environmentIntensity={isNight ? 0.28 : 0.42}
+        environmentIntensity={isNight ? 0.38 : 0.42}
       />
     </>
   )

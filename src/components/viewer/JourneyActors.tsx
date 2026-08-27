@@ -7,6 +7,8 @@ import { pedestrianCollisionAt } from '@/domain/journeySafety'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { BRAND_ASSETS } from '@/config/brandAssets'
+import { FuelNozzleModel } from './FuelNozzleModel'
+import { dampAngle } from '@/three/angles'
 
 const gaze = new THREE.Vector3()
 
@@ -114,7 +116,9 @@ export function JourneyActors() {
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.actor : undefined
   const operatorHoldsNozzle =
-    step?.nozzle?.owner === 'attendant' && step.nozzle.state !== 'holstered'
+    step?.nozzle?.owner === 'attendant' &&
+    step.nozzle.state !== 'holstered' &&
+    step.nozzle.state !== 'returning'
   const cashierVisible = true
 
   useEffect(() => {
@@ -167,10 +171,11 @@ export function JourneyActors() {
       gaze.x - attendant.current.position.x,
       gaze.z - attendant.current.position.z,
     )
-    attendant.current.rotation.y = THREE.MathUtils.lerp(
+    attendant.current.rotation.y = dampAngle(
       attendant.current.rotation.y,
       yaw,
-      1 - Math.exp(-delta * 8),
+      8,
+      delta,
     )
     if (rightArm.current) {
       const raised = operatorHoldsNozzle
@@ -241,7 +246,7 @@ export function JourneyActors() {
         </RoundedBox>
         <mesh position={[0, 1.97, 0.174]}>
           <planeGeometry args={[0.19, 0.049]} />
-          <meshBasicMaterial map={q8Logo} transparent toneMapped={false} />
+          <meshStandardMaterial map={q8Logo} transparent roughness={0.72} />
         </mesh>
         {([-1, 1] as const).map((side) => (
           <group
@@ -257,6 +262,14 @@ export function JourneyActors() {
               <capsuleGeometry args={[0.055, 0.08, 6, 14]} />
               <meshStandardMaterial color="#c98d73" roughness={0.78} />
             </mesh>
+            {side === 1 && operatorHoldsNozzle && (
+              <group
+                position={[0.05, -0.53, 0.08]}
+                rotation={[0.08, 0.42, -0.72]}
+              >
+                <FuelNozzleModel scale={0.56} />
+              </group>
+            )}
           </group>
         ))}
         {([-1, 1] as const).map((side) => (
@@ -282,7 +295,7 @@ export function JourneyActors() {
         ))}
         <mesh position={[0, 1.32, 0.148]}>
           <planeGeometry args={[0.22, 0.057]} />
-          <meshBasicMaterial map={q8Logo} transparent toneMapped={false} />
+          <meshStandardMaterial map={q8Logo} transparent roughness={0.72} />
         </mesh>
       </group>
       <SvoltaCashier

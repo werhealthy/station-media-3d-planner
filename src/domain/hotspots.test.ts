@@ -11,7 +11,7 @@ describe('curated station hotspots', () => {
     ])
   })
 
-  it('posiziona Interno Svolta davanti alla cassa e la orienta sulla commessa', () => {
+  it('posiziona Interno Svolta davanti alla cassa e lo orienta verso la stazione', () => {
     const hotspot = HOTSPOTS.find((item) => item.id === 'inside-svolta')
     expect(hotspot).toBeDefined()
     expect(hotspot!.position[0]).toBeGreaterThan(
@@ -23,7 +23,13 @@ describe('curated station hotspots', () => {
     expect(hotspot!.position[2]).toBeLessThan(
       STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2,
     )
-    expect(hotspot!.target[0]).toBeGreaterThan(hotspot!.position[0])
-    expect(hotspot!.target[2]).toBeLessThan(hotspot!.position[2])
+    expect(hotspot!.target[0]).toBeLessThan(hotspot!.position[0])
+    expect(hotspot!.target[2]).toBeGreaterThan(hotspot!.position[2])
+  })
+
+  it('sposta l’hotspot di ingresso sul lato destro della strada', () => {
+    const hotspot = HOTSPOTS.find((item) => item.id === 'road-entry')
+    expect(hotspot!.position[0]).toBeGreaterThan(STATION_LAYOUT.road.entryX)
+    expect(hotspot!.position[2]).toBeGreaterThan(STATION_LAYOUT.road.nearLaneZ)
   })
 })

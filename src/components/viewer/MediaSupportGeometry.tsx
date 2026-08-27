@@ -1,7 +1,7 @@
 import { RoundedBox } from '@react-three/drei'
-import { useMemo } from 'react'
 import * as THREE from 'three'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
+import { createBeachFlagShape } from '@/three/beachFlagGeometry'
 
 function Panel({
   width,
@@ -67,25 +67,7 @@ export function MediaSupportGeometry({
   const panelBottom = Math.max(0, point.position[1] - point.height / 2)
   const stendardoPoleHeight = point.position[1] + point.height / 2 + 0.1
   const stendardoPoleCenterY = -point.position[1] + stendardoPoleHeight / 2
-  const flagShape = useMemo(() => {
-    const shape = new THREE.Shape()
-    shape.moveTo(-point.width * 0.42, -point.height / 2)
-    shape.lineTo(-point.width / 2, point.height * 0.38)
-    shape.quadraticCurveTo(
-      -point.width * 0.18,
-      point.height * 0.56,
-      point.width / 2,
-      point.height * 0.38,
-    )
-    shape.quadraticCurveTo(
-      point.width * 0.36,
-      -point.height * 0.08,
-      -point.width * 0.42,
-      -point.height / 2,
-    )
-    shape.closePath()
-    return shape
-  }, [point.height, point.width])
+  const flagShape = createBeachFlagShape(point.width, point.height)
 
   switch (point.supportShape) {
     case 'pump-leader':
@@ -221,10 +203,19 @@ export function MediaSupportGeometry({
     case 'freestanding':
       return (
         <>
-          <Panel width={point.width} height={point.height} depth={0.08} color={color} />
+          <Panel
+            width={point.width}
+            height={point.height}
+            depth={0.08}
+            color={color}
+          />
           <mesh position={[0, -point.height / 2 - 0.095, -0.025]} castShadow>
             <boxGeometry args={[point.width * 0.82, 0.16, 0.22]} />
-            <meshStandardMaterial color="#d7dcdf" metalness={0.65} roughness={0.28} />
+            <meshStandardMaterial
+              color="#d7dcdf"
+              metalness={0.65}
+              roughness={0.28}
+            />
           </mesh>
           <RoundedBox
             args={[point.width * 0.9, 0.2, 0.48]}

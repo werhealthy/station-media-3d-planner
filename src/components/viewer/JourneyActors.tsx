@@ -240,7 +240,7 @@ export function JourneyActors() {
           <meshStandardMaterial color="#12327b" roughness={0.76} />
         </RoundedBox>
         <mesh position={[0, 1.97, 0.174]}>
-          <planeGeometry args={[0.19, 0.1]} />
+          <planeGeometry args={[0.19, 0.049]} />
           <meshBasicMaterial map={q8Logo} transparent toneMapped={false} />
         </mesh>
         {([-1, 1] as const).map((side) => (
@@ -281,7 +281,7 @@ export function JourneyActors() {
           </group>
         ))}
         <mesh position={[0, 1.32, 0.148]}>
-          <planeGeometry args={[0.22, 0.1]} />
+          <planeGeometry args={[0.22, 0.057]} />
           <meshBasicMaterial map={q8Logo} transparent toneMapped={false} />
         </mesh>
       </group>

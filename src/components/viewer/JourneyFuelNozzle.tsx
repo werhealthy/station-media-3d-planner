@@ -1,5 +1,4 @@
 import { RoundedBox } from '@react-three/drei'
-import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { getJourney } from '@/domain/journeys'
@@ -30,18 +29,17 @@ export function JourneyFuelNozzle() {
   const routeId = usePlaybackStore((state) => state.activeRouteId)
   const activeStepIndex = usePlaybackStore((state) => state.activeStepIndex)
   const root = useStationRuntimeStore((state) => state.root)
-  const { camera } = useThree()
   const nozzle = useRef<THREE.Group>(null)
-  const start = useMemo(() => new THREE.Vector3(), [])
-  const destination = useMemo(() => new THREE.Vector3(), [])
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.nozzle : undefined
   const rack = cue ? RACK[cue.pump] : RACK.self
   const filler = cue ? FILLER[cue.pump] : FILLER.self
-  // The prop stays visible from the instant it is taken from the rack: this
-  // avoids the distracting "appears already in the filler" jump.
-  const worldVisible = Boolean(cue && cue.state !== 'holstered')
+  // Presentation-safe preview: the procedural prop is shown only in its final,
+  // stable pose. Pickup and insertion are implied by short cuts, so the user
+  // never sees a low-poly nozzle flying, detaching from a hand or intersecting
+  // the bodywork. Production GLTF animation can replace this cue later.
+  const worldVisible = cue?.state === 'inserted'
 
   const hoseGeometry = useMemo(() => {
     const points = [
@@ -63,51 +61,27 @@ export function JourneyFuelNozzle() {
 
   useEffect(() => {
     if (!root) return
-    const pumpName = cue?.pump === 'servito' ? 'fuel-dispenser-21' : 'fuel-dispenser-11'
+    const pumpName =
+      cue?.pump === 'servito' ? 'fuel-dispenser-21' : 'fuel-dispenser-11'
     root.traverse((object) => {
       if (object.name !== 'q8-easy-nozzle-0') return
-      object.visible =
-        !cue || cue.state === 'holstered' || !belongsToPump(object, pumpName)
+      object.visible = !worldVisible || !belongsToPump(object, pumpName)
     })
     return () => {
       root.traverse((object) => {
         if (object.name === 'q8-easy-nozzle-0') object.visible = true
       })
     }
-  }, [cue, root])
-
-  useFrame(() => {
-    if (!nozzle.current || !cue || !worldVisible) return
-    if (cue.owner === 'driver') {
-      start
-        .set(0.18, -0.28, -0.62)
-        .applyQuaternion(camera.quaternion)
-        .add(camera.position)
-    } else {
-      start.set(
-        (step?.actor?.position[0] ?? filler.x) + 0.25,
-        1.02,
-        (step?.actor?.position[2] ?? filler.z) + 0.12,
-      )
-    }
-
-    if (cue.state === 'hand' || cue.state === 'removing') destination.copy(start)
-    else if (cue.state === 'inserted' || cue.state === 'inserting')
-      destination.copy(filler)
-    else if (cue.state === 'returning') destination.copy(rack)
-    else destination.copy(start)
-
-    nozzle.current.position.copy(destination)
-    nozzle.current.rotation.set(
-      0,
-      cue.state === 'inserted' ? 0 : cue.pump === 'self' ? -0.18 : 0.18,
-      cue.state === 'inserted' ? 0 : -0.3,
-    )
-  })
+  }, [cue, root, worldVisible])
 
   return (
     <>
-      <group ref={nozzle} visible={worldVisible}>
+      <group
+        ref={nozzle}
+        visible={worldVisible}
+        position={filler}
+        rotation={[0, cue?.pump === 'self' ? -0.08 : 0.08, -0.08]}
+      >
         <RoundedBox
           args={[0.11, 0.16, 0.28]}
           radius={0.022}
@@ -115,18 +89,22 @@ export function JourneyFuelNozzle() {
           position={[0.22, 0, 0]}
           castShadow
         >
-          <meshStandardMaterial color="#20252b" metalness={0.2} roughness={0.48} />
+          <meshStandardMaterial
+            color="#20252b"
+            metalness={0.2}
+            roughness={0.48}
+          />
         </RoundedBox>
         <mesh position={[0.08, 0.07, 0]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.014, 0.02, 0.3, 12]} />
-          <meshStandardMaterial color="#c7cbd0" metalness={0.72} roughness={0.28} />
+          <meshStandardMaterial
+            color="#c7cbd0"
+            metalness={0.72}
+            roughness={0.28}
+          />
         </mesh>
       </group>
-      <mesh
-        geometry={hoseGeometry}
-        visible={Boolean(cue && cue.state !== 'holstered')}
-        castShadow
-      >
+      <mesh geometry={hoseGeometry} visible={worldVisible} castShadow>
         <meshStandardMaterial color="#101317" roughness={0.9} />
       </mesh>
     </>

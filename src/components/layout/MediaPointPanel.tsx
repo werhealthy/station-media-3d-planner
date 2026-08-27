@@ -5,9 +5,13 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Images,
   ImagePlus,
   Info,
+  ChevronLeft,
+  ChevronRight,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
 import type { ConfigMediaPoint } from '@/domain/stationConfig'
@@ -20,6 +24,10 @@ import {
 import { BRAND_ASSETS } from '@/config/brandAssets'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
+import {
+  SUPPORT_REFERENCES,
+  type SupportReferencePhoto,
+} from '@/domain/supportReferences'
 
 const millimetres = (metres: number) => Math.round(metres * 1000)
 const ratioLabel = (ratio: number) => `${ratio.toFixed(2)}:1`
@@ -49,15 +57,17 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
     (state) => state.updateCreativeDisplay,
   )
   const [error, setError] = useState('')
+  const [referenceIndex, setReferenceIndex] = useState<number | null>(null)
   const inventoryPoints = points.filter((item) => item.assignable)
   const point = inventoryPoints.find((item) => item.id === selectedId)
   const asset = point ? assignments[point.id] : undefined
   const pointHidden = point ? hiddenMediaPointIds.includes(point.id) : false
-  const displaySettings = point
-    ? creativeDisplay[point.id]
-    : undefined
+  const displaySettings = point ? creativeDisplay[point.id] : undefined
   const usesSmartOptIdle = point?.supportTypeId === '11'
   const support = getSupportType(point?.supportTypeId)
+  const referencePhotos: SupportReferencePhoto[] = point?.supportTypeId
+    ? (SUPPORT_REFERENCES[point.supportTypeId] ?? [])
+    : []
   const orientedAsset =
     point && asset && point.supportShape === 'beach-flag'
       ? orientCreativeToPortrait(asset.width, asset.height)
@@ -309,6 +319,54 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               </section>
             )}
 
+            {referencePhotos.length > 0 && (
+              <section>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Foto nel mondo reale
+                  </h3>
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                    <Images size={14} /> {referencePhotos.length}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReferenceIndex(0)}
+                  className="group relative block w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 text-left shadow-sm"
+                >
+                  <img
+                    src={referencePhotos[0]!.src}
+                    alt={referencePhotos[0]!.alt}
+                    className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
+                  <span className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur">
+                    Apri galleria
+                  </span>
+                </button>
+                {referencePhotos.length > 1 && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {referencePhotos.slice(0, 3).map((item, index) => (
+                      <button
+                        type="button"
+                        key={item.src}
+                        onClick={() => setReferenceIndex(index)}
+                        className="overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
+                      >
+                        <img
+                          src={item.src}
+                          alt={item.alt}
+                          className="h-16 w-full object-cover transition hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-2 text-[11px] leading-4 text-slate-500">
+                  Riferimenti fotografici estratti dalla distinta Q8 condivisa.
+                </p>
+              </section>
+            )}
+
             <section>
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Creatività assegnata
@@ -409,12 +467,15 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                               updateCreativeDisplay(point.id, { fitMode })
                             }
                             className={`rounded-lg border px-3 py-2 text-xs font-bold ${
-                              (displaySettings?.fitMode ?? 'contain') === fitMode
+                              (displaySettings?.fitMode ?? 'contain') ===
+                              fitMode
                                 ? 'border-[#1954c6] bg-blue-50 text-[#1954c6]'
                                 : 'border-slate-200 bg-white text-slate-600'
                             }`}
                           >
-                            {fitMode === 'contain' ? 'Mostra intera' : 'Ritaglia'}
+                            {fitMode === 'contain'
+                              ? 'Mostra intera'
+                              : 'Ritaglia'}
                           </button>
                         ))}
                       </div>
@@ -437,7 +498,10 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                         ['Orizzontale', 'offsetX', -1, 1, 0.05],
                         ['Verticale', 'offsetY', -1, 1, 0.05],
                       ].map(([label, key, min, max, step]) => (
-                        <label key={String(key)} className="block text-xs font-semibold text-slate-600">
+                        <label
+                          key={String(key)}
+                          className="block text-xs font-semibold text-slate-600"
+                        >
                           <span className="mb-1 flex justify-between">
                             {label}
                             <span className="tabular-nums text-slate-400">
@@ -552,6 +616,76 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
             </section>
           </div>
         </>
+      )}
+      {referenceIndex !== null && referencePhotos[referenceIndex] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Galleria ${point?.name ?? 'supporto'}`}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/88 p-6 backdrop-blur-sm"
+          onClick={() => setReferenceIndex(null)}
+        >
+          <div
+            className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-[#202329] shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between px-5 py-4 text-white">
+              <div>
+                <p className="font-bold">{point?.name}</p>
+                <p className="text-xs text-white/60">
+                  Foto {referenceIndex + 1} di {referencePhotos.length}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Chiudi galleria"
+                onClick={() => setReferenceIndex(null)}
+                className="rounded-full p-2 text-white/75 hover:bg-white/10 hover:text-white"
+              >
+                <X />
+              </button>
+            </header>
+            <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black/30 p-4">
+              <img
+                src={referencePhotos[referenceIndex]!.src}
+                alt={referencePhotos[referenceIndex]!.alt}
+                className="max-h-[72vh] max-w-full object-contain"
+              />
+              {referencePhotos.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Foto precedente"
+                    onClick={() =>
+                      setReferenceIndex(
+                        (referenceIndex - 1 + referencePhotos.length) %
+                          referencePhotos.length,
+                      )
+                    }
+                    className="absolute left-4 rounded-full bg-black/55 p-3 text-white hover:bg-black/75"
+                  >
+                    <ChevronLeft />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Foto successiva"
+                    onClick={() =>
+                      setReferenceIndex(
+                        (referenceIndex + 1) % referencePhotos.length,
+                      )
+                    }
+                    className="absolute right-4 rounded-full bg-black/55 p-3 text-white hover:bg-black/75"
+                  >
+                    <ChevronRight />
+                  </button>
+                </>
+              )}
+            </div>
+            <p className="px-5 py-4 text-sm text-white/75">
+              {referencePhotos[referenceIndex]!.alt}
+            </p>
+          </div>
+        </div>
       )}
     </aside>
   )

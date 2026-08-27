@@ -368,6 +368,9 @@ function brandedMaterial(texture: THREE.Texture) {
   texture.anisotropy = 8
   return new THREE.MeshStandardMaterial({
     map: texture,
+    emissive: '#ffffff',
+    emissiveMap: texture,
+    emissiveIntensity: 0.28,
     transparent: true,
     alphaTest: 0.04,
     roughness: 0.38,
@@ -394,9 +397,18 @@ function brandPlane(
   pos: [number, number, number],
   name: string,
 ) {
+  const image = texture.image as { width?: number; height?: number } | undefined
+  const sourceWidth = image?.width ?? size[0]
+  const sourceHeight = image?.height ?? size[1]
+  const sourceAspect = sourceWidth / Math.max(sourceHeight, 0.001)
+  const boundsAspect = size[0] / size[1]
+  const containedSize: [number, number] =
+    sourceAspect > boundsAspect
+      ? [size[0], size[0] / sourceAspect]
+      : [size[1] * sourceAspect, size[1]]
   return mesh(
     root,
-    new THREE.PlaneGeometry(...size),
+    new THREE.PlaneGeometry(...containedSize),
     brandedMaterial(texture),
     pos,
     name,
@@ -833,7 +845,9 @@ function buildStation(
       'shop-entry-door',
     )
   }
-  for (const offset of [-1.5, 0, 1.5]) {
+  // The two leaves meet without a fixed centre mullion. Keeping a frame at
+  // x=0 made the open entrance look blocked in both walkthrough and auto tour.
+  for (const offset of [-1.5, 1.5]) {
     box(
       root,
       [0.08, 3.25, 0.2],

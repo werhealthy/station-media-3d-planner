@@ -9,6 +9,7 @@ import {
 } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { useImageTexture } from '@/hooks/useImageTexture'
+import { useCreativeCanvasTexture } from '@/hooks/useCreativeCanvasTexture'
 import {
   containedSurfaceSize,
   orientCreativeToPortrait,
@@ -17,6 +18,7 @@ import { BRAND_ASSETS, SMARTOPT_SCREEN_SIZE } from '@/config/brandAssets'
 import { getJourney } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { MediaSupportGeometry } from './MediaSupportGeometry'
+import { createBeachFlagGeometry } from '@/three/beachFlagGeometry'
 
 export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   const selected = useViewerStore((s) => s.selectedMediaPointId === point.id)
@@ -53,14 +55,11 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
           rotationRadians: 0,
         }
   }, [displayedAsset, point.supportShape])
-  const rotateBeachFlagCreative = Boolean(orientedCreative?.rotationRadians)
   const availableSurface = useMemo<[number, number]>(() => {
-    if (point.supportShape === 'beach-flag')
-      return [point.width * 0.68, point.height * 0.78]
     return [point.width, point.height]
-  }, [point.height, point.supportShape, point.width])
+  }, [point.height, point.width])
   const texture = useImageTexture(
-    displayedAsset?.url,
+    point.supportShape === 'beach-flag' ? undefined : displayedAsset?.url,
     displayedAsset
       ? {
           sourceAspectRatio:
@@ -71,19 +70,17 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
         }
       : undefined,
   )
-  const displayTexture = useMemo(() => {
-    if (!texture) return texture
+  const transformedTexture = useMemo(() => {
+    if (!texture || point.supportShape === 'beach-flag') return texture
     const hasCustomTransform =
       creativeDisplay.rotation !== 0 ||
       creativeDisplay.zoom !== 1 ||
       creativeDisplay.offsetX !== 0 ||
       creativeDisplay.offsetY !== 0
-    if (!rotateBeachFlagCreative && !hasCustomTransform) return texture
+    if (!hasCustomTransform) return texture
     const rotated = texture.clone()
     rotated.center.set(0.5, 0.5)
-    rotated.rotation =
-      (orientedCreative?.rotationRadians ?? 0) +
-      THREE.MathUtils.degToRad(creativeDisplay.rotation)
+    rotated.rotation = THREE.MathUtils.degToRad(creativeDisplay.rotation)
     const baseRepeatX = texture.repeat.x
     const baseRepeatY = texture.repeat.y
     rotated.repeat.set(
@@ -105,15 +102,22 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
     creativeDisplay.offsetY,
     creativeDisplay.rotation,
     creativeDisplay.zoom,
-    orientedCreative?.rotationRadians,
-    rotateBeachFlagCreative,
+    point.supportShape,
     texture,
   ])
+  const flagTexture = useCreativeCanvasTexture(displayedAsset?.url, {
+    ...creativeDisplay,
+    autoRotationRadians: orientedCreative?.rotationRadians ?? 0,
+    targetAspectRatio: point.width / point.height,
+  })
+  const displayTexture =
+    point.supportShape === 'beach-flag' ? flagTexture : transformedTexture
   useEffect(
     () => () => {
-      if (displayTexture && displayTexture !== texture) displayTexture.dispose()
+      if (transformedTexture && transformedTexture !== texture)
+        transformedTexture.dispose()
     },
-    [displayTexture, texture],
+    [texture, transformedTexture],
   )
   const surfaceSize = useMemo<[number, number]>(() => {
     if (!displayedAsset) return availableSurface
@@ -132,6 +136,14 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
         ? '#132d64'
         : '#6c737a'
   const creativeDepth = point.supportShape === 'fondostazione' ? 0.101 : 0.071
+  const flagGeometry = useMemo(
+    () =>
+      point.supportShape === 'beach-flag'
+        ? createBeachFlagGeometry(point.width, point.height)
+        : null,
+    [point.height, point.supportShape, point.width],
+  )
+  useEffect(() => () => flagGeometry?.dispose(), [flagGeometry])
 
   const stop = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation()
@@ -192,7 +204,14 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
         }
       />
       <mesh
-        position={[0, 0, creativeDepth]}
+        position={
+          point.supportShape === 'beach-flag'
+            ? [0.025, 0.015, creativeDepth]
+            : [0, 0, creativeDepth]
+        }
+        rotation={
+          point.supportShape === 'beach-flag' ? [0, 0, -0.025] : undefined
+        }
         onClick={stop}
         onPointerOver={(event) => {
           event.stopPropagation()
@@ -204,7 +223,11 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
           document.body.style.cursor = 'default'
         }}
       >
-        <planeGeometry args={surfaceSize} />
+        {flagGeometry ? (
+          <primitive object={flagGeometry} attach="geometry" />
+        ) : (
+          <planeGeometry args={surfaceSize} />
+        )}
         <meshStandardMaterial
           map={displayTexture}
           color={

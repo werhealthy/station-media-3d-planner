@@ -52,7 +52,7 @@ function supportPoint(
 export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('1', {
     id: 'mp-01',
-    number: 1,
+    number: 5,
     location: 'Isola anteriore',
     surface: 'Cappuccio erogatore',
     heightFromGround: 2.595,
@@ -61,7 +61,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('2', {
     id: 'mp-02',
-    number: 2,
+    number: 4,
     location: 'Testata corta esterna isola Servito',
     surface: 'Telaio bifacciale a due gambe',
     heightFromGround: 0.3655,
@@ -70,7 +70,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('4', {
     id: 'mp-03',
-    number: 4,
+    number: 6,
     location: 'Colonna pensilina',
     surface: 'Piastra verticale',
     heightFromGround: 1.35,
@@ -79,7 +79,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('10', {
     id: 'mp-04',
-    number: 10,
+    number: 7,
     location: 'Erogatore Servito',
     surface: 'Estensione erogatore',
     heightFromGround: 1.1,
@@ -88,7 +88,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('11', {
     id: 'mp-05',
-    number: 3,
+    number: 8,
     location: 'Isola Self · terminale di pagamento',
     surface: 'Display verticale touch 21 pollici',
     heightFromGround:
@@ -103,7 +103,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('6', {
     id: 'mp-06',
-    number: 6,
+    number: 10,
     location: 'Piazzale davanti a Svolta',
     surface: 'Sagomato autoportante',
     heightFromGround: 0.25,
@@ -112,7 +112,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('5', {
     id: 'mp-07',
-    number: 5,
+    number: 9,
     location: 'Fondale dietro le pompe',
     surface: 'Fondale 2880 x 1380 mm',
     heightFromGround: 1.8,
@@ -121,7 +121,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('7', {
     id: 'mp-08',
-    number: 7,
+    number: 1,
     location: 'Palo bandiera',
     surface: 'Pannello bifacciale sospeso',
     heightFromGround: 1.9,
@@ -130,7 +130,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('9', {
     id: 'mp-09',
-    number: 9,
+    number: 2,
     location: 'Ingresso piazzale',
     surface: 'Vela mobile',
     heightFromGround: 0,
@@ -143,7 +143,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   }),
   supportPoint('8', {
     id: 'mp-10',
-    number: 8,
+    number: 3,
     location: 'Ingresso isola',
     surface: 'Base fissa in cemento',
     heightFromGround: 0,
@@ -152,6 +152,6 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
       0.72,
       STATION_LAYOUT.entry.concreteSignZ,
     ],
-    rotation: [0, 0, 0],
+    rotation: [0, 90, 0],
   }),
 ])

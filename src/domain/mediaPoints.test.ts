@@ -9,6 +9,14 @@ function point(id: string) {
 }
 
 describe('media point physical layout', () => {
+  it('numera i supporti nell’ordine in cui vengono incontrati', () => {
+    expect(
+      [...MEDIA_POINTS]
+        .sort((left, right) => left.number - right.number)
+        .map((item) => item.supportTypeId),
+    ).toEqual(['7', '9', '8', '2', '1', '4', '10', '11', '5', '6'])
+  })
+
   it('monta il Pump Leader sulla testata corta con due gambe', () => {
     expect(point('mp-02')).toMatchObject({
       position: [

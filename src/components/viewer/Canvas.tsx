@@ -40,7 +40,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMappingExposure = isNight ? 0.78 : 1.12
+    gl.toneMappingExposure = isNight ? 0.96 : 1.12
   }, [gl, isNight])
 
   return (
@@ -69,16 +69,16 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           mieDirectionalG={0.82}
         />
       )}
-      <ambientLight intensity={isNight ? 0.055 : 0.18} />
+      <ambientLight intensity={isNight ? 0.13 : 0.18} />
       <hemisphereLight
         args={
-          isNight ? ['#40598f', '#10151b', 0.34] : ['#edf8ff', '#555950', 1.15]
+          isNight ? ['#6e87b8', '#151b22', 0.56] : ['#edf8ff', '#555950', 1.15]
         }
       />
       <directionalLight
         position={isNight ? [18, 24, -12] : [-18, 30, 22]}
         color={isNight ? '#a9c2ff' : '#ffffff'}
-        intensity={isNight ? 0.48 : 2.9}
+        intensity={isNight ? 0.7 : 2.9}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-38}
@@ -104,8 +104,25 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           <pointLight
             position={[9.5, 3.9, -5.1]}
             color="#fff0c7"
+            intensity={28}
+            distance={16}
+            decay={2}
+          />
+          {[5.8, 9.5, 13.2].map((x) => (
+            <pointLight
+              key={`svolta-interior-${x}`}
+              position={[x, 2.7, -4.85]}
+              color="#ffe7b5"
+              intensity={18}
+              distance={11}
+              decay={2}
+            />
+          ))}
+          <pointLight
+            position={[0, 5.75, 5.8]}
+            color="#dfe9ff"
             intensity={20}
-            distance={13}
+            distance={16}
             decay={2}
           />
           <pointLight
@@ -119,7 +136,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
       )}
       <Environment
         preset={isNight ? 'night' : 'city'}
-        environmentIntensity={isNight ? 0.16 : 0.42}
+        environmentIntensity={isNight ? 0.28 : 0.42}
       />
     </>
   )
@@ -266,7 +283,7 @@ export function Canvas() {
       gl={{
         antialias: true,
         toneMapping: 4,
-        toneMappingExposure: isNight ? 0.78 : 1.12,
+        toneMappingExposure: isNight ? 0.96 : 1.12,
       }}
     >
       <Suspense fallback={null}>

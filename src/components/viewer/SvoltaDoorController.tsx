@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { STATION_LAYOUT } from '@/domain/stationLayout'
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
+import { useViewerStore } from '@/stores/viewerStore'
 
 interface MovingPart {
   object: THREE.Object3D
@@ -14,9 +15,11 @@ interface MovingPart {
 /** Opens the two Svolta leaves before the camera reaches the glazing. */
 export function SvoltaDoorController() {
   const root = useStationRuntimeStore((state) => state.root)
+  const isNight = useViewerStore((state) => state.timeOfDay === 'night')
   const { camera } = useThree()
   const parts = useRef<MovingPart[]>([])
   const openAmount = useRef(0)
+  const isOpen = useRef(false)
 
   useEffect(() => {
     if (!root) return
@@ -42,8 +45,13 @@ export function SvoltaDoorController() {
       STATION_LAYOUT.shop.x,
       STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2,
     )
-    const distance = entrance.distanceTo(new THREE.Vector2(camera.position.x, camera.position.z))
-    const desired = distance < 4.1 ? 1 : 0
+    const distance = entrance.distanceTo(
+      new THREE.Vector2(camera.position.x, camera.position.z),
+    )
+    if (isNight) isOpen.current = false
+    else if (distance < 3.15) isOpen.current = true
+    else if (distance > 3.75) isOpen.current = false
+    const desired = isOpen.current ? 1 : 0
     openAmount.current = THREE.MathUtils.lerp(
       openAmount.current,
       desired,

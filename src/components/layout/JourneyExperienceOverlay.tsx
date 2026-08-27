@@ -1,11 +1,6 @@
 import { useEffect } from 'react'
 import { CreditCard, Fuel, Store, UserRound, Zap } from 'lucide-react'
-import {
-  getJourney,
-  journeyDuration,
-  journeyElapsedAfterStep,
-  type JourneyId,
-} from '@/domain/journeys'
+import { getJourney, journeyDuration, type JourneyId } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -23,6 +18,21 @@ export function JourneyExperienceOverlay() {
   const step = journey.steps[activeStepIndex]
   const journeyHeading = !serviceChoice ? 'Ingresso Q8' : journey.name
   const duration = journeyDuration(journey)
+  const elapsedBeforeStep = journey.steps
+    .slice(0, activeStepIndex)
+    .reduce((total, item) => total + item.duration, 0)
+  const stepLocalProgress = Math.min(
+    1,
+    Math.max(
+      0,
+      (progress * duration - elapsedBeforeStep) /
+        Math.max(step?.duration ?? 0.001, 0.001),
+    ),
+  )
+  const cinematicFade =
+    step?.cameraTransition === 'fade-cut'
+      ? Math.max(0, 1 - Math.abs(stepLocalProgress - 0.5) / 0.22)
+      : 0
   const fuelStepIndexes = journey.steps.flatMap((item, index) =>
     item.nozzle && item.dwellSeconds ? [index] : [],
   )
@@ -70,23 +80,23 @@ export function JourneyExperienceOverlay() {
       paymentChoice?: 'operator' | 'svolta'
     },
   ) => {
-    const target = getJourney(targetRouteId)
     const decisionId = step.decision ? step.id : 'common-service-choice'
-    const decisionIndex = target.steps.findIndex(
-      (item) => item.id === decisionId,
-    )
-    const nextIndex = Math.min(target.steps.length - 1, decisionIndex + 1)
     continueOnRoute({
       routeId: targetRouteId,
-      progress:
-        journeyElapsedAfterStep(target, decisionId) / journeyDuration(target),
-      activeStepIndex: nextIndex,
+      resumeAfterStepId: decisionId,
       ...choices,
     })
   }
 
   return (
     <>
+      {step.cameraTransition === 'fade-cut' && (
+        <div
+          aria-hidden="true"
+          className="journey-cinematic-cut"
+          style={{ opacity: cinematicFade }}
+        />
+      )}
       {!pendingDecision && (
         <div className="journey-phase" aria-live="polite">
           <span>{journeyHeading}</span>

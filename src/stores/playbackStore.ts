@@ -1,8 +1,11 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type {
-  JourneyDecision,
-  JourneyId,
+import {
+  getJourney,
+  journeyDuration,
+  journeyElapsedAfterStep,
+  type JourneyDecision,
+  type JourneyId,
 } from '@/domain/journeys'
 
 export type ServiceChoice = 'self' | 'servito'
@@ -38,8 +41,7 @@ interface PlaybackState {
   openDecision: (decision: JourneyDecision) => void
   continueOnRoute: (options: {
     routeId: JourneyId
-    progress: number
-    activeStepIndex: number
+    resumeAfterStepId: string
     serviceChoice?: ServiceChoice
     paymentChoice?: PaymentChoice
   }) => void
@@ -91,22 +93,34 @@ export const usePlaybackStore = create<PlaybackState>()(
       set({ pendingDecision, isPlaying: false }),
     continueOnRoute: ({
       routeId,
-      progress,
-      activeStepIndex,
+      resumeAfterStepId,
       serviceChoice,
       paymentChoice,
-    }) =>
+    }) => {
+      const journey = getJourney(routeId)
+      const decisionIndex = journey.steps.findIndex(
+        (step) => step.id === resumeAfterStepId,
+      )
+      const activeStepIndex = Math.min(
+        journey.steps.length - 1,
+        Math.max(0, decisionIndex + 1),
+      )
+      const progress =
+        journeyElapsedAfterStep(journey, resumeAfterStepId) /
+        journeyDuration(journey)
       set((state) => ({
         activeRouteId: routeId,
         progress: Math.min(1, Math.max(0, progress)),
         activeStepIndex,
-        activeMediaPointId: null,
+        activeMediaPointId:
+          journey.steps[activeStepIndex]?.mediaPointId ?? null,
         pendingDecision: null,
         serviceChoice: serviceChoice ?? state.serviceChoice,
         paymentChoice: paymentChoice ?? state.paymentChoice,
         isPlaying: true,
         seekToken: state.seekToken + 1,
-      })),
+      }))
+    },
     resetInteractiveJourney: () =>
       set((state) => ({
         activeRouteId: 'self-service',

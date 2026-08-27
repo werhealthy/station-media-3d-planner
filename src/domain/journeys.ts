@@ -61,6 +61,11 @@ export interface JourneyStep {
   terminalScreen?: SmartOptScreen
   nozzle?: JourneyNozzleCue
   checkpoint?: string
+  /**
+   * Nasconde con un breve nero i cambi di assetto che il prototipo non può
+   * ancora animare in modo credibile (auto/persona e soglie dello store).
+   */
+  cameraTransition?: 'fade-cut'
 }
 
 export interface StationJourney {
@@ -179,17 +184,6 @@ function commonArrivalSteps(
       position: [22.8, 1.28, 18.1],
       gazeTarget: [15, 1.4, 13.2],
       duration: 3,
-      cameraMode: 'vehicle',
-      motion: 'drive',
-      actor: waitingOperator,
-    },
-    {
-      id: 'common-differential',
-      phase: 'Ingresso · Differenziale Self/Servito',
-      label: 'Valuta il differenziale di prezzo rallentando prima del bivio',
-      position: [20.1, 1.28, 16.2],
-      gazeTarget: [L.entry.concreteSignX, 1.2, L.entry.concreteSignZ],
-      duration: 3.5,
       cameraMode: 'vehicle',
       motion: 'drive',
       actor: waitingOperator,
@@ -528,6 +522,7 @@ function selfFuelSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
       cameraMode: 'vehicle',
       motion: 'enter',
       vehicleYaw: WESTBOUND,
+      cameraTransition: 'fade-cut',
     },
   ]
 }
@@ -811,10 +806,11 @@ const selfServiceSteps: JourneyStep[] = [
     label: 'Esce dal lato conducente e individua il DSP in stato idle',
     position: [-4.6, 1.69, 7],
     gazeTarget: [-7.3, 1.4, 7],
-    duration: 2.5,
+    duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'exit',
     terminalScreen: 'idle',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'self-around-car',
@@ -890,9 +886,10 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Dopo la scelta esce dal lato conducente e individua Svolta',
     position: [4.6, 1.69, 7],
     gazeTarget: [6.8, 1.55, 5.2],
-    duration: 2.5,
+    duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'exit',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-clear-car',
@@ -951,10 +948,11 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Entra nell’ambiente retail Svolta',
     position: [9.5, 1.69, -5.6],
     gazeTarget: [10.3, 1.35, -7.7],
-    duration: 3,
+    duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'walk',
     checkpoint: 'Ingresso in Svolta',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-counter',
@@ -984,9 +982,10 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Esce dallo store e riprende la diagonale verso l’auto',
     position: [9.5, 1.69, -3.7],
     gazeTarget: [8.45, 1.5, -0.45],
-    duration: 3,
+    duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'walk',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-return-behind-pumps',
@@ -1024,10 +1023,11 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Rientra in auto dopo aver pagato',
     position: SERVED_STOP,
     gazeTarget: [-12, 1.3, 5.6],
-    duration: 2.5,
+    duration: 1.4,
     cameraMode: 'vehicle',
     motion: 'enter',
     vehicleYaw: WESTBOUND,
+    cameraTransition: 'fade-cut',
   },
   ...departureSteps('svolta'),
 ]

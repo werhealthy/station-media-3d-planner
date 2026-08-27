@@ -1051,6 +1051,7 @@ function buildStation(
   }
   const totem = new THREE.Group()
   totem.position.set(L.totem.x, 0, L.totem.z)
+  totem.rotation.y = THREE.MathUtils.degToRad(90)
   totem.name = 'price-pylon'
   root.add(totem)
   // Roadside Q8 sign: a narrow galvanized pole carrying the logo and price
@@ -1078,7 +1079,7 @@ function buildStation(
     [1.46, 0.8],
     [0, 6.7, 0.275],
     'price-pylon-logo',
-    1.3,
+    0.42,
   )
   roundedBox(
     totem,
@@ -1116,66 +1117,6 @@ function buildStation(
       'fuel-label',
     )
   }
-  const differentialSign = new THREE.Group()
-  differentialSign.position.set(L.entry.concreteSignX, 0, L.entry.concreteSignZ)
-  differentialSign.rotation.y = THREE.MathUtils.degToRad(
-    L.entry.concreteSignYaw,
-  )
-  differentialSign.name = 'structural-price-differential-sign'
-  root.add(differentialSign)
-  roundedBox(
-    differentialSign,
-    [0.82, 0.2, 0.54],
-    0.07,
-    mat('#252a31', 0.84),
-    [0, 0.13, 0],
-    'structural-price-sign-rubber-base',
-  )
-  roundedBox(
-    differentialSign,
-    [0.72, 1.34, 0.14],
-    0.045,
-    mat('#d9dde0', 0.36, 0.42),
-    [0, 0.88, 0],
-    'structural-price-sign-frame',
-  )
-  box(
-    differentialSign,
-    [0.62, 0.37, 0.035],
-    mat('#16367f', 0.34),
-    [0, 1.29, 0.09],
-    'structural-price-sign-heading',
-  )
-  box(
-    differentialSign,
-    [0.62, 0.34, 0.035],
-    mat('#16805d', 0.42),
-    [0, 0.91, 0.09],
-    'structural-price-sign-self-row',
-  )
-  box(
-    differentialSign,
-    [0.62, 0.34, 0.035],
-    mat('#b73535', 0.42),
-    [0, 0.54, 0.09],
-    'structural-price-sign-served-row',
-  )
-  for (const y of [0.54, 0.91, 1.29])
-    box(
-      differentialSign,
-      [0.38, 0.035, 0.018],
-      mat('#f5f1df', 0.28),
-      [0, y, 0.115],
-      'structural-price-sign-copy-line',
-    )
-  for (const x of [L.totem.x - 1.7, L.totem.x + 1.7])
-    mesh(
-      root,
-      new THREE.CylinderGeometry(0.11, 0.14, 1.05, 16),
-      steel,
-      [x, 0.53, L.totem.z + 0.7],
-      'price-pylon-bollard',
-    )
   // Compact entrance island: the supports form one readable sequence instead
   // of floating across an oversized empty forecourt.
   box(root, [21, 0.2, 1.05], concrete, [0, 0.12, 12.65], 'pedestrian-curb')

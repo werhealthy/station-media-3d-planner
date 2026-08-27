@@ -32,7 +32,12 @@ export function AutoWalkthroughPanel() {
       ? journeyElapsedAfterStep(journey, 'served-payment-choice') / duration
       : 1
   const checkpoints = journey.steps.reduce<
-    Array<{ label: string; stepIndex: number; progress: number }>
+    Array<{
+      label: string
+      stepIndex: number
+      progress: number
+      ordinal: number
+    }>
   >((markers, item, stepIndex) => {
     const elapsed = journey.steps
       .slice(0, stepIndex)
@@ -43,6 +48,7 @@ export function AutoWalkthroughPanel() {
         label: item.checkpoint,
         stepIndex,
         progress: markerProgress,
+        ordinal: markers.length + 1,
       })
     return markers
   }, [])
@@ -96,6 +102,7 @@ export function AutoWalkthroughPanel() {
             max={choiceLimit}
             step="0.001"
             value={progress}
+            onPointerDown={pause}
             onChange={(event) => seekTo(Number(event.target.value))}
           />
           <div className="step-dots" aria-label="Checkpoint della journey">
@@ -110,6 +117,7 @@ export function AutoWalkthroughPanel() {
                 className={activeStepIndex === marker.stepIndex ? 'active' : ''}
                 onClick={() => seekStep(marker.stepIndex)}
               >
+                <b>{marker.ordinal}</b>
                 <span>{marker.label}</span>
               </button>
             ))}

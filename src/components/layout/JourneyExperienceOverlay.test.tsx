@@ -1,7 +1,11 @@
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getJourney } from '@/domain/journeys'
+import {
+  getJourney,
+  journeyDuration,
+  journeyElapsedAfterStep,
+} from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { JourneyExperienceOverlay } from './JourneyExperienceOverlay'
@@ -57,6 +61,16 @@ describe('JourneyExperienceOverlay', () => {
       paymentChoice: 'svolta',
       isPlaying: true,
     })
+    expect(
+      usePlaybackStore.getState().progress *
+        journeyDuration(getJourney('servito-svolta')),
+    ).toBeCloseTo(
+      journeyElapsedAfterStep(
+        getJourney('servito-svolta'),
+        'served-payment-choice',
+      ),
+      5,
+    )
     expect(
       getJourney('servito-svolta').steps[
         usePlaybackStore.getState().activeStepIndex

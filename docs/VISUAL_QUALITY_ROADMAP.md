@@ -33,6 +33,57 @@ Auto tour is a separate experience: each journey is a timed scene with a
 vehicle cockpit, approach, turn, stop and natural gaze targets. Hotspots are
 not used as animation keyframes.
 
+## Character and motion direction
+
+The rejected generic character is not a production fallback. Until one visual
+language is approved, the first-person tour should show only a dedicated
+forearm/hand viewmodel and the served journey may use the neutral procedural
+staff proxy. Do not mix characters from unrelated libraries in the pitch.
+
+The target is stylised realism, closer to _The Sims_ than to photorealism:
+consistent proportions, rounded silhouettes, a controlled Q8 palette, soft
+material response and expressive but restrained animation. Asset coherence is
+more important than polygon count.
+
+Recommended production slice:
+
+1. Approve one customer viewmodel, one attendant and one cashier in the same
+   style before authoring motion.
+2. Auto-rig the approved staff meshes with [AccuRIG](https://actorcore.reallusion.com/auto-rig)
+   or a reviewed equivalent. Treat automatic weights as a first pass.
+3. Record the exact actions needed by the journey on a phone: walk, collect,
+   insert and return the nozzle, wait while refuelling, pay and enter/exit the
+   vehicle. Convert the takes with [DeepMotion Animate 3D](https://www.deepmotion.com/animate-3d)
+   or [Rokoko Vision](https://www.rokoko.com/products/vision), then clean the
+   result in [Cascadeur](https://cascadeur.com/) or Blender.
+4. Export in-place locomotion clips and action clips in one GLB. Optimise only
+   after approval with [glTF Transform](https://gltf-transform.dev/) and
+   Meshopt/KTX2 compression.
+5. At runtime keep one persistent `AnimationMixer`. Cross-fade and phase-match
+   walk/run, scale clip playback to actual world speed, and never restart the
+   walk cycle at journey checkpoints.
+6. Separate lower-body locomotion, upper-body action and head gaze by filtering
+   animation tracks. Apply hand/foot IK after the mixer: both hands target the
+   nozzle/grip while the neck and eyes remain free to scan the station.
+
+Three.js provides cross-fades and additive clips, but it does not provide an
+opinionated animation state graph or root-motion system. The application owns
+those layers and bone masks. For the guided pitch, keep the existing authored
+spline. For manual walking, use Rapier's kinematic character controller for
+move-and-slide, slopes and steps; do not introduce a third-party all-in-one
+controller as a deadline-critical dependency.
+
+### Pitch scope
+
+- Keep the customer in first person; do not render a full player body.
+- Use one short camera cut for entering/exiting the car and continuous motion
+  through the already-opening Svolta doors.
+- Produce only the six to eight clips visible in the approved journey instead
+  of a generic animation library.
+- Lock the nozzle to authored hand targets during refuelling. Head movement
+  must never be allowed to drag either hand.
+- Ship a compressed character package, not a multipart runtime reconstruction.
+
 ## Acceptance criteria for the first reference station
 
 - Two pump islands and four dispensers maximum.

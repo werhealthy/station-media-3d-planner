@@ -88,9 +88,7 @@ export function FirstPersonAvatar() {
   const step = getJourney(routeId).steps[activeStepIndex]
   const journey = getJourney(routeId)
   const autoPedestrian = mode === 'auto' && step?.cameraMode === 'pedestrian'
-  const visible =
-    mode === 'walkthrough' ||
-    (autoPedestrian && step?.cameraTransition !== 'character-cut')
+  const visible = mode === 'walkthrough' || autoPedestrian
   const paying =
     mode === 'auto' &&
     (step?.id === 'self-insert-cash' ||

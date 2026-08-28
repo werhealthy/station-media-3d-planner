@@ -209,7 +209,7 @@ describe('station journeys', () => {
     )
   })
 
-  it('animates car transitions but crosses the open Svolta doors continuously', () => {
+  it('cuts once between car and pedestrian POV but crosses Svolta continuously', () => {
     for (const id of [
       'self-exit',
       'self-enter-car',
@@ -221,7 +221,7 @@ describe('station journeys', () => {
         : getJourney('servito-svolta')
       expect(
         journey.steps.find((step) => step.id === id)?.cameraTransition,
-      ).toBe('character-cut')
+      ).toBe('fade-cut')
     }
     for (const id of ['svolta-enter-store', 'svolta-exit-store']) {
       expect(

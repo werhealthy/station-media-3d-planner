@@ -77,4 +77,27 @@ describe('JourneyExperienceOverlay', () => {
       ]?.id,
     ).toBe('svolta-exit')
   })
+
+  it('resumes at Svolta even if the visible step advances while the dialog is open', async () => {
+    const journey = getJourney('servito')
+    const nextIndex = journey.steps.findIndex(
+      (step) => step.id === 'served-return-window',
+    )
+    usePlaybackStore.setState({
+      activeRouteId: 'servito',
+      activeStepIndex: nextIndex,
+      pendingDecision: 'operator-payment',
+      serviceChoice: 'servito',
+      paymentChoice: null,
+    })
+
+    render(<JourneyExperienceOverlay />)
+    await userEvent.click(screen.getByRole('button', { name: /In Svolta/ }))
+
+    const state = usePlaybackStore.getState()
+    expect(state.activeRouteId).toBe('servito-svolta')
+    expect(
+      getJourney(state.activeRouteId).steps[state.activeStepIndex]?.id,
+    ).toBe('svolta-exit')
+  })
 })

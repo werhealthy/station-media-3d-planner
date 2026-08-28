@@ -7,7 +7,7 @@ Haven at runtime:
 | -------------- | ----------------------------------------- | ---------------------------------------- |
 | Asphalt 07     | Forecourt and access road PBR maps        | <https://polyhaven.com/a/asphalt_07>     |
 | Rough Concrete | Pavement and curb PBR maps                | <https://polyhaven.com/a/rough_concrete> |
-| Sparse Grass   | Landscape ground PBR maps                 | <https://polyhaven.com/a/sparse_grass>   |
+| Leafy Grass    | Landscape ground PBR maps                 | <https://polyhaven.com/a/leafy_grass>    |
 | Shrub 04       | Instanced hedges and organic tree foliage | <https://polyhaven.com/a/shrub_04>       |
 
 Poly Haven publishes these assets under CC0. The current proof-of-concept uses

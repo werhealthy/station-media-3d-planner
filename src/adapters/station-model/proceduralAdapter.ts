@@ -253,14 +253,25 @@ const assetTreePositions: Array<[number, number, number]> = [
   [-35, -6, 1.04],
   [35, -17, 0.96],
   [35, -5, 1.02],
+  [-32, -39, 0.94],
+  [-24, -40, 1.05],
+  [-16, -39.2, 0.98],
+  [-8, -40.3, 1.08],
+  [0, -39.4, 1.02],
+  [8, -40.1, 0.96],
+  [16, -39.3, 1.07],
+  [24, -40.2, 0.98],
+  [32, -39.5, 1.04],
+  [-35, 7, 0.96],
+  [35, 7, 1.02],
 ]
 
 function createOrganicTrunkGeometry() {
-  const geometry = new THREE.CylinderGeometry(0.2, 0.38, 4.8, 14, 9)
+  const geometry = new THREE.CylinderGeometry(0.18, 0.34, 4, 14, 9)
   const positions = geometry.getAttribute('position')
   for (let index = 0; index < positions.count; index += 1) {
     const y = positions.getY(index)
-    const height = THREE.MathUtils.clamp((y + 2.4) / 4.8, 0, 1)
+    const height = THREE.MathUtils.clamp((y + 2) / 4, 0, 1)
     const x = positions.getX(index)
     const z = positions.getZ(index)
     const irregularity = 1 + Math.sin(index * 2.17 + height * 9) * 0.035
@@ -277,46 +288,15 @@ function createOrganicTrunkGeometry() {
 }
 
 function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
-  const foliageMaterial = Array.isArray(source.material)
+  const sourceMaterial = Array.isArray(source.material)
     ? source.material[0]!
     : source.material
-  const foliage = new THREE.InstancedMesh(
-    source.geometry,
-    foliageMaterial,
-    assetTreePositions.length * 5 + 41,
-  )
-  foliage.name = 'landscape-foliage-pbr'
-  foliage.castShadow = true
-  foliage.receiveShadow = true
-  const transform = new THREE.Object3D()
-  let instance = 0
-
-  for (const [treeIndex, [x, z, scale]] of assetTreePositions.entries()) {
-    for (let branch = 0; branch < 5; branch += 1) {
-      const angle =
-        (branch / 5) * Math.PI * 2 + Math.sin(treeIndex * 2.31) * 0.34
-      const radius = branch === 4 ? 0.25 : 0.72 + (branch % 2) * 0.32
-      transform.position.set(
-        x + Math.cos(angle) * radius * scale,
-        (4.25 + (branch % 3) * 0.62) * scale,
-        z + Math.sin(angle) * radius * scale,
-      )
-      transform.rotation.set(
-        Math.sin(treeIndex + branch) * 0.18,
-        angle,
-        -0.24 + (branch % 3) * 0.2,
-      )
-      transform.scale.set(
-        (3.2 + (branch % 2) * 0.52) * scale,
-        (2.1 + ((treeIndex + branch) % 3) * 0.28) * scale,
-        (2.4 + (branch % 3) * 0.24) * scale,
-      )
-      transform.updateMatrix()
-      foliage.setMatrixAt(instance, transform.matrix)
-      instance += 1
-    }
+  const foliageMaterial = sourceMaterial.clone()
+  if (foliageMaterial instanceof THREE.MeshStandardMaterial) {
+    foliageMaterial.color.multiply(new THREE.Color('#c8efb8'))
+    foliageMaterial.roughness = 0.9
+    foliageMaterial.alphaTest = Math.max(foliageMaterial.alphaTest, 0.28)
   }
-
   const shrubPositions: Array<[number, number]> = []
   for (let index = 0; index < 29; index += 1)
     shrubPositions.push([
@@ -328,10 +308,58 @@ function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
       -8.45 + index * 1.52,
       12 + Math.sin(index * 1.7) * 0.08,
     ])
+  for (let index = 0; index < 25; index += 1)
+    shrubPositions.push([
+      -28 + index * 2.32,
+      -22.8 + Math.sin(index * 1.15) * 0.38,
+    ])
+  for (let index = 0; index < 12; index += 1)
+    shrubPositions.push([
+      -27.4,
+      -11 + index * 2.15 + Math.sin(index * 1.35) * 0.16,
+    ])
+  const foliage = new THREE.InstancedMesh(
+    source.geometry,
+    foliageMaterial,
+    assetTreePositions.length * 9 + shrubPositions.length,
+  )
+  foliage.name = 'landscape-foliage-pbr'
+  foliage.castShadow = false
+  foliage.receiveShadow = true
+  const transform = new THREE.Object3D()
+  let instance = 0
+
+  for (const [treeIndex, [x, z, scale]] of assetTreePositions.entries()) {
+    for (let branch = 0; branch < 9; branch += 1) {
+      const angle =
+        (branch / 9) * Math.PI * 2 + Math.sin(treeIndex * 2.31) * 0.34
+      const layer = Math.floor(branch / 3)
+      const radius = branch < 2 ? 0.2 : 0.72 + (branch % 3) * 0.34
+      transform.position.set(
+        x + Math.cos(angle) * radius * scale,
+        (3.2 + layer * 0.48 + (branch % 2) * 0.18) * scale,
+        z + Math.sin(angle) * radius * scale,
+      )
+      transform.rotation.set(
+        Math.sin(treeIndex + branch) * 0.18,
+        angle,
+        -0.24 + (branch % 3) * 0.2,
+      )
+      transform.scale.set(
+        (4.35 + (branch % 2) * 0.58) * scale,
+        (3.05 + ((treeIndex + branch) % 3) * 0.34) * scale,
+        (3.35 + (branch % 3) * 0.3) * scale,
+      )
+      transform.updateMatrix()
+      foliage.setMatrixAt(instance, transform.matrix)
+      instance += 1
+    }
+  }
+
   for (const [shrubIndex, [x, z]] of shrubPositions.entries()) {
     transform.position.set(x, 0.04, z)
     transform.rotation.set(0, shrubIndex * 2.17, -0.08)
-    const scale = 2.25 + (shrubIndex % 4) * 0.16
+    const scale = 2.45 + (shrubIndex % 4) * 0.18
     transform.scale.set(scale * 1.18, scale, scale)
     transform.updateMatrix()
     foliage.setMatrixAt(instance, transform.matrix)
@@ -349,7 +377,7 @@ function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
   trunks.castShadow = true
   trunks.receiveShadow = true
   for (const [index, [x, z, scale]] of assetTreePositions.entries()) {
-    transform.position.set(x, 2.4 * scale, z)
+    transform.position.set(x, 2 * scale, z)
     transform.rotation.set(0, Math.sin(index * 1.7) * 0.35, 0)
     transform.scale.set(scale, scale, scale)
     transform.updateMatrix()
@@ -629,7 +657,7 @@ function buildStation(
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
     grass = pbrSurfaceMaterial(visualAssets.grass, {
-      color: '#7b9367',
+      color: '#a4d28d',
       roughness: 1,
       repeat: [28, 20],
       seed: 9471,
@@ -1306,7 +1334,7 @@ function buildStation(
   box(
     root,
     [18, 0.34, 2.1],
-    mat('#5e6e48', 0.95),
+    mat('#86b96f', 0.95),
     [0, 0.22, 11.95],
     'landscape-bed',
   )
@@ -1411,7 +1439,7 @@ export const proceduralAdapter: StationModelAdapter = {
           visualAssets.concrete
             ? 'Poly Haven rough concrete'
             : 'aggregate concrete',
-          visualAssets.grass ? 'Poly Haven sparse grass' : 'aggregate grass',
+          visualAssets.grass ? 'Poly Haven leafy grass' : 'aggregate grass',
           visualAssets.foliageMesh
             ? 'Poly Haven shrub 04'
             : 'procedural vegetation',

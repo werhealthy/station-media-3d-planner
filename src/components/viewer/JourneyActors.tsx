@@ -46,8 +46,8 @@ function StylizedStaffPerson({
 }) {
   const q8Logo = useTexture(BRAND_ASSETS.q8LogoWhite)
   const attendant = uniform === 'attendant'
-  const shirt = attendant ? '#13337a' : '#f7f5ef'
-  const trousers = attendant ? '#202a3a' : '#214a4b'
+  const shirt = '#13337a'
+  const trousers = attendant ? '#202a3a' : '#263347'
   const skin = attendant ? '#c98d73' : '#d7a087'
 
   return (
@@ -187,21 +187,10 @@ function StylizedStaffPerson({
           </group>
         </group>
       ))}
-      {attendant ? (
-        <mesh position={[0, 1.34, 0.14]}>
-          <planeGeometry args={[0.22, 0.052]} />
-          <meshStandardMaterial map={q8Logo} transparent roughness={0.72} />
-        </mesh>
-      ) : (
-        <RoundedBox
-          args={[0.22, 0.09, 0.035]}
-          radius={0.02}
-          smoothness={3}
-          position={[0, 1.31, 0.15]}
-        >
-          <meshStandardMaterial color="#078b83" roughness={0.58} />
-        </RoundedBox>
-      )}
+      <mesh position={[0, 1.34, 0.14]}>
+        <planeGeometry args={[0.22, 0.052]} />
+        <meshStandardMaterial map={q8Logo} transparent roughness={0.72} />
+      </mesh>
     </group>
   )
 }

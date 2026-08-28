@@ -161,6 +161,29 @@ export function pedestrianCollisionAt(
   )
 }
 
+export function pedestrianVehicleCollisionAt(
+  position: Pick<THREE.Vector3, 'x' | 'z'>,
+  vehicle: {
+    position: readonly [number, number, number]
+    yaw: number
+  },
+) {
+  const footprint = {
+    minX: position.x - PEDESTRIAN_RADIUS,
+    maxX: position.x + PEDESTRIAN_RADIUS,
+    minZ: position.z - PEDESTRIAN_RADIUS,
+    maxZ: position.z + PEDESTRIAN_RADIUS,
+  }
+  return boundsIntersect(
+    footprint,
+    vehicleBoundsAt(
+      { x: vehicle.position[0], z: vehicle.position[2] },
+      vehicle.yaw,
+    ),
+    0.12,
+  )
+}
+
 export function arrivalCurveCollisions(
   points: Array<[number, number, number]>,
   samples = 240,

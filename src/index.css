@@ -31,7 +31,7 @@ button {
   bottom: 24px;
   left: 24px;
   display: grid;
-  grid-template-columns: minmax(220px, 1.25fr) 46px 42px minmax(260px, 2fr);
+  grid-template-columns: minmax(280px, 1.25fr) 46px 42px minmax(260px, 2fr);
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
@@ -52,7 +52,8 @@ button {
 }
 .auto-summary strong {
   color: var(--ink);
-  font-size: 14px;
+  font-size: 18px;
+  line-height: 1.15;
 }
 .journey-select {
   max-width: 210px;
@@ -66,7 +67,7 @@ button {
 .auto-summary > span:last-child {
   overflow: hidden;
   color: #64748b;
-  font-size: 11px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -215,12 +216,12 @@ button {
   top: 22px;
   left: 50%;
   display: flex;
-  min-width: min(540px, calc(100% - 48px));
+  width: min(760px, calc(100% - 48px));
   transform: translateX(-50%);
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 11px 20px 12px;
+  gap: 4px;
+  padding: 14px 24px 16px;
   border: 1px solid rgb(255 255 255 / 0.8);
   border-radius: 16px;
   background: rgb(255 255 255 / 0.9);
@@ -237,7 +238,14 @@ button {
   pointer-events: none;
 }
 
-.journey-phase span {
+.journey-phase > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.journey-phase span,
+.journey-phase b {
   color: var(--q8-blue);
   font-size: 10px;
   font-weight: 850;
@@ -245,15 +253,29 @@ button {
   text-transform: uppercase;
 }
 
+.journey-phase b {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e8efff;
+}
+
 .journey-phase strong {
   color: var(--ink);
-  font-size: 15px;
+  font-size: clamp(22px, 2vw, 30px);
+  line-height: 1.12;
+}
+
+.journey-phase p {
+  margin: 0;
+  color: #516078;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .fuel-progress {
   position: absolute;
   z-index: 8;
-  top: 102px;
+  top: 132px;
   left: 50%;
   width: min(360px, calc(100% - 48px));
   transform: translateX(-50%);

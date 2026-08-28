@@ -32,7 +32,13 @@ export function JourneyExperienceOverlay() {
   const cinematicFade =
     step?.cameraTransition === 'fade-cut'
       ? Math.max(0, 1 - Math.abs(stepLocalProgress - 0.5) / 0.22)
-      : 0
+      : step?.cameraTransition === 'character-cut'
+        ? Math.max(
+            0,
+            1 - stepLocalProgress / 0.16,
+            1 - (1 - stepLocalProgress) / 0.16,
+          )
+        : 0
   const fuelStepIndexes = journey.steps.flatMap((item, index) =>
     item.nozzle && item.dwellSeconds ? [index] : [],
   )
@@ -90,7 +96,7 @@ export function JourneyExperienceOverlay() {
 
   return (
     <>
-      {step.cameraTransition === 'fade-cut' && (
+      {step.cameraTransition && (
         <div
           aria-hidden="true"
           className="journey-cinematic-cut"

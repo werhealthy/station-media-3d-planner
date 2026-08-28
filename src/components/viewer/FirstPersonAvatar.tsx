@@ -82,10 +82,15 @@ export function FirstPersonAvatar() {
   const rightArm = useRef<THREE.Group>(null)
   const lastPosition = useRef(new THREE.Vector3())
   const gait = useRef(0)
+  const anchoredRightArmWorld = useRef<THREE.Matrix4 | null>(null)
+  const inverseBodyMatrix = useRef(new THREE.Matrix4())
+  const anchoredLocalMatrix = useRef(new THREE.Matrix4())
   const step = getJourney(routeId).steps[activeStepIndex]
   const journey = getJourney(routeId)
   const autoPedestrian = mode === 'auto' && step?.cameraMode === 'pedestrian'
-  const visible = mode === 'walkthrough' || autoPedestrian
+  const visible =
+    mode === 'walkthrough' ||
+    (autoPedestrian && step?.cameraTransition !== 'character-cut')
   const paying =
     mode === 'auto' &&
     (step?.id === 'self-insert-cash' ||
@@ -95,6 +100,11 @@ export function FirstPersonAvatar() {
     mode === 'auto' &&
     step?.nozzle?.owner === 'driver' &&
     step.nozzle.state !== 'holstered'
+  const keepsHandOnNozzle =
+    holdingNozzle &&
+    Boolean(
+      step && (step.id.endsWith('-refuel') || step.id.includes('-dwell-')),
+    )
   const tapStep =
     mode === 'auto' &&
     Boolean(
@@ -112,6 +122,7 @@ export function FirstPersonAvatar() {
   useFrame((_, delta) => {
     if (!body.current || !visible) {
       lastPosition.current.copy(camera.position)
+      anchoredRightArmWorld.current = null
       return
     }
 
@@ -181,6 +192,25 @@ export function FirstPersonAvatar() {
         -0.48 - extension * 0.5,
         settle,
       )
+
+      body.current.updateMatrixWorld(true)
+      if (keepsHandOnNozzle) {
+        if (!anchoredRightArmWorld.current) {
+          rightArm.current.updateWorldMatrix(true, false)
+          anchoredRightArmWorld.current = rightArm.current.matrixWorld.clone()
+        } else {
+          inverseBodyMatrix.current.copy(body.current.matrixWorld).invert()
+          anchoredLocalMatrix.current.multiplyMatrices(
+            inverseBodyMatrix.current,
+            anchoredRightArmWorld.current,
+          )
+          anchoredLocalMatrix.current.decompose(
+            rightArm.current.position,
+            rightArm.current.quaternion,
+            rightArm.current.scale,
+          )
+        }
+      } else anchoredRightArmWorld.current = null
     }
   })
 

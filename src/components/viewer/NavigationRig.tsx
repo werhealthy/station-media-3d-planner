@@ -24,7 +24,16 @@ import { orbitMinDistance } from './navigationLimits'
 const OVERVIEW_POSITION = new THREE.Vector3(30, 16, 31)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
 const WALK_SPEED = 1.68
+const SPRINT_SPEED = 2.72
 const GRAVITY = 18
+
+interface PedestrianMotionSegment {
+  firstStepIndex: number
+  lastStepIndex: number
+  startTime: number
+  duration: number
+  curve: THREE.CatmullRomCurve3
+}
 
 function canWalkTo(position: THREE.Vector3) {
   return !pedestrianCollisionAt(position)
@@ -46,7 +55,7 @@ function easeJourneyMotion(local: number, motion: JourneyMotion) {
       return THREE.MathUtils.smootherstep(local, 0, 1)
     case 'walk':
     default:
-      return local
+      return THREE.MathUtils.smootherstep(local, 0, 1)
   }
 }
 
@@ -128,6 +137,59 @@ export function NavigationRig() {
     [activeJourney, departureStartIndex],
   )
   const departureDuration = activeJourneyDuration - departureStartTime
+  const pedestrianMotionSegments = useMemo(() => {
+    const segments: PedestrianMotionSegment[] = []
+    let elapsed = 0
+    let index = 0
+    while (index < activeJourney.steps.length) {
+      const step = activeJourney.steps[index]!
+      const isContinuousWalk =
+        step.motion === 'walk' &&
+        step.cameraMode === 'pedestrian' &&
+        !step.cameraTransition
+      if (!isContinuousWalk) {
+        elapsed += step.duration
+        index += 1
+        continue
+      }
+
+      const firstStepIndex = index
+      const startTime = elapsed
+      const points: THREE.Vector3[] = []
+      const previous = activeJourney.steps[Math.max(0, index - 1)]!
+      points.push(
+        new THREE.Vector3(previous.position[0], 0, previous.position[2]),
+      )
+      let duration = 0
+      while (index < activeJourney.steps.length) {
+        const candidate = activeJourney.steps[index]!
+        if (
+          candidate.motion !== 'walk' ||
+          candidate.cameraMode !== 'pedestrian' ||
+          candidate.cameraTransition
+        )
+          break
+        const point = new THREE.Vector3(
+          candidate.position[0],
+          0,
+          candidate.position[2],
+        )
+        if (point.distanceToSquared(points.at(-1)!) > 0.0001) points.push(point)
+        duration += candidate.duration
+        elapsed += candidate.duration
+        index += 1
+      }
+      if (points.length >= 2)
+        segments.push({
+          firstStepIndex,
+          lastStepIndex: index - 1,
+          startTime,
+          duration,
+          curve: new THREE.CatmullRomCurve3(points, false, 'centripetal', 0.5),
+        })
+    }
+    return segments
+  }, [activeJourney])
   const runtimeBounds = useStationRuntimeStore((s) => s.bounds)
   const config = useStationSetupStore((s) => s.config)
   const setupEnabled = useStationSetupStore((s) => s.enabled)
@@ -317,7 +379,13 @@ export function NavigationRig() {
       if (keys.current.has('KeyA') || keys.current.has('ArrowLeft'))
         move.sub(right)
       const desiredVelocity = move.lengthSq()
-        ? move.normalize().multiplyScalar(WALK_SPEED)
+        ? move
+            .normalize()
+            .multiplyScalar(
+              keys.current.has('ShiftLeft') || keys.current.has('ShiftRight')
+                ? SPRINT_SPEED
+                : WALK_SPEED,
+            )
         : move
       velocity.current.lerp(
         desiredVelocity,
@@ -445,6 +513,13 @@ export function NavigationRig() {
       const inContinuousDeparture =
         departureStartIndex >= 0 && stepIndex >= departureStartIndex
       const isFadeCut = current.cameraTransition === 'fade-cut'
+      const isCharacterCut = current.cameraTransition === 'character-cut'
+      const isCameraCut = isFadeCut || isCharacterCut
+      const pedestrianSegment = pedestrianMotionSegments.find(
+        (segment) =>
+          stepIndex >= segment.firstStepIndex &&
+          stepIndex <= segment.lastStepIndex,
+      )
 
       if (inContinuousArrival) {
         const rawArrivalProgress = THREE.MathUtils.clamp(
@@ -512,7 +587,12 @@ export function NavigationRig() {
           current.motion === 'walk'
             ? THREE.MathUtils.clamp(local * 1.4, 0, 1)
             : easeJourneyMotion(local, current.motion)
-        if (isFadeCut) {
+        if (isCharacterCut && activeJourney.parkedVehicle) {
+          const [carX, , carZ] = activeJourney.parkedVehicle.position
+          const cameraSide = carX >= 0 ? 1 : -1
+          destination.set(carX + cameraSide * 3.8, 2.35, carZ + 4.25)
+          target.set(carX, 1.05, carZ + 0.75)
+        } else if (isFadeCut) {
           const afterCut = local >= 0.5
           const cutStep = afterCut ? current : previous
           destination.set(...cutStep.position)
@@ -521,6 +601,26 @@ export function NavigationRig() {
               ? eyeHeight
               : cutStep.position[1]
           target.set(...cutStep.gazeTarget)
+        } else if (pedestrianSegment) {
+          const segmentProgress = THREE.MathUtils.smootherstep(
+            THREE.MathUtils.clamp(
+              (autoTime.current - pedestrianSegment.startTime) /
+                Math.max(pedestrianSegment.duration, 0.001),
+              0,
+              1,
+            ),
+            0,
+            1,
+          )
+          destination.copy(pedestrianSegment.curve.getPointAt(segmentProgress))
+          destination.y = eyeHeight
+          const tangent = pedestrianSegment.curve
+            .getTangentAt(segmentProgress)
+            .normalize()
+          target
+            .copy(destination)
+            .addScaledVector(tangent, 4.8)
+            .setY(destination.y - 0.08)
         } else {
           destination
             .set(...previous.position)
@@ -539,7 +639,7 @@ export function NavigationRig() {
             .lerp(new THREE.Vector3(...current.gazeTarget), gazeAmount)
         }
 
-        if (current.motion === 'walk' && !isFadeCut) {
+        if (current.motion === 'walk' && !isCameraCut && !pedestrianSegment) {
           const walkingDirection = new THREE.Vector3(...current.position).sub(
             new THREE.Vector3(...previous.position),
           )
@@ -551,7 +651,7 @@ export function NavigationRig() {
               .setY(destination.y - 0.08)
         }
 
-        if (current.cameraMode === 'pedestrian' && !isFadeCut) {
+        if (current.cameraMode === 'pedestrian' && !isCameraCut) {
           if (pedestrianCollisionAt(destination))
             destination.copy(lastSafeAutoPosition.current)
           else lastSafeAutoPosition.current.copy(destination)
@@ -559,9 +659,9 @@ export function NavigationRig() {
       }
 
       if (current.motion === 'walk') {
-        const footfalls = local * Math.max(2, current.duration * 1.9) * Math.PI
-        destination.y += Math.abs(Math.sin(footfalls)) * 0.017 - 0.006
-        target.x += Math.sin(footfalls * 0.5) * 0.025
+        const footfalls = autoTime.current * 1.9 * Math.PI
+        destination.y += Math.abs(Math.sin(footfalls)) * 0.01 - 0.004
+        target.x += Math.sin(footfalls * 0.5) * 0.012
       } else if (current.motion === 'drive' || current.motion === 'brake') {
         destination.y += Math.sin(autoTime.current * 17) * 0.0025
       } else if (current.motion === 'hold') {
@@ -570,7 +670,7 @@ export function NavigationRig() {
       }
 
       camera.position.copy(destination)
-      if (isFadeCut) smoothedAutoTarget.current.copy(target)
+      if (isCameraCut) smoothedAutoTarget.current.copy(target)
       else
         smoothedAutoTarget.current.lerp(
           target,
@@ -589,7 +689,11 @@ export function NavigationRig() {
             ),
         )
       camera.lookAt(smoothedAutoTarget.current)
-      const desiredFov = current.cameraMode === 'vehicle' ? 68 : 64
+      const desiredFov = isCharacterCut
+        ? 48
+        : current.cameraMode === 'vehicle'
+          ? 68
+          : 64
       if (Math.abs(perspectiveCamera.fov - desiredFov) > 0.05) {
         perspectiveCamera.fov = THREE.MathUtils.lerp(
           perspectiveCamera.fov,
@@ -601,7 +705,7 @@ export function NavigationRig() {
       if (usePlaybackStore.getState().activeStepIndex !== stepIndex)
         setActiveStep(stepIndex, current.mediaPointId ?? null)
       if (
-        isFadeCut ||
+        isCameraCut ||
         autoTime.current - lastUiUpdate.current > 0.12 ||
         !isPlaying
       ) {

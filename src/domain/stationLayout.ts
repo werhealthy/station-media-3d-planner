@@ -36,10 +36,10 @@ export const STATION_LAYOUT = {
   },
   entry: {
     beachFlagX: 26,
-    beachFlagZ: 9.25,
+    beachFlagZ: 8.85,
     beachFlagYaw: 90,
-    stendardoX: 24.65,
-    stendardoZ: 9.65,
+    stendardoX: 25.55,
+    stendardoZ: 10.3,
     stendardoYaw: 90,
     standardSignX: 15.9,
     standardSignZ: 2.9,

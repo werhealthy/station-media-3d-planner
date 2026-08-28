@@ -3,6 +3,11 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { STATION_LAYOUT as L } from '@/domain/stationLayout'
 import type { StationModelAdapter } from './types'
 import { BRAND_ASSETS } from '@/config/brandAssets'
+import {
+  loadProceduralVisualAssets,
+  type ProceduralVisualAssets,
+  type SurfaceTextureSet,
+} from './visualAssets'
 const mat = (color: string, roughness = 0.55, metalness = 0) =>
   new THREE.MeshStandardMaterial({ color, roughness, metalness })
 function mesh(
@@ -121,6 +126,35 @@ function aggregateMaterial(
   })
 }
 
+function pbrSurfaceMaterial(
+  textures: SurfaceTextureSet | undefined,
+  fallback: {
+    color: string
+    roughness: number
+    repeat: [number, number]
+    seed: number
+    bumpScale: number
+  },
+) {
+  if (!textures)
+    return aggregateMaterial(
+      fallback.color,
+      fallback.roughness,
+      fallback.repeat,
+      fallback.seed,
+      fallback.bumpScale,
+    )
+  return new THREE.MeshStandardMaterial({
+    color: fallback.color,
+    map: textures.map,
+    normalMap: textures.normalMap,
+    normalScale: new THREE.Vector2(0.45, 0.45),
+    roughnessMap: textures.roughnessMap,
+    roughness: fallback.roughness,
+    metalness: 0.01,
+  })
+}
+
 function tree(
   root: THREE.Object3D,
   x: number,
@@ -195,6 +229,136 @@ function shrubRow(
     shrub.scale.set(1.18, 0.82, 0.9)
   }
 }
+
+const assetTreePositions: Array<[number, number, number]> = [
+  [-21, -14.5, 0.92],
+  [-16, -14.2, 1.08],
+  [-10.5, -14.6, 0.88],
+  [-4.5, -14.2, 1.16],
+  [2, -14.5, 0.96],
+  [8.5, -14.3, 1.12],
+  [15, -14.5, 0.9],
+  [21, -14.1, 1.08],
+  [-22, -8, 0.9],
+  [-22, 4, 1.02],
+  [-30, -27.1, 0.92],
+  [-22, -27.8, 1.03],
+  [-13, -26.9, 0.95],
+  [-4, -27.7, 1.08],
+  [5, -27.2, 0.9],
+  [14, -27.9, 1.05],
+  [23, -27.1, 0.94],
+  [32, -27.6, 1.02],
+  [-35, -18, 0.92],
+  [-35, -6, 1.04],
+  [35, -17, 0.96],
+  [35, -5, 1.02],
+]
+
+function createOrganicTrunkGeometry() {
+  const geometry = new THREE.CylinderGeometry(0.2, 0.38, 4.8, 14, 9)
+  const positions = geometry.getAttribute('position')
+  for (let index = 0; index < positions.count; index += 1) {
+    const y = positions.getY(index)
+    const height = THREE.MathUtils.clamp((y + 2.4) / 4.8, 0, 1)
+    const x = positions.getX(index)
+    const z = positions.getZ(index)
+    const irregularity = 1 + Math.sin(index * 2.17 + height * 9) * 0.035
+    positions.setXYZ(
+      index,
+      x * irregularity + Math.sin(height * 2.7) * height * 0.17,
+      y,
+      z * irregularity + Math.sin(height * 4.1) * height * 0.11,
+    )
+  }
+  positions.needsUpdate = true
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
+  const foliageMaterial = Array.isArray(source.material)
+    ? source.material[0]!
+    : source.material
+  const foliage = new THREE.InstancedMesh(
+    source.geometry,
+    foliageMaterial,
+    assetTreePositions.length * 5 + 41,
+  )
+  foliage.name = 'landscape-foliage-pbr'
+  foliage.castShadow = true
+  foliage.receiveShadow = true
+  const transform = new THREE.Object3D()
+  let instance = 0
+
+  for (const [treeIndex, [x, z, scale]] of assetTreePositions.entries()) {
+    for (let branch = 0; branch < 5; branch += 1) {
+      const angle =
+        (branch / 5) * Math.PI * 2 + Math.sin(treeIndex * 2.31) * 0.34
+      const radius = branch === 4 ? 0.25 : 0.72 + (branch % 2) * 0.32
+      transform.position.set(
+        x + Math.cos(angle) * radius * scale,
+        (4.25 + (branch % 3) * 0.62) * scale,
+        z + Math.sin(angle) * radius * scale,
+      )
+      transform.rotation.set(
+        Math.sin(treeIndex + branch) * 0.18,
+        angle,
+        -0.24 + (branch % 3) * 0.2,
+      )
+      transform.scale.set(
+        (3.2 + (branch % 2) * 0.52) * scale,
+        (2.1 + ((treeIndex + branch) % 3) * 0.28) * scale,
+        (2.4 + (branch % 3) * 0.24) * scale,
+      )
+      transform.updateMatrix()
+      foliage.setMatrixAt(instance, transform.matrix)
+      instance += 1
+    }
+  }
+
+  const shrubPositions: Array<[number, number]> = []
+  for (let index = 0; index < 29; index += 1)
+    shrubPositions.push([
+      -20.5 + index * 1.42,
+      -15.15 + Math.sin(index * 1.7) * 0.08,
+    ])
+  for (let index = 0; index < 12; index += 1)
+    shrubPositions.push([
+      -8.45 + index * 1.52,
+      12 + Math.sin(index * 1.7) * 0.08,
+    ])
+  for (const [shrubIndex, [x, z]] of shrubPositions.entries()) {
+    transform.position.set(x, 0.04, z)
+    transform.rotation.set(0, shrubIndex * 2.17, -0.08)
+    const scale = 2.25 + (shrubIndex % 4) * 0.16
+    transform.scale.set(scale * 1.18, scale, scale)
+    transform.updateMatrix()
+    foliage.setMatrixAt(instance, transform.matrix)
+    instance += 1
+  }
+  foliage.instanceMatrix.needsUpdate = true
+  root.add(foliage)
+
+  const trunks = new THREE.InstancedMesh(
+    createOrganicTrunkGeometry(),
+    mat('#654838', 0.96),
+    assetTreePositions.length,
+  )
+  trunks.name = 'landscape-trunks-organic'
+  trunks.castShadow = true
+  trunks.receiveShadow = true
+  for (const [index, [x, z, scale]] of assetTreePositions.entries()) {
+    transform.position.set(x, 2.4 * scale, z)
+    transform.rotation.set(0, Math.sin(index * 1.7) * 0.35, 0)
+    transform.scale.set(scale, scale, scale)
+    transform.updateMatrix()
+    trunks.setMatrixAt(index, transform.matrix)
+  }
+  trunks.instanceMatrix.needsUpdate = true
+  root.add(trunks)
+}
+
 function pump(
   root: THREE.Group,
   x: number,
@@ -443,15 +607,34 @@ function silhouettePlane(
 function buildStation(
   q8WhiteTexture: THREE.Texture,
   svoltaTexture: THREE.Texture,
+  visualAssets: Partial<ProceduralVisualAssets>,
 ) {
   const root = new THREE.Group()
   root.name = 'q8-station'
-  const asphalt = aggregateMaterial('#4b5055', 0.94, [18, 13], 8217, 0.035),
-    concrete = aggregateMaterial('#dad7cf', 0.86, [15, 9], 3209, 0.018),
+  const asphalt = pbrSurfaceMaterial(visualAssets.asphalt, {
+      color: '#c7c9ca',
+      roughness: 0.96,
+      repeat: [18, 13],
+      seed: 8217,
+      bumpScale: 0.035,
+    }),
+    concrete = pbrSurfaceMaterial(visualAssets.concrete, {
+      color: '#e3e0d9',
+      roughness: 0.9,
+      repeat: [15, 9],
+      seed: 3209,
+      bumpScale: 0.018,
+    }),
     blue = mat('#123a88', 0.26, 0.35),
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
-    grass = aggregateMaterial('#678452', 0.98, [28, 20], 9471, 0.055)
+    grass = pbrSurfaceMaterial(visualAssets.grass, {
+      color: '#7b9367',
+      roughness: 1,
+      repeat: [28, 20],
+      seed: 9471,
+      bumpScale: 0.055,
+    })
   const surroundings = mesh(
     root,
     new THREE.PlaneGeometry(360, 280),
@@ -1127,44 +1310,48 @@ function buildStation(
     [0, 0.22, 11.95],
     'landscape-bed',
   )
-  shrubRow(root, -20.5, -15.15, 29, 1.42)
-  shrubRow(root, -8.45, 12, 12, 1.52)
-  const treePositions: Array<[number, number, number]> = [
-    [-21, -14.5, 0.92],
-    [-16, -14.2, 1.08],
-    [-10.5, -14.6, 0.88],
-    [-4.5, -14.2, 1.16],
-    [2, -14.5, 0.96],
-    [8.5, -14.3, 1.12],
-    [15, -14.5, 0.9],
-    [21, -14.1, 1.08],
-    [-22, -8, 0.9],
-    [-22, 4, 1.02],
-  ]
-  for (const [index, [x, z, scale]] of treePositions.entries())
-    tree(root, x, z, scale, index + 1)
-  let perimeterTreeId = treePositions.length + 1
-  for (let x = -34; x <= 34; x += 5.2) {
-    tree(
-      root,
-      x,
-      -27.5 + Math.sin(x * 0.37) * 0.9,
-      0.92 + ((perimeterTreeId * 17) % 7) * 0.045,
-      perimeterTreeId,
-    )
-    perimeterTreeId += 1
-  }
-  for (let z = -22; z <= 11; z += 6.3) {
-    tree(root, -36, z, 0.82 + (perimeterTreeId % 4) * 0.06, perimeterTreeId)
-    perimeterTreeId += 1
-    tree(
-      root,
-      36,
-      z + 1.8,
-      0.88 + (perimeterTreeId % 3) * 0.06,
-      perimeterTreeId,
-    )
-    perimeterTreeId += 1
+  if (visualAssets.foliageMesh)
+    addAssetVegetation(root, visualAssets.foliageMesh)
+  else {
+    shrubRow(root, -20.5, -15.15, 29, 1.42)
+    shrubRow(root, -8.45, 12, 12, 1.52)
+    const treePositions: Array<[number, number, number]> = [
+      [-21, -14.5, 0.92],
+      [-16, -14.2, 1.08],
+      [-10.5, -14.6, 0.88],
+      [-4.5, -14.2, 1.16],
+      [2, -14.5, 0.96],
+      [8.5, -14.3, 1.12],
+      [15, -14.5, 0.9],
+      [21, -14.1, 1.08],
+      [-22, -8, 0.9],
+      [-22, 4, 1.02],
+    ]
+    for (const [index, [x, z, scale]] of treePositions.entries())
+      tree(root, x, z, scale, index + 1)
+    let perimeterTreeId = treePositions.length + 1
+    for (let x = -34; x <= 34; x += 5.2) {
+      tree(
+        root,
+        x,
+        -27.5 + Math.sin(x * 0.37) * 0.9,
+        0.92 + ((perimeterTreeId * 17) % 7) * 0.045,
+        perimeterTreeId,
+      )
+      perimeterTreeId += 1
+    }
+    for (let z = -22; z <= 11; z += 6.3) {
+      tree(root, -36, z, 0.82 + (perimeterTreeId % 4) * 0.06, perimeterTreeId)
+      perimeterTreeId += 1
+      tree(
+        root,
+        36,
+        z + 1.8,
+        0.88 + (perimeterTreeId % 3) * 0.06,
+        perimeterTreeId,
+      )
+      perimeterTreeId += 1
+    }
   }
   for (const x of [-22, 22])
     for (const z of [-13, 14])
@@ -1186,14 +1373,15 @@ function collect(root: THREE.Object3D) {
 }
 export const proceduralAdapter: StationModelAdapter = {
   async load() {
-    const [q8WhiteTexture, svoltaTexture] =
+    const [q8WhiteTexture, svoltaTexture, visualAssets] =
       import.meta.env.MODE === 'test'
-        ? [fallbackBrandTexture('#ffffff'), fallbackBrandTexture('#13877d')]
+        ? [fallbackBrandTexture('#ffffff'), fallbackBrandTexture('#13877d'), {}]
         : await Promise.all([
             new THREE.TextureLoader().loadAsync(BRAND_ASSETS.q8LogoWhite),
             new THREE.TextureLoader().loadAsync(BRAND_ASSETS.svoltaLogo),
+            loadProceduralVisualAssets(),
           ])
-    const root = buildStation(q8WhiteTexture, svoltaTexture)
+    const root = buildStation(q8WhiteTexture, svoltaTexture, visualAssets)
     const meshes = collect(root)
     const boundingBox = new THREE.Box3().setFromObject(root)
     const size = boundingBox.getSize(new THREE.Vector3()).toArray()
@@ -1216,7 +1404,18 @@ export const proceduralAdapter: StationModelAdapter = {
         center,
         meshCount: meshes.length,
         materialCount: materials.size,
-        textureNames: ['Q8 logo', 'Svolta logo', 'aggregate surfaces'],
+        textureNames: [
+          'Q8 logo',
+          'Svolta logo',
+          visualAssets.asphalt ? 'Poly Haven asphalt 07' : 'aggregate asphalt',
+          visualAssets.concrete
+            ? 'Poly Haven rough concrete'
+            : 'aggregate concrete',
+          visualAssets.grass ? 'Poly Haven sparse grass' : 'aggregate grass',
+          visualAssets.foliageMesh
+            ? 'Poly Haven shrub 04'
+            : 'procedural vegetation',
+        ],
         missingTextures: [],
         scaleApplied: 1,
         hierarchy: [],

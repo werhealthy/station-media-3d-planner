@@ -21,13 +21,11 @@ the production source of visual truth by accumulating more primitive meshes.
 
 ## First-person pipeline
 
-The walkthrough uses an intentionally restrained first-person proxy:
-
-- sleeves/forearms only, without spherical hands;
-- arms driven by a subtle idle/walk animation blend;
-- footsteps synchronised to the gait cycle;
-- capsule collision and step handling kept independent from the render mesh;
-- height presets applied to camera, collision capsule and gait together.
+The walkthrough does not render procedural hands or forearms. They magnify the
+prototype look because they remain close to the camera for the entire journey.
+A first-person body returns only when a rigged, textured GLB viewmodel has been
+approved. Collision, eye height and camera motion remain independent from that
+future render mesh.
 
 Auto tour is a separate experience: each journey is a timed scene with a
 vehicle cockpit, approach, turn, stop and natural gaze targets. Hotspots are
@@ -36,21 +34,14 @@ not used as animation keyframes.
 ## Character and motion direction
 
 The rejected generic character is not a production fallback. Until one visual
-language is approved, the first-person tour should show only a dedicated
-forearm/hand viewmodel and the served journey may use the neutral procedural
-staff proxy. Do not mix characters from unrelated libraries in the pitch.
+language is approved, the first-person tour stays bodyless and the served
+journey may use the neutral procedural staff proxy. Do not mix characters from
+unrelated libraries in the pitch.
 
 The target is stylised realism, closer to _The Sims_ than to photorealism:
 consistent proportions, rounded silhouettes, a controlled Q8 palette, soft
 material response and expressive but restrained animation. Asset coherence is
 more important than polygon count.
-
-The code-only pitch proxy follows the same rule: its gait phase is derived from
-distance travelled, its knees and arms are articulated independently and idle
-motion is blended out while walking. This prevents foot sliding and frozen
-breathing without pretending that a procedural proxy replaces the final rigged
-asset. Day and night use a local light-card environment so material response is
-art-directed and deterministic instead of inherited from a generic remote HDR.
 
 Recommended production slice:
 
@@ -100,8 +91,8 @@ controller as a deadline-critical dependency.
 - Asphalt, concrete, glass, metal and vegetation have visible material response
   under daylight without clipping or excessive reflections.
 - Overview composition remains close to the supplied 2D reference.
-- Walkthrough shows understated forearms, never placeholder spheres, and uses
-  the selected eye height consistently.
+- Walkthrough never shows procedural hands or placeholder spheres and uses the
+  selected eye height consistently.
 - Self and Servito auto tours begin inside the vehicle and include a visible
   approach and stop, not a sequence of teleports between hotspots.
 - Stable interactive frame rate on the agreed target laptop and tablet.
@@ -113,5 +104,5 @@ controller as a deadline-critical dependency.
 - Approved Q8 material and colour specifications.
 - Production artwork templates for every media support.
 - A licensed rigged human avatar and walk/idle animation set.
-- Licensed vegetation and surface texture library, including usage rights for
-  a web application.
+- Approval and local optimisation of the CC0 Poly Haven vegetation and surface
+  material proof-of-concept used by the asset-driven visual slice.

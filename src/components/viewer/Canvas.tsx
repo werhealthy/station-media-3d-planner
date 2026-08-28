@@ -4,7 +4,6 @@ import {
   ContactShadows,
   Environment,
   Html,
-  Lightformer,
   Sky,
   Stars,
 } from '@react-three/drei'
@@ -30,7 +29,6 @@ import {
   rotationFromSurfaceNormal,
 } from '@/three/stationPicking'
 import { StationDebugHelpers } from './StationDebugHelpers'
-import { FirstPersonAvatar } from './FirstPersonAvatar'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
 import { JourneyFuelNozzle } from './JourneyFuelNozzle'
@@ -41,10 +39,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMapping = THREE.ACESFilmicToneMapping
     gl.toneMappingExposure = isNight ? 1.08 : 1.12
-    gl.outputColorSpace = THREE.SRGBColorSpace
-    gl.shadowMap.type = THREE.PCFSoftShadowMap
   }, [gl, isNight])
 
   return (
@@ -146,39 +141,9 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
         </>
       )}
       <Environment
-        key={isNight ? 'night-light-rig' : 'day-light-rig'}
-        resolution={128}
-        frames={1}
-        environmentIntensity={isNight ? 0.32 : 0.46}
-      >
-        {/* Local light cards create a stable stylised-PBR response without
-            downloading a generic HDR preset at runtime. */}
-        <group rotation={[0, -0.35, 0]}>
-          <Lightformer
-            form="rect"
-            color={isNight ? '#7f9fe4' : '#fff8e9'}
-            intensity={isNight ? 1.5 : 2.4}
-            position={[-6, 7, -9]}
-            scale={[8, 5, 1]}
-          />
-          <Lightformer
-            form="rect"
-            color={isNight ? '#ffe0a6' : '#cfe7ff'}
-            intensity={isNight ? 1.8 : 1.35}
-            position={[8, 3, 4]}
-            rotation={[0, Math.PI, 0]}
-            scale={[5, 3, 1]}
-          />
-          <Lightformer
-            form="ring"
-            color={isNight ? '#31539a' : '#ffffff'}
-            intensity={isNight ? 0.9 : 1.15}
-            position={[0, 10, 2]}
-            rotation={[Math.PI / 2, 0, 0]}
-            scale={[4, 4, 1]}
-          />
-        </group>
-      </Environment>
+        preset={isNight ? 'night' : 'city'}
+        environmentIntensity={isNight ? 0.38 : 0.42}
+      />
     </>
   )
 }
@@ -323,9 +288,8 @@ export function Canvas() {
       camera={{ position: [30, 16, 31], fov: 43, near: 0.1, far: 320 }}
       gl={{
         antialias: true,
-        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMapping: 4,
         toneMappingExposure: isNight ? 0.96 : 1.12,
-        powerPreference: 'high-performance',
       }}
     >
       <Suspense fallback={null}>
@@ -349,7 +313,6 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
-        <FirstPersonAvatar />
         <JourneyVehicle />
         <JourneyActors />
         <JourneyFuelNozzle />

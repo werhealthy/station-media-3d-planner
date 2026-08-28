@@ -62,10 +62,10 @@ export interface JourneyStep {
   nozzle?: JourneyNozzleCue
   checkpoint?: string
   /**
-   * Regia usata soltanto quando cambia l'assetto auto/persona. L'ingresso
-   * Svolta resta invece nella stessa scena e attraversa le porte animate.
+   * Breve stacco in prima persona quando cambia l'assetto auto/pedone.
+   * L'ingresso Svolta resta nella stessa scena e attraversa le porte animate.
    */
-  cameraTransition?: 'fade-cut' | 'character-cut'
+  cameraTransition?: 'fade-cut'
 }
 
 export interface StationJourney {
@@ -522,7 +522,7 @@ function selfFuelSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
       cameraMode: 'vehicle',
       motion: 'enter',
       vehicleYaw: WESTBOUND,
-      cameraTransition: 'character-cut',
+      cameraTransition: 'fade-cut',
     },
   ]
 }
@@ -810,7 +810,7 @@ const selfServiceSteps: JourneyStep[] = [
     cameraMode: 'pedestrian',
     motion: 'exit',
     terminalScreen: 'idle',
-    cameraTransition: 'character-cut',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'self-around-car',
@@ -889,7 +889,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'exit',
-    cameraTransition: 'character-cut',
+    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-clear-car',
@@ -1025,7 +1025,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     cameraMode: 'vehicle',
     motion: 'enter',
     vehicleYaw: WESTBOUND,
-    cameraTransition: 'character-cut',
+    cameraTransition: 'fade-cut',
   },
   ...departureSteps('svolta'),
 ]

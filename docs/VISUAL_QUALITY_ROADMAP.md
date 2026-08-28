@@ -45,6 +45,13 @@ consistent proportions, rounded silhouettes, a controlled Q8 palette, soft
 material response and expressive but restrained animation. Asset coherence is
 more important than polygon count.
 
+The code-only pitch proxy follows the same rule: its gait phase is derived from
+distance travelled, its knees and arms are articulated independently and idle
+motion is blended out while walking. This prevents foot sliding and frozen
+breathing without pretending that a procedural proxy replaces the final rigged
+asset. Day and night use a local light-card environment so material response is
+art-directed and deterministic instead of inherited from a generic remote HDR.
+
 Recommended production slice:
 
 1. Approve one customer viewmodel, one attendant and one cashier in the same

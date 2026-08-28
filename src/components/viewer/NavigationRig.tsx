@@ -20,6 +20,11 @@ import {
 import { useStationRuntimeStore } from '@/stores/stationRuntimeStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
 import { orbitMinDistance } from './navigationLimits'
+import {
+  advanceGaitPhase,
+  gaitWeightForSpeed,
+  sampleHumanGait,
+} from '@/three/humanMotion'
 
 const OVERVIEW_POSITION = new THREE.Vector3(30, 16, 31)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
@@ -79,6 +84,11 @@ export function NavigationRig() {
   const smoothedAutoTarget = useRef(new THREE.Vector3())
   const velocity = useRef(new THREE.Vector3())
   const walkTime = useRef(0)
+  const walkGaitBlend = useRef(0)
+  const autoGaitPhase = useRef(0)
+  const autoGaitBlend = useRef(0)
+  const autoMotionPosition = useRef(new THREE.Vector3())
+  const autoMotionReady = useRef(false)
   const verticalVelocity = useRef(0)
   const personHeightRef = useRef(personHeight)
   const walkthroughInitialized = useRef(false)
@@ -276,6 +286,7 @@ export function NavigationRig() {
       velocity.current.set(0, 0, 0)
       verticalVelocity.current = 0
       walkTime.current = 0
+      walkGaitBlend.current = 0
     }
   }, [camera, config.modelType, mode, perspectiveCamera, runtimeBounds])
 
@@ -289,6 +300,8 @@ export function NavigationRig() {
     perspectiveCamera.fov = 68
     perspectiveCamera.updateProjectionMatrix()
     lastUiUpdate.current = 0
+    autoMotionReady.current = false
+    autoGaitBlend.current = 0
     if (config.modelType === 'procedural') {
       const currentProgress = usePlaybackStore.getState().progress
       const routeTime = currentProgress * activeJourneyDuration
@@ -338,6 +351,8 @@ export function NavigationRig() {
         (config.modelType === 'procedural'
           ? activeJourneyDuration
           : config.walkPath.length * 4)
+    autoMotionReady.current = false
+    autoGaitBlend.current = 0
   }, [
     activeJourneyDuration,
     config.modelType,
@@ -391,6 +406,8 @@ export function NavigationRig() {
         desiredVelocity,
         1 - Math.exp(-delta * (move.lengthSq() ? 7 : 9)),
       )
+      const frameStartX = camera.position.x
+      const frameStartZ = camera.position.z
       if (velocity.current.lengthSq() > 0.002) {
         const next = camera.position
           .clone()
@@ -421,8 +438,18 @@ export function NavigationRig() {
         )
           camera.position.z = nextZ.z
         else velocity.current.z = 0
-        walkTime.current += delta * velocity.current.length() * 4.8
       }
+      const walkedDistance = Math.hypot(
+        camera.position.x - frameStartX,
+        camera.position.z - frameStartZ,
+      )
+      walkTime.current = advanceGaitPhase(walkTime.current, walkedDistance)
+      const actualWalkSpeed = walkedDistance / Math.max(delta, 0.001)
+      walkGaitBlend.current = THREE.MathUtils.lerp(
+        walkGaitBlend.current,
+        gaitWeightForSpeed(actualWalkSpeed),
+        1 - Math.exp(-delta * (walkedDistance > 0 ? 10 : 7)),
+      )
       verticalVelocity.current -= GRAVITY * delta
       const groundedHeight =
         (config.ground?.y ?? (runtimeBounds ? runtimeBounds.min[1] : 0)) +
@@ -432,8 +459,8 @@ export function NavigationRig() {
         camera.position.y + verticalVelocity.current * delta,
       )
       if (camera.position.y <= groundedHeight) verticalVelocity.current = 0
-      const stride = Math.sin(walkTime.current)
-      const bob = Math.abs(stride) * 0.012 - 0.006
+      const bob =
+        sampleHumanGait(walkTime.current, walkGaitBlend.current).bodyLift * 0.6
       camera.position.y = THREE.MathUtils.lerp(
         camera.position.y,
         groundedHeight + bob,
@@ -651,10 +678,35 @@ export function NavigationRig() {
         } else lastSafeAutoPosition.current.copy(destination)
       }
 
+      let autoGaitRoll = 0
+      const canSampleWalk = current.motion === 'walk' && !isFadeCut
+      if (!autoMotionReady.current || isFadeCut) {
+        autoMotionPosition.current.copy(destination)
+        autoMotionReady.current = true
+      }
+      const autoWalkDistance = canSampleWalk
+        ? Math.hypot(
+            destination.x - autoMotionPosition.current.x,
+            destination.z - autoMotionPosition.current.z,
+          )
+        : 0
+      autoMotionPosition.current.copy(destination)
+      autoGaitPhase.current = advanceGaitPhase(
+        autoGaitPhase.current,
+        autoWalkDistance,
+      )
+      autoGaitBlend.current = THREE.MathUtils.lerp(
+        autoGaitBlend.current,
+        gaitWeightForSpeed(autoWalkDistance / Math.max(delta, 0.001)),
+        1 - Math.exp(-delta * (canSampleWalk ? 9 : 7)),
+      )
       if (current.motion === 'walk') {
-        const footfalls = autoTime.current * 1.9 * Math.PI
-        destination.y += Math.abs(Math.sin(footfalls)) * 0.01 - 0.004
-        target.x += Math.sin(footfalls * 0.5) * 0.012
+        const autoGait = sampleHumanGait(
+          autoGaitPhase.current,
+          autoGaitBlend.current,
+        )
+        destination.y += autoGait.bodyLift * 0.55
+        autoGaitRoll = autoGait.bodyRoll * 0.32
       } else if (current.motion === 'drive' || current.motion === 'brake') {
         destination.y += Math.sin(autoTime.current * 17) * 0.0025
       } else if (current.motion === 'hold') {
@@ -682,6 +734,7 @@ export function NavigationRig() {
             ),
         )
       camera.lookAt(smoothedAutoTarget.current)
+      if (autoGaitRoll) camera.rotateZ(autoGaitRoll)
       const desiredFov = current.cameraMode === 'vehicle' ? 68 : 64
       if (Math.abs(perspectiveCamera.fov - desiredFov) > 0.05) {
         perspectiveCamera.fov = THREE.MathUtils.lerp(

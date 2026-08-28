@@ -5,6 +5,12 @@ import * as THREE from 'three'
 import { getJourney, journeyDuration } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
+import {
+  advanceGaitPhase,
+  gaitWeightForSpeed,
+  sampleHumanGait,
+  sampleIdleMotion,
+} from '@/three/humanMotion'
 
 const skin = new THREE.MeshStandardMaterial({
   color: '#d99b82',
@@ -49,6 +55,26 @@ function Arm({ side, armRef, paying }: ArmProps) {
         castShadow
         material={skin}
       />
+      <mesh
+        position={[side * 0.055, -0.092, -0.205]}
+        rotation={[1.08, side * 0.4, side * -0.72]}
+        castShadow
+        material={skin}
+      >
+        <capsuleGeometry args={[0.014, 0.052, 5, 10]} />
+      </mesh>
+      {([-1, 0, 1] as const).map((finger) => (
+        <RoundedBox
+          key={finger}
+          args={[0.022, 0.032, 0.068]}
+          radius={0.01}
+          smoothness={3}
+          position={[finger * 0.026, -0.107, -0.29]}
+          rotation={[0.12, 0, side * -0.02]}
+          castShadow
+          material={skin}
+        />
+      ))}
       {isActionHand && paying && (
         <group
           position={[0.015, -0.095, -0.285]}
@@ -82,6 +108,7 @@ export function FirstPersonAvatar() {
   const rightArm = useRef<THREE.Group>(null)
   const lastPosition = useRef(new THREE.Vector3())
   const gait = useRef(0)
+  const gaitBlend = useRef(0)
   const anchoredRightArmWorld = useRef<THREE.Matrix4 | null>(null)
   const inverseBodyMatrix = useRef(new THREE.Matrix4())
   const anchoredLocalMatrix = useRef(new THREE.Matrix4())
@@ -117,33 +144,49 @@ export function FirstPersonAvatar() {
       ].includes(step.id),
     )
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!body.current || !visible) {
       lastPosition.current.copy(camera.position)
       anchoredRightArmWorld.current = null
+      gaitBlend.current = 0
       return
     }
 
     const dx = camera.position.x - lastPosition.current.x
     const dz = camera.position.z - lastPosition.current.z
-    const horizontalSpeed = Math.hypot(dx, dz) / Math.max(delta, 0.001)
+    const distanceThisFrame = Math.hypot(dx, dz)
+    // Route cuts and mode changes are teleports, not a one-frame sprint.
+    const gaitDistance = distanceThisFrame < 0.35 ? distanceThisFrame : 0
+    const horizontalSpeed = gaitDistance / Math.max(delta, 0.001)
     lastPosition.current.copy(camera.position)
-    const moving = horizontalSpeed > 0.18
-    if (moving) gait.current += delta * Math.min(horizontalSpeed, 2.4) * 4.6
+    const moving = horizontalSpeed > 0.04
+    gait.current = advanceGaitPhase(gait.current, moving ? gaitDistance : 0)
+    gaitBlend.current = THREE.MathUtils.lerp(
+      gaitBlend.current,
+      gaitWeightForSpeed(horizontalSpeed),
+      1 - Math.exp(-delta * (moving ? 10 : 7)),
+    )
+    const gaitMotion = sampleHumanGait(gait.current, gaitBlend.current)
+    const idle = sampleIdleMotion(state.clock.elapsedTime + 1.4)
+    const idleWeight = 1 - gaitBlend.current
 
     body.current.position.copy(camera.position)
     body.current.quaternion.copy(camera.quaternion)
     body.current.scale.setScalar(
       THREE.MathUtils.clamp(personHeight / 1.8, 0.86, 1.12),
     )
+    body.current.translateX(gaitMotion.bodyRoll * 0.28)
+    body.current.translateY(gaitMotion.bodyLift * 0.35 + idle.lift * idleWeight)
+    body.current.rotateZ(-gaitMotion.bodyRoll * 0.45 + idle.sway * idleWeight)
 
     const settle = 1 - Math.exp(-delta * 14)
-    const swing = moving ? Math.sin(gait.current) * 0.055 : 0
-    const breathe = Math.sin(gait.current * 0.35) * 0.006
+    const leftSwing = gaitMotion.leftArm * 0.22
+    const rightSwing = gaitMotion.rightArm * 0.22
+    const breathe = idle.lift * 1.2 * idleWeight
     if (leftArm.current && rightArm.current) {
       leftArm.current.rotation.x = THREE.MathUtils.lerp(
         leftArm.current.rotation.x,
-        swing + breathe,
+        leftSwing + breathe,
         settle,
       )
       const elapsedBefore = journey.steps
@@ -172,7 +215,7 @@ export function FirstPersonAvatar() {
       )
       rightArm.current.rotation.x = THREE.MathUtils.lerp(
         rightArm.current.rotation.x,
-        -swing + breathe - extension * 0.08,
+        rightSwing + breathe - extension * 0.08,
         settle,
       )
       rightArm.current.position.x = THREE.MathUtils.lerp(

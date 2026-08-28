@@ -16,6 +16,7 @@ interface MovingPart {
 export function SvoltaDoorController() {
   const root = useStationRuntimeStore((state) => state.root)
   const isNight = useViewerStore((state) => state.timeOfDay === 'night')
+  const navigationMode = useViewerStore((state) => state.navigationMode)
   const { camera } = useThree()
   const parts = useRef<MovingPart[]>([])
   const openAmount = useRef(0)
@@ -48,7 +49,9 @@ export function SvoltaDoorController() {
     const distance = entrance.distanceTo(
       new THREE.Vector2(camera.position.x, camera.position.z),
     )
-    if (isNight) isOpen.current = false
+    // The guided Svolta journey must never cross a visibly closed leaf. In
+    // overview mode the night scene can still present the store as closed.
+    if (isNight && navigationMode !== 'auto') isOpen.current = false
     else if (distance < 3.15) isOpen.current = true
     else if (distance > 3.4) isOpen.current = false
     const desired = isOpen.current ? 1 : 0

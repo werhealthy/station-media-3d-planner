@@ -33,6 +33,8 @@ export function JourneyFuelNozzle() {
   const root = useStationRuntimeStore((state) => state.root)
   const { camera } = useThree()
   const viewModel = useRef<THREE.Group>(null)
+  const anchoredPosition = useRef<THREE.Vector3 | null>(null)
+  const anchoredQuaternion = useRef<THREE.Quaternion | null>(null)
   const forward = useMemo(() => new THREE.Vector3(), [])
   const right = useMemo(() => new THREE.Vector3(), [])
   const up = useMemo(() => new THREE.Vector3(), [])
@@ -49,9 +51,24 @@ export function JourneyFuelNozzle() {
   const held = isHeld(cue?.state)
   const driverVisible =
     held && cue?.owner === 'driver' && step?.cameraMode === 'pedestrian'
+  const anchoredDuringFueling =
+    driverVisible &&
+    Boolean(
+      step && (step.id.endsWith('-refuel') || step.id.includes('-dwell-')),
+    )
 
   useFrame(() => {
-    if (!viewModel.current || !driverVisible) return
+    if (!viewModel.current || !driverVisible) {
+      anchoredPosition.current = null
+      anchoredQuaternion.current = null
+      return
+    }
+    if (anchoredDuringFueling && anchoredPosition.current) {
+      viewModel.current.position.copy(anchoredPosition.current)
+      if (anchoredQuaternion.current)
+        viewModel.current.quaternion.copy(anchoredQuaternion.current)
+      return
+    }
     forward.set(0, 0, -1).applyQuaternion(camera.quaternion)
     right.set(1, 0, 0).applyQuaternion(camera.quaternion)
     up.set(0, 1, 0).applyQuaternion(camera.quaternion)
@@ -61,6 +78,13 @@ export function JourneyFuelNozzle() {
       .addScaledVector(right, 0.3)
       .addScaledVector(up, -0.31)
     viewModel.current.quaternion.copy(camera.quaternion).multiply(localRotation)
+    if (anchoredDuringFueling) {
+      anchoredPosition.current = viewModel.current.position.clone()
+      anchoredQuaternion.current = viewModel.current.quaternion.clone()
+    } else {
+      anchoredPosition.current = null
+      anchoredQuaternion.current = null
+    }
   })
 
   useEffect(() => {

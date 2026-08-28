@@ -1,16 +1,20 @@
 import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useRef } from 'react'
+import { Suspense, useRef } from 'react'
 import * as THREE from 'three'
 import { getJourney } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { dampAngle } from '@/three/angles'
+import { AnimatedJourneyCharacter } from './AnimatedJourneyCharacter'
 
 export function JourneyVehicle() {
   const mode = useViewerStore((state) => state.navigationMode)
   const activeRouteId = usePlaybackStore((state) => state.activeRouteId)
   const activeStepIndex = usePlaybackStore((state) => state.activeStepIndex)
+  const isPlaying = usePlaybackStore((state) => state.isPlaying)
+  const playbackSpeed = usePlaybackStore((state) => state.playbackSpeed)
+  const seekToken = usePlaybackStore((state) => state.seekToken)
   const { camera } = useThree()
   const cockpit = useRef<THREE.Group>(null)
   const vehicleYaw = useRef(-Math.PI / 2)
@@ -19,13 +23,27 @@ export function JourneyVehicle() {
   const movementReady = useRef(false)
   const journey = getJourney(activeRouteId)
   const step = journey.steps[activeStepIndex]
-  const visible = mode === 'auto' && step?.cameraMode === 'vehicle'
+  const characterTransition = step?.cameraTransition === 'character-cut'
+  const visible =
+    mode === 'auto' &&
+    step?.cameraMode === 'vehicle' &&
+    !characterTransition
   const phoneVisible = visible && step?.id === 'served-dwell-phone'
   const parkedCarVisible =
     mode === 'auto' &&
     Boolean(journey.parkedVehicle) &&
-    step?.cameraMode === 'pedestrian' &&
-    step.motion !== 'exit'
+    (step?.cameraMode === 'pedestrian' || characterTransition)
+  const transitionAnimation =
+    characterTransition && step?.motion === 'exit'
+      ? 'ExitingCar'
+      : characterTransition && step?.motion === 'enter'
+        ? 'EnteringCar'
+        : null
+  const transitionPlaybackSpeed = transitionAnimation
+    ? ((transitionAnimation === 'ExitingCar' ? 5.8 : 5.466) /
+        Math.max(step?.duration ?? 0.1, 0.1)) *
+      playbackSpeed
+    : playbackSpeed
 
   useFrame((_, delta) => {
     if (!cockpit.current || !visible) {
@@ -65,6 +83,15 @@ export function JourneyVehicle() {
   return (
     <>
       <group ref={cockpit} visible={visible}>
+        <Suspense fallback={null}>
+          <group position={[0, -1.64, 0.18]} rotation={[0, Math.PI, 0]}>
+            <AnimatedJourneyCharacter
+              animation="Driving"
+              paused={!isPlaying}
+              playbackSpeed={playbackSpeed}
+            />
+          </group>
+        </Suspense>
         <mesh position={[0, -0.58, -0.92]} receiveShadow>
           <boxGeometry args={[1.9, 0.32, 0.72]} />
           <meshStandardMaterial color="#171d27" roughness={0.72} />
@@ -136,28 +163,6 @@ export function JourneyVehicle() {
             />
           </mesh>
         </group>
-        {([-1, 1] as const).map((side) => (
-          <group key={side}>
-            <mesh
-              position={[side * 0.24, -0.51, -0.59]}
-              rotation={[1.03, 0, side * -0.18]}
-              castShadow
-            >
-              <cylinderGeometry args={[0.042, 0.057, 0.29, 18]} />
-              <meshStandardMaterial color="#d99b82" roughness={0.72} />
-            </mesh>
-            <RoundedBox
-              args={[0.09, 0.06, 0.13]}
-              radius={0.022}
-              smoothness={4}
-              position={[side * 0.17, -0.34, -0.79]}
-              rotation={[0.12, 0, side * -0.3]}
-              castShadow
-            >
-              <meshStandardMaterial color="#d99b82" roughness={0.72} />
-            </RoundedBox>
-          </group>
-        ))}
         {[-1, 1].map((side) => (
           <mesh
             key={side}
@@ -293,6 +298,35 @@ export function JourneyVehicle() {
           />
         </mesh>
       </group>
+
+      {transitionAnimation && journey.parkedVehicle && (
+        <group
+          position={
+            transitionAnimation === 'ExitingCar'
+              ? journey.parkedVehicle.position
+              : [
+                  journey.parkedVehicle.position[0],
+                  0,
+                  journey.parkedVehicle.position[2] + 1.9,
+                ]
+          }
+          rotation={[
+            0,
+            transitionAnimation === 'ExitingCar' ? -Math.PI / 2 : Math.PI,
+            0,
+          ]}
+          name="journey-driver-transition"
+        >
+          <Suspense fallback={null}>
+            <AnimatedJourneyCharacter
+              key={`${step?.id ?? 'transition'}-${seekToken}`}
+              animation={transitionAnimation}
+              paused={!isPlaying}
+              playbackSpeed={transitionPlaybackSpeed}
+            />
+          </Suspense>
+        </group>
+      )}
     </>
   )
 }

@@ -62,10 +62,10 @@ export interface JourneyStep {
   nozzle?: JourneyNozzleCue
   checkpoint?: string
   /**
-   * Nasconde con un breve nero i cambi di assetto che il prototipo non può
-   * ancora animare in modo credibile (auto/persona e soglie dello store).
+   * Regia usata soltanto quando cambia l'assetto auto/persona. L'ingresso
+   * Svolta resta invece nella stessa scena e attraversa le porte animate.
    */
-  cameraTransition?: 'fade-cut'
+  cameraTransition?: 'fade-cut' | 'character-cut'
 }
 
 export interface StationJourney {
@@ -522,7 +522,7 @@ function selfFuelSteps(prefix: 'self' | 'svolta'): JourneyStep[] {
       cameraMode: 'vehicle',
       motion: 'enter',
       vehicleYaw: WESTBOUND,
-      cameraTransition: 'fade-cut',
+      cameraTransition: 'character-cut',
     },
   ]
 }
@@ -810,7 +810,7 @@ const selfServiceSteps: JourneyStep[] = [
     cameraMode: 'pedestrian',
     motion: 'exit',
     terminalScreen: 'idle',
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   {
     id: 'self-around-car',
@@ -889,7 +889,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     duration: 1.4,
     cameraMode: 'pedestrian',
     motion: 'exit',
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   {
     id: 'svolta-clear-car',
@@ -948,11 +948,10 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Entra nell’ambiente retail Svolta',
     position: [9.5, 1.69, -5.6],
     gazeTarget: [10.3, 1.35, -7.7],
-    duration: 1.4,
+    duration: 2.2,
     cameraMode: 'pedestrian',
     motion: 'walk',
     checkpoint: 'Ingresso in Svolta',
-    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-counter',
@@ -982,10 +981,9 @@ const servedSvoltaSteps: JourneyStep[] = [
     label: 'Esce dallo store e riprende la diagonale verso l’auto',
     position: [9.5, 1.69, -3.7],
     gazeTarget: [8.45, 1.5, -0.45],
-    duration: 1.4,
+    duration: 2.2,
     cameraMode: 'pedestrian',
     motion: 'walk',
-    cameraTransition: 'fade-cut',
   },
   {
     id: 'svolta-return-behind-pumps',
@@ -1027,7 +1025,7 @@ const servedSvoltaSteps: JourneyStep[] = [
     cameraMode: 'vehicle',
     motion: 'enter',
     vehicleYaw: WESTBOUND,
-    cameraTransition: 'fade-cut',
+    cameraTransition: 'character-cut',
   },
   ...departureSteps('svolta'),
 ]

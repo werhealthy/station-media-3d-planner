@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { getJourney } from '@/domain/journeys'
+import { presentedCameraMode } from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 import { dampAngle } from '@/three/angles'
@@ -11,6 +12,7 @@ export function JourneyVehicle() {
   const mode = useViewerStore((state) => state.navigationMode)
   const activeRouteId = usePlaybackStore((state) => state.activeRouteId)
   const activeStepIndex = usePlaybackStore((state) => state.activeStepIndex)
+  const progress = usePlaybackStore((state) => state.progress)
   const { camera } = useThree()
   const cockpit = useRef<THREE.Group>(null)
   const vehicleYaw = useRef(-Math.PI / 2)
@@ -19,15 +21,16 @@ export function JourneyVehicle() {
   const movementReady = useRef(false)
   const journey = getJourney(activeRouteId)
   const step = journey.steps[activeStepIndex]
-  const visible = mode === 'auto' && step?.cameraMode === 'vehicle'
+  const cameraMode = presentedCameraMode(journey, activeStepIndex, progress)
+  const visible = mode === 'auto' && cameraMode === 'vehicle'
   const phoneVisible = visible && step?.id === 'served-dwell-phone'
   const parkedCarVisible =
     mode === 'auto' &&
     Boolean(journey.parkedVehicle) &&
-    (step?.cameraMode === 'pedestrian' || step?.cameraTransition === 'fade-cut')
+    cameraMode === 'pedestrian'
 
   useFrame((_, delta) => {
-    if (!cockpit.current || !visible) {
+    if (!cockpit.current || !visible || !step) {
       movementReady.current = false
       return
     }

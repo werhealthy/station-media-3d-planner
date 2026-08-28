@@ -24,6 +24,9 @@ export function AutoWalkthroughPanel() {
     (s) => s.resetInteractiveJourney,
   )
   const journey = getJourney(activeRouteId)
+  const activeStep = journey.steps[activeStepIndex] ?? journey.steps[0]!
+  const [phaseCode, ...phaseWords] = activeStep.phase.split(' · ')
+  const phaseTitle = phaseWords.join(' · ') || phaseCode
   const journeyLabel = !serviceChoice ? 'Ingresso Q8' : journey.name
   const duration = journeyDuration(journey)
   const choiceLimit = !serviceChoice
@@ -66,10 +69,10 @@ export function AutoWalkthroughPanel() {
     <section className="auto-panel" aria-label="Controlli auto walkthrough">
       <div className="auto-summary">
         <span className="eyebrow">
-          <Sparkles size={14} /> Tour interattivo
+          <Sparkles size={14} /> {journeyLabel}
         </span>
-        <strong>{journeyLabel}</strong>
-        <span>La scena si ferma alle scelte di servizio e pagamento</span>
+        <strong>{phaseTitle}</strong>
+        <span>{activeStep.label}</span>
       </div>
       <button
         className="play-button"

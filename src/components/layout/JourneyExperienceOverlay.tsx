@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { CreditCard, Fuel, Store, UserRound, Zap } from 'lucide-react'
 import { getJourney, journeyDuration, type JourneyId } from '@/domain/journeys'
+import { journeyStepLocalProgress } from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -18,16 +19,10 @@ export function JourneyExperienceOverlay() {
   const step = journey.steps[activeStepIndex]
   const journeyHeading = !serviceChoice ? 'Ingresso Q8' : journey.name
   const duration = journeyDuration(journey)
-  const elapsedBeforeStep = journey.steps
-    .slice(0, activeStepIndex)
-    .reduce((total, item) => total + item.duration, 0)
-  const stepLocalProgress = Math.min(
-    1,
-    Math.max(
-      0,
-      (progress * duration - elapsedBeforeStep) /
-        Math.max(step?.duration ?? 0.001, 0.001),
-    ),
+  const stepLocalProgress = journeyStepLocalProgress(
+    journey,
+    activeStepIndex,
+    progress,
   )
   const cinematicFade =
     step?.cameraTransition === 'fade-cut'
@@ -73,6 +68,9 @@ export function JourneyExperienceOverlay() {
 
   if (mode !== 'auto' || !step) return null
 
+  const [phaseCode, ...phaseWords] = step.phase.split(' · ')
+  const phaseTitle = phaseWords.join(' · ') || phaseCode
+
   const continueAfterDecision = (
     targetRouteId: JourneyId,
     choices: {
@@ -80,7 +78,10 @@ export function JourneyExperienceOverlay() {
       paymentChoice?: 'operator' | 'svolta'
     },
   ) => {
-    const decisionId = step.decision ? step.id : 'common-service-choice'
+    const decisionId =
+      pendingDecision === 'operator-payment'
+        ? 'served-payment-choice'
+        : 'common-service-choice'
     continueOnRoute({
       routeId: targetRouteId,
       resumeAfterStepId: decisionId,
@@ -99,8 +100,12 @@ export function JourneyExperienceOverlay() {
       )}
       {!pendingDecision && (
         <div className="journey-phase" aria-live="polite">
-          <span>{journeyHeading}</span>
-          <strong>{step.phase}</strong>
+          <div>
+            <span>{journeyHeading}</span>
+            {phaseWords.length > 0 && <b>{phaseCode}</b>}
+          </div>
+          <strong>{phaseTitle}</strong>
+          <p>{step.label}</p>
         </div>
       )}
 

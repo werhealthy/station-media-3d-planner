@@ -79,7 +79,7 @@ export async function loadProceduralVisualAssets(): Promise<
   const [asphalt, concrete, grass, foliageMesh] = await Promise.allSettled([
     loadSurfaceTextureSet(textureLoader, 'asphalt_07', [18, 13]),
     loadSurfaceTextureSet(textureLoader, 'rough_concrete', [15, 9]),
-    loadSurfaceTextureSet(textureLoader, 'sparse_grass', [28, 20]),
+    loadSurfaceTextureSet(textureLoader, 'leafy_grass', [24, 18]),
     loadFoliageMesh(),
   ])
   return {

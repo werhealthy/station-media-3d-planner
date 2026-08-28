@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
 import { getJourney } from './journeys'
-import { arrivalCurveCollisions, pedestrianCollisionAt } from './journeySafety'
+import {
+  arrivalCurveCollisions,
+  pedestrianCollisionAt,
+  pedestrianVehicleCollisionAt,
+} from './journeySafety'
 
 function segmentCollisions(
   from: [number, number, number],
@@ -33,6 +37,20 @@ function splineCollisions(points: Array<[number, number, number]>): string[] {
   return [...collisions]
 }
 
+function segmentCrossesParkedVehicle(
+  from: [number, number, number],
+  to: [number, number, number],
+  vehicle: { position: [number, number, number]; yaw: number },
+): boolean {
+  const start = new THREE.Vector3(...from)
+  const end = new THREE.Vector3(...to)
+  for (let index = 0; index <= 80; index += 1) {
+    const point = start.clone().lerp(end, index / 80)
+    if (pedestrianVehicleCollisionAt(point, vehicle)) return true
+  }
+  return false
+}
+
 describe('journey physical safety', () => {
   it.each(['servito', 'self-service', 'servito-svolta'] as const)(
     'keeps the full %s vehicle footprint outside every obstacle',
@@ -54,6 +72,29 @@ describe('journey physical safety', () => {
           segmentCollisions(steps[index - 1]!.position, steps[index]!.position),
           `${steps[index - 1]!.id} -> ${steps[index]!.id}`,
         ).toEqual([])
+      }
+    },
+  )
+
+  it.each(['self-service', 'servito-svolta'] as const)(
+    'keeps every %s pedestrian segment outside the parked car',
+    (journeyId) => {
+      const journey = getJourney(journeyId)
+      const vehicle = journey.parkedVehicle
+      expect(vehicle).toBeDefined()
+      if (!vehicle) return
+      const steps = journey.steps.filter(
+        (step) => step.cameraMode === 'pedestrian',
+      )
+      for (let index = 1; index < steps.length; index += 1) {
+        expect(
+          segmentCrossesParkedVehicle(
+            steps[index - 1]!.position,
+            steps[index]!.position,
+            vehicle,
+          ),
+          `${steps[index - 1]!.id} -> ${steps[index]!.id}`,
+        ).toBe(false)
       }
     },
   )

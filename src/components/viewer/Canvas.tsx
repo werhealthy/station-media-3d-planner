@@ -34,6 +34,7 @@ import { JourneyActors } from './JourneyActors'
 import { JourneyFuelNozzle } from './JourneyFuelNozzle'
 import { SvoltaDoorController } from './SvoltaDoorController'
 import { useViewerStore } from '@/stores/viewerStore'
+import { FirstPersonArms } from './FirstPersonArms'
 
 function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
@@ -44,10 +45,10 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
 
   return (
     <>
-      <color attach="background" args={[isNight ? '#111e38' : '#a9cfea']} />
+      <color attach="background" args={[isNight ? '#111e38' : '#c5e8fa']} />
       <fog
         attach="fog"
-        args={[isNight ? '#192844' : '#afcee2', isNight ? 88 : 118, 255]}
+        args={[isNight ? '#192844' : '#c7e7d7', isNight ? 88 : 128, 270]}
       />
       {isNight ? (
         <Stars
@@ -68,16 +69,16 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           mieDirectionalG={0.82}
         />
       )}
-      <ambientLight intensity={isNight ? 0.25 : 0.18} />
+      <ambientLight intensity={isNight ? 0.25 : 0.27} />
       <hemisphereLight
         args={
-          isNight ? ['#8299c8', '#202733', 0.78] : ['#edf8ff', '#555950', 1.15]
+          isNight ? ['#8299c8', '#202733', 0.78] : ['#f4fbff', '#668c5f', 1.2]
         }
       />
       <directionalLight
         position={isNight ? [18, 24, -12] : [-18, 30, 22]}
         color={isNight ? '#a9c2ff' : '#ffffff'}
-        intensity={isNight ? 0.92 : 2.9}
+        intensity={isNight ? 0.92 : 2.65}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-38}
@@ -142,7 +143,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
       )}
       <Environment
         preset={isNight ? 'night' : 'city'}
-        environmentIntensity={isNight ? 0.38 : 0.42}
+        environmentIntensity={isNight ? 0.38 : 0.5}
       />
     </>
   )
@@ -313,6 +314,7 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
+        <FirstPersonArms />
         <JourneyVehicle />
         <JourneyActors />
         <JourneyFuelNozzle />

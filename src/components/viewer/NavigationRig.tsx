@@ -14,6 +14,7 @@ import {
 import {
   createArrivalCurve,
   pedestrianCollisionAt,
+  pedestrianVehicleCollisionAt,
   vehicleCollisionAt,
   vehicleYawFromTangent,
 } from '@/domain/journeySafety'
@@ -300,7 +301,7 @@ export function NavigationRig() {
         const elapsed = activeJourney.steps
           .slice(0, index + 1)
           .reduce((total, item) => total + item.duration, 0)
-        return routeTime <= elapsed
+        return routeTime < elapsed
       })
       const start =
         routeTime <= arrivalDuration
@@ -500,10 +501,7 @@ export function NavigationRig() {
       let elapsed = 0
       let stepIndex = activeJourney.steps.length - 1
       for (let index = 0; index < activeJourney.steps.length; index += 1) {
-        if (
-          autoTime.current <=
-          elapsed + activeJourney.steps[index]!.duration
-        ) {
+        if (autoTime.current < elapsed + activeJourney.steps[index]!.duration) {
           stepIndex = index
           break
         }
@@ -653,7 +651,14 @@ export function NavigationRig() {
         }
 
         if (current.cameraMode === 'pedestrian' && !isFadeCut) {
-          if (pedestrianCollisionAt(destination))
+          if (
+            pedestrianCollisionAt(destination) ||
+            (activeJourney.parkedVehicle &&
+              pedestrianVehicleCollisionAt(
+                destination,
+                activeJourney.parkedVehicle,
+              ))
+          )
             destination.copy(lastSafeAutoPosition.current)
           else lastSafeAutoPosition.current.copy(destination)
         } else lastSafeAutoPosition.current.copy(destination)

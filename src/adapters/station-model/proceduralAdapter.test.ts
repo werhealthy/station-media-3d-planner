@@ -99,4 +99,21 @@ describe('proceduralAdapter composition', () => {
 
     proceduralAdapter.dispose(handle)
   })
+
+  it('always builds a dense forest belt around the station', async () => {
+    const handle = await proceduralAdapter.load()
+    const crowns = handle.root.getObjectByName(
+      'landscape-paradise-forest-crowns',
+    )
+
+    expect(crowns).toBeInstanceOf(THREE.InstancedMesh)
+    expect((crowns as THREE.InstancedMesh).count).toBeGreaterThan(300)
+    const bounds = new THREE.Box3().setFromObject(crowns!)
+    const size = bounds.getSize(new THREE.Vector3())
+    expect(size.x).toBeGreaterThan(80)
+    expect(size.y).toBeGreaterThan(6)
+    expect(size.z).toBeGreaterThan(35)
+
+    proceduralAdapter.dispose(handle)
+  })
 })

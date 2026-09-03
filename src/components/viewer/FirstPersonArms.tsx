@@ -1,4 +1,3 @@
-import { RoundedBox } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
@@ -9,6 +8,14 @@ import { useViewerStore } from '@/stores/viewerStore'
 
 const cameraPosition = new THREE.Vector3()
 const cameraQuaternion = new THREE.Quaternion()
+const TERMINAL_TOUCH_STEPS = new Set([
+  'self-terminal-start',
+  'self-no-payback',
+  'self-select-pump',
+  'self-select-fuel',
+  'self-select-payment',
+  'self-review',
+])
 
 export function FirstPersonArms() {
   const rig = useRef<THREE.Group>(null)
@@ -26,13 +33,17 @@ export function FirstPersonArms() {
   const isPlaying = usePlaybackStore((state) => state.isPlaying)
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
+  const pedestrianView =
+    presentedCameraMode(journey, activeStepIndex, progress) === 'pedestrian'
   const autoWalk =
+    mode === 'auto' && isPlaying && pedestrianView && step?.motion === 'walk'
+  const terminalTouch =
     mode === 'auto' &&
     isPlaying &&
-    presentedCameraMode(journey, activeStepIndex, progress) === 'pedestrian' &&
-    step?.motion === 'walk'
+    pedestrianView &&
+    Boolean(step && TERMINAL_TOUCH_STEPS.has(step.id))
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!rig.current || !leftArm.current || !rightArm.current) return
     camera.getWorldPosition(cameraPosition)
     camera.getWorldQuaternion(cameraQuaternion)
@@ -44,7 +55,7 @@ export function FirstPersonArms() {
     lastPosition.current.copy(cameraPosition)
 
     const manualWalk = mode === 'walkthrough' && speed > 0.12
-    const targetVisibility = autoWalk || manualWalk ? 1 : 0
+    const targetVisibility = autoWalk || manualWalk || terminalTouch ? 1 : 0
     visibility.current = THREE.MathUtils.lerp(
       visibility.current,
       targetVisibility,
@@ -55,12 +66,24 @@ export function FirstPersonArms() {
     rig.current.quaternion.copy(cameraQuaternion)
     rig.current.scale.setScalar(visibility.current)
 
-    const gaitWeight = Math.min(1, speed / 1.5) * targetVisibility
+    const gaitWeight =
+      Math.min(1, speed / 1.5) * (autoWalk || manualWalk ? 1 : 0)
     gaitPhase.current += delta * THREE.MathUtils.lerp(5.2, 7.2, gaitWeight)
     const swing = Math.sin(gaitPhase.current) * 0.09 * gaitWeight
     const lift = Math.abs(Math.sin(gaitPhase.current)) * 0.012 * gaitWeight
+    const touchCycle = (state.clock.elapsedTime * 0.72) % 1
+    const touchReach = terminalTouch
+      ? THREE.MathUtils.smoothstep(touchCycle, 0.12, 0.3) *
+        (1 - THREE.MathUtils.smoothstep(touchCycle, 0.48, 0.68))
+      : 0
+    leftArm.current.position.set(-0.42, -0.58, -0.72)
+    rightArm.current.position.set(
+      0.42 - touchReach * 0.32,
+      -0.58 + touchReach * 0.28,
+      -0.72 + touchReach * 0.1,
+    )
     leftArm.current.rotation.x = swing
-    rightArm.current.rotation.x = -swing
+    rightArm.current.rotation.x = -swing - touchReach * 0.08
     rig.current.position.y += lift
   })
 
@@ -76,16 +99,15 @@ export function FirstPersonArms() {
             <capsuleGeometry args={[0.09, 0.34, 7, 14]} />
             <meshStandardMaterial color="#17366f" roughness={0.82} />
           </mesh>
-          <RoundedBox
-            args={[0.16, 0.14, 0.2]}
-            radius={0.055}
-            smoothness={4}
+          <mesh
             position={[0, 0.28, -0.46]}
             rotation={[-0.12, 0, side * 0.04]}
+            scale={[0.88, 0.78, 1.08]}
             castShadow
           >
+            <sphereGeometry args={[0.105, 18, 12]} />
             <meshStandardMaterial color="#d59b7f" roughness={0.8} />
-          </RoundedBox>
+          </mesh>
         </group>
       ))}
     </group>

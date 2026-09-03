@@ -1,12 +1,6 @@
 /* eslint-disable react-hooks/immutability -- R3F renderer exposure is mutable scene state. */
 import { Canvas as R3FCanvas, useThree } from '@react-three/fiber'
-import {
-  ContactShadows,
-  Environment,
-  Html,
-  Sky,
-  Stars,
-} from '@react-three/drei'
+import { ContactShadows, Environment, Html, Stars } from '@react-three/drei'
 import { Suspense, useCallback, useEffect, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -36,6 +30,40 @@ import { SvoltaDoorController } from './SvoltaDoorController'
 import { useViewerStore } from '@/stores/viewerStore'
 import { FirstPersonArms } from './FirstPersonArms'
 
+function DaySky() {
+  const geometry = useMemo(() => {
+    const sky = new THREE.SphereGeometry(1, 48, 24)
+    const positions = sky.getAttribute('position')
+    const colors = new Float32Array(positions.count * 3)
+    const horizon = new THREE.Color('#73c8f4')
+    const zenith = new THREE.Color('#168fe0')
+    const color = new THREE.Color()
+    for (let index = 0; index < positions.count; index += 1) {
+      const blend = THREE.MathUtils.smoothstep(
+        positions.getY(index),
+        -0.05,
+        0.72,
+      )
+      color.copy(horizon).lerp(zenith, blend)
+      color.toArray(colors, index * 3)
+    }
+    sky.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    return sky
+  }, [])
+
+  return (
+    <mesh geometry={geometry} scale={240} frustumCulled={false}>
+      <meshBasicMaterial
+        vertexColors
+        side={THREE.BackSide}
+        depthWrite={false}
+        fog={false}
+        toneMapped={false}
+      />
+    </mesh>
+  )
+}
+
 function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
 
@@ -45,10 +73,10 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
 
   return (
     <>
-      <color attach="background" args={[isNight ? '#111e38' : '#c5e8fa']} />
+      <color attach="background" args={[isNight ? '#111e38' : '#5db8ec']} />
       <fog
         attach="fog"
-        args={[isNight ? '#192844' : '#c7e7d7', isNight ? 88 : 128, 270]}
+        args={[isNight ? '#192844' : '#72bfe9', isNight ? 88 : 125, 245]}
       />
       {isNight ? (
         <Stars
@@ -60,14 +88,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           speed={0.25}
         />
       ) : (
-        <Sky
-          distance={450000}
-          sunPosition={[-18, 30, 22]}
-          turbidity={6.5}
-          rayleigh={1.65}
-          mieCoefficient={0.005}
-          mieDirectionalG={0.82}
-        />
+        <DaySky />
       )}
       <ambientLight intensity={isNight ? 0.25 : 0.27} />
       <hemisphereLight

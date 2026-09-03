@@ -27,6 +27,18 @@ const OVERVIEW_TARGET = new THREE.Vector3(0, 2.2, -2)
 const WALK_SPEED = 1.68
 const SPRINT_SPEED = 2.72
 const GRAVITY = 18
+const WALKTHROUGH_KEYS = new Set([
+  'KeyW',
+  'KeyA',
+  'KeyS',
+  'KeyD',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ShiftLeft',
+  'ShiftRight',
+])
 
 interface PedestrianMotionSegment {
   firstStepIndex: number
@@ -231,18 +243,46 @@ export function NavigationRig() {
   }, [camera, perspectiveCamera, requestedView, viewRequestId])
 
   useEffect(() => {
-    const down = (event: KeyboardEvent) => {
-      keys.current.add(event.code)
-      if (event.code === 'Escape' && mode === 'walkthrough') setMode('overview')
+    const clearMovement = () => {
+      keys.current.clear()
+      velocity.current.set(0, 0, 0)
     }
-    const up = (event: KeyboardEvent) => keys.current.delete(event.code)
+    const down = (event: KeyboardEvent) => {
+      if (event.code === 'Escape' && mode === 'walkthrough') {
+        clearMovement()
+        setMode('overview')
+        return
+      }
+      if (mode !== 'walkthrough' || !WALKTHROUGH_KEYS.has(event.code)) return
+      event.preventDefault()
+      keys.current.add(event.code)
+    }
+    const up = (event: KeyboardEvent) => {
+      if (!WALKTHROUGH_KEYS.has(event.code)) return
+      event.preventDefault()
+      keys.current.delete(event.code)
+    }
+    const visibilityChange = () => {
+      if (document.hidden) clearMovement()
+    }
+    const pointerLockChange = () => {
+      if (document.pointerLockElement !== gl.domElement) clearMovement()
+    }
+    clearMovement()
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
+    window.addEventListener('blur', clearMovement)
+    document.addEventListener('visibilitychange', visibilityChange)
+    document.addEventListener('pointerlockchange', pointerLockChange)
     return () => {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
+      window.removeEventListener('blur', clearMovement)
+      document.removeEventListener('visibilitychange', visibilityChange)
+      document.removeEventListener('pointerlockchange', pointerLockChange)
+      clearMovement()
     }
-  }, [mode, setMode])
+  }, [gl.domElement, mode, setMode])
 
   useEffect(() => {
     if (mode !== 'walkthrough') {
@@ -398,8 +438,10 @@ export function NavigationRig() {
         : move
       velocity.current.lerp(
         desiredVelocity,
-        1 - Math.exp(-delta * (move.lengthSq() ? 7 : 9)),
+        1 - Math.exp(-delta * (move.lengthSq() ? 6.5 : 12)),
       )
+      if (!move.lengthSq() && velocity.current.lengthSq() < 0.0004)
+        velocity.current.set(0, 0, 0)
       if (velocity.current.lengthSq() > 0.002) {
         const next = camera.position
           .clone()

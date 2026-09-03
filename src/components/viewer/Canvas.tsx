@@ -35,8 +35,8 @@ function DaySky() {
     const sky = new THREE.SphereGeometry(1, 48, 24)
     const positions = sky.getAttribute('position')
     const colors = new Float32Array(positions.count * 3)
-    const horizon = new THREE.Color('#73c8f4')
-    const zenith = new THREE.Color('#168fe0')
+    const horizon = new THREE.Color('#a9d2e4')
+    const zenith = new THREE.Color('#478fbe')
     const color = new THREE.Color()
     for (let index = 0; index < positions.count; index += 1) {
       const blend = THREE.MathUtils.smoothstep(
@@ -68,15 +68,15 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
   const { gl } = useThree()
 
   useEffect(() => {
-    gl.toneMappingExposure = isNight ? 1.08 : 1.12
+    gl.toneMappingExposure = isNight ? 1.08 : 1.04
   }, [gl, isNight])
 
   return (
     <>
-      <color attach="background" args={[isNight ? '#111e38' : '#5db8ec']} />
+      <color attach="background" args={[isNight ? '#111e38' : '#83bad5']} />
       <fog
         attach="fog"
-        args={[isNight ? '#192844' : '#72bfe9', isNight ? 88 : 125, 245]}
+        args={[isNight ? '#192844' : '#a2c9d8', isNight ? 88 : 130, 245]}
       />
       {isNight ? (
         <Stars
@@ -93,13 +93,13 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
       <ambientLight intensity={isNight ? 0.25 : 0.27} />
       <hemisphereLight
         args={
-          isNight ? ['#8299c8', '#202733', 0.78] : ['#f4fbff', '#668c5f', 1.2]
+          isNight ? ['#8299c8', '#202733', 0.78] : ['#f4fbff', '#70786b', 1.08]
         }
       />
       <directionalLight
         position={isNight ? [18, 24, -12] : [-18, 30, 22]}
         color={isNight ? '#a9c2ff' : '#ffffff'}
-        intensity={isNight ? 0.92 : 2.65}
+        intensity={isNight ? 0.92 : 2.3}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-38}

@@ -95,17 +95,21 @@ export function FirstPersonArms() {
           ref={side === -1 ? leftArm : rightArm}
           position={[side * 0.42, -0.58, -0.72]}
         >
-          <mesh rotation={[-1.02, 0, side * 0.06]} castShadow>
-            <capsuleGeometry args={[0.09, 0.34, 7, 14]} />
+          <mesh
+            position={[0, 0.21, -0.21]}
+            rotation={[-Math.PI / 4, 0, side * 0.04]}
+            castShadow
+          >
+            <capsuleGeometry args={[0.09, 0.4, 7, 14]} />
             <meshStandardMaterial color="#17366f" roughness={0.82} />
           </mesh>
           <mesh
-            position={[0, 0.28, -0.46]}
-            rotation={[-0.12, 0, side * 0.04]}
-            scale={[0.88, 0.78, 1.08]}
+            position={[0, 0.42, -0.42]}
+            rotation={[-0.08, 0, side * 0.03]}
+            scale={[0.94, 0.86, 1]}
             castShadow
           >
-            <sphereGeometry args={[0.105, 18, 12]} />
+            <sphereGeometry args={[0.112, 14, 10]} />
             <meshStandardMaterial color="#d59b7f" roughness={0.8} />
           </mesh>
         </group>

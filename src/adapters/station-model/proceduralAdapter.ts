@@ -189,37 +189,33 @@ function createParkTerrainGeometry() {
   return geometry
 }
 
-function createOrganicCrownGeometry() {
-  const geometry = new THREE.IcosahedronGeometry(1, 1)
-  const positions = geometry.getAttribute('position')
-  for (let index = 0; index < positions.count; index += 1) {
-    const x = positions.getX(index)
-    const y = positions.getY(index)
-    const z = positions.getZ(index)
-    const variation =
-      1 + Math.sin(index * 2.31 + x * 3.7) * 0.08 + Math.cos(y * 5.1) * 0.05
-    positions.setXYZ(index, x * variation, y * variation, z * variation)
-  }
-  positions.needsUpdate = true
-  geometry.computeVertexNormals()
-  return geometry
-}
-
 function parkTreePositions(): Array<[number, number, number]> {
-  const positions: Array<[number, number, number]> = []
-  for (let row = 0; row < 12; row += 1) {
-    for (let column = 0; column < 15; column += 1) {
-      const phase = row * 17 + column * 11
-      // Keep alternate cells empty: each tree remains readable instead of
-      // becoming another continuous wall of foliage.
-      if ((phase * 7) % 13 > 6) continue
-      const x = -77 + column * 11 + Math.sin(phase * 1.37) * 2.1
-      const z = -73 + row * 11.5 + Math.cos(phase * 1.73) * 2
-      // The forecourt, road and shop remain unobstructed while the wider
-      // landscape receives trees in every direction.
-      if (Math.abs(x) < 38 && z > -33 && z < 29) continue
-      positions.push([x, z, 0.86 + (phase % 7) * 0.035])
-    }
+  const positions: Array<[number, number, number]> = [
+    [-21, -14.5, 0.92],
+    [-16, -14.2, 1.08],
+    [-10.5, -14.6, 0.88],
+    [-4.5, -14.2, 1.16],
+    [2, -14.5, 0.96],
+    [8.5, -14.3, 1.12],
+    [15, -14.5, 0.9],
+    [21, -14.1, 1.08],
+    [-22, -8, 0.9],
+    [-22, 4, 1.02],
+  ]
+  let treeId = positions.length
+  for (let x = -34; x <= 34; x += 5.2) {
+    positions.push([
+      x,
+      -27.5 + Math.sin(x * 0.37) * 0.9,
+      0.92 + ((treeId * 17) % 7) * 0.045,
+    ])
+    treeId += 1
+  }
+  for (let z = -22; z <= 11; z += 6.3) {
+    positions.push([-36, z, 0.82 + (treeId % 4) * 0.06])
+    treeId += 1
+    positions.push([36, z + 1.8, 0.88 + (treeId % 3) * 0.06])
+    treeId += 1
   }
   return positions
 }
@@ -228,41 +224,68 @@ function addParkTrees(root: THREE.Object3D) {
   const treePositions = parkTreePositions()
   const transform = new THREE.Object3D()
   const trunks = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(0.19, 0.34, 4.5, 9, 3),
-    mat('#6a5142', 0.96),
+    new THREE.CylinderGeometry(0.24, 0.34, 4.6, 14, 3),
+    mat('#72513a', 0.96),
     treePositions.length,
   )
   trunks.name = 'landscape-park-tree-trunks'
+  trunks.castShadow = true
   trunks.receiveShadow = true
+
+  const branchesPerTree = 2
+  const branches = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.075, 0.13, 1.5, 10),
+    mat('#72513a', 0.96),
+    treePositions.length * branchesPerTree,
+  )
+  branches.name = 'landscape-park-tree-branches'
+  branches.castShadow = true
+  branches.receiveShadow = true
 
   const crownMaterial = new THREE.MeshStandardMaterial({
     color: '#ffffff',
-    roughness: 0.94,
-    flatShading: true,
+    roughness: 0.9,
   })
-  const crownsPerTree = 3
+  const crownsPerTree = 5
   const crowns = new THREE.InstancedMesh(
-    createOrganicCrownGeometry(),
+    new THREE.SphereGeometry(1, 18, 12),
     crownMaterial,
     treePositions.length * crownsPerTree,
   )
   crowns.name = 'landscape-park-tree-crowns'
+  crowns.castShadow = true
   crowns.receiveShadow = true
-  const crownColors = ['#3d6545', '#4b7550', '#5b8458', '#6d9162']
+  const crownColors = ['#315d35', '#416f3e', '#4f7d44', '#5e8950']
   const crownLobes: Array<[number, number, number, number, number, number]> = [
-    [0, 5.02, 0, 2.2, 1.92, 2.05],
-    [-1.05, 4.72, 0.14, 1.58, 1.43, 1.6],
-    [1.02, 4.8, -0.16, 1.65, 1.49, 1.57],
+    [0, 5.35, 0, 1.9, 1.65, 1.72],
+    [-1.35, 4.85, 0.18, 1.35, 1.2, 1.28],
+    [1.25, 4.9, -0.18, 1.4, 1.22, 1.34],
+    [-0.55, 6.25, -0.1, 1.3, 1.15, 1.22],
+    [0.78, 6.05, 0.25, 1.28, 1.12, 1.2],
   ]
 
+  let branchIndex = 0
   let crownIndex = 0
   for (const [treeIndex, [x, z, scale]] of treePositions.entries()) {
     const groundY = parkTerrainHeightAt(x, z)
-    transform.position.set(x, groundY + 2.25 * scale, z)
+    transform.position.set(x, groundY + 2.3 * scale, z)
     transform.rotation.set(0, Math.sin(treeIndex * 1.47) * 0.28, 0)
     transform.scale.set(scale, scale, scale)
     transform.updateMatrix()
     trunks.setMatrixAt(treeIndex, transform.matrix)
+
+    for (const side of [-1, 1] as const) {
+      transform.position.set(
+        x + side * 0.48 * scale,
+        groundY + 3.62 * scale,
+        z + side * 0.08 * scale,
+      )
+      transform.rotation.set(0, treeIndex * 0.43, side * 0.66)
+      transform.scale.set(scale, scale, scale)
+      transform.updateMatrix()
+      branches.setMatrixAt(branchIndex, transform.matrix)
+      branchIndex += 1
+    }
 
     for (const [lobeIndex, [lx, ly, lz, sx, sy, sz]] of crownLobes.entries()) {
       transform.position.set(
@@ -288,9 +311,10 @@ function addParkTrees(root: THREE.Object3D) {
     }
   }
   trunks.instanceMatrix.needsUpdate = true
+  branches.instanceMatrix.needsUpdate = true
   crowns.instanceMatrix.needsUpdate = true
   if (crowns.instanceColor) crowns.instanceColor.needsUpdate = true
-  root.add(trunks, crowns)
+  root.add(trunks, branches, crowns)
 }
 
 function pump(

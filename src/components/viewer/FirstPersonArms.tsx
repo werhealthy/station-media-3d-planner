@@ -69,21 +69,21 @@ export function FirstPersonArms() {
     const gaitWeight =
       Math.min(1, speed / 1.5) * (autoWalk || manualWalk ? 1 : 0)
     gaitPhase.current += delta * THREE.MathUtils.lerp(5.2, 7.2, gaitWeight)
-    const swing = Math.sin(gaitPhase.current) * 0.09 * gaitWeight
-    const lift = Math.abs(Math.sin(gaitPhase.current)) * 0.012 * gaitWeight
+    const swing = Math.sin(gaitPhase.current) * 0.055 * gaitWeight
+    const lift = Math.abs(Math.sin(gaitPhase.current)) * 0.008 * gaitWeight
     const touchCycle = (state.clock.elapsedTime * 0.72) % 1
     const touchReach = terminalTouch
       ? THREE.MathUtils.smoothstep(touchCycle, 0.12, 0.3) *
         (1 - THREE.MathUtils.smoothstep(touchCycle, 0.48, 0.68))
       : 0
-    leftArm.current.position.set(-0.42, -0.58, -0.72)
+    leftArm.current.position.set(-0.34, -0.67, -0.58)
     rightArm.current.position.set(
-      0.42 - touchReach * 0.32,
-      -0.58 + touchReach * 0.28,
-      -0.72 + touchReach * 0.1,
+      0.34 - touchReach * 0.12,
+      -0.67 + touchReach * 0.15,
+      -0.58 - touchReach * 0.23,
     )
     leftArm.current.rotation.x = swing
-    rightArm.current.rotation.x = -swing - touchReach * 0.08
+    rightArm.current.rotation.x = -swing - touchReach * 0.06
     rig.current.position.y += lift
   })
 
@@ -93,23 +93,23 @@ export function FirstPersonArms() {
         <group
           key={side}
           ref={side === -1 ? leftArm : rightArm}
-          position={[side * 0.42, -0.58, -0.72]}
+          position={[side * 0.34, -0.67, -0.58]}
         >
           <mesh
-            position={[0, 0.21, -0.21]}
-            rotation={[-Math.PI / 4, 0, side * 0.04]}
+            position={[0, 0.135, -0.12]}
+            rotation={[-0.73, 0, side * 0.04]}
             castShadow
           >
-            <capsuleGeometry args={[0.09, 0.4, 7, 14]} />
+            <capsuleGeometry args={[0.105, 0.19, 7, 14]} />
             <meshStandardMaterial color="#17366f" roughness={0.82} />
           </mesh>
           <mesh
-            position={[0, 0.42, -0.42]}
-            rotation={[-0.08, 0, side * 0.03]}
-            scale={[0.94, 0.86, 1]}
+            position={[0, 0.285, -0.255]}
+            rotation={[-0.12, 0, side * 0.04]}
+            scale={[1, 0.68, 1.15]}
             castShadow
           >
-            <sphereGeometry args={[0.112, 14, 10]} />
+            <sphereGeometry args={[0.118, 16, 11]} />
             <meshStandardMaterial color="#d59b7f" roughness={0.8} />
           </mesh>
         </group>

@@ -62,10 +62,26 @@ async function loadFoliageMesh() {
     `${POLY_HAVEN_MODEL_ROOT}/gltf/1k/shrub_04/shrub_04_1k.gltf`,
   )
   let foliageMesh: THREE.Mesh | null = null
+  gltf.scene.updateMatrixWorld(true)
   gltf.scene.traverse((object) => {
-    if (!foliageMesh && object instanceof THREE.Mesh) foliageMesh = object
+    if (!foliageMesh && object instanceof THREE.Mesh)
+      foliageMesh = bakeMeshWorldTransform(object)
   })
   return foliageMesh
+}
+
+/**
+ * GLTF plant assets commonly keep their real scale/offset on scene nodes.
+ * Instancing the raw child geometry drops those transforms, producing tiny,
+ * displaced foliage. Baking the world matrix makes the geometry standalone.
+ */
+export function bakeMeshWorldTransform(source: THREE.Mesh) {
+  source.updateWorldMatrix(true, false)
+  const geometry = source.geometry.clone()
+  geometry.applyMatrix4(source.matrixWorld)
+  geometry.computeBoundingBox()
+  geometry.computeBoundingSphere()
+  return new THREE.Mesh(geometry, source.material)
 }
 
 /**

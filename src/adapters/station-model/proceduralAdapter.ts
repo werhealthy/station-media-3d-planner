@@ -155,6 +155,36 @@ function pbrSurfaceMaterial(
   })
 }
 
+function parkGrassMaterial(textures: SurfaceTextureSet | undefined) {
+  if (!textures)
+    return aggregateMaterial('#67b85c', 0.98, [34, 26], 9471, 0.035)
+  return new THREE.MeshStandardMaterial({
+    color: '#67b85c',
+    normalMap: textures.normalMap,
+    normalScale: new THREE.Vector2(0.28, 0.28),
+    roughnessMap: textures.roughnessMap,
+    roughness: 0.98,
+  })
+}
+
+function createParkTerrainGeometry() {
+  const geometry = new THREE.PlaneGeometry(360, 280, 72, 56)
+  const positions = geometry.getAttribute('position')
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index)
+    const sourceY = positions.getY(index)
+    const worldZ = -22 - sourceY
+    const distance = Math.hypot(x, worldZ * 1.12)
+    const farMask = THREE.MathUtils.smoothstep(distance, 52, 135)
+    const rollingHeight =
+      2.4 + Math.sin(x * 0.035) * 1.05 + Math.cos(worldZ * 0.041) * 0.82
+    positions.setZ(index, Math.max(0, rollingHeight) * farMask)
+  }
+  positions.needsUpdate = true
+  geometry.computeVertexNormals()
+  return geometry
+}
+
 function tree(
   root: THREE.Object3D,
   x: number,
@@ -242,7 +272,6 @@ const assetTreePositions: Array<[number, number, number]> = [
   [-22, -8, 0.9],
   [-22, 4, 1.02],
   [-30, -27.1, 0.92],
-  [-22, -27.8, 1.03],
   [-13, -26.9, 0.95],
   [-4, -27.7, 1.08],
   [5, -27.2, 0.9],
@@ -346,9 +375,9 @@ function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
         -0.24 + (branch % 3) * 0.2,
       )
       transform.scale.set(
-        (4.35 + (branch % 2) * 0.58) * scale,
-        (3.05 + ((treeIndex + branch) % 3) * 0.34) * scale,
-        (3.35 + (branch % 3) * 0.3) * scale,
+        (6.8 + (branch % 2) * 0.72) * scale,
+        (8.2 + ((treeIndex + branch) % 3) * 0.52) * scale,
+        (7.6 + (branch % 3) * 0.48) * scale,
       )
       transform.updateMatrix()
       foliage.setMatrixAt(instance, transform.matrix)
@@ -385,6 +414,110 @@ function addAssetVegetation(root: THREE.Object3D, source: THREE.Mesh) {
   }
   trunks.instanceMatrix.needsUpdate = true
   root.add(trunks)
+}
+
+function createOrganicCrownGeometry() {
+  const geometry = new THREE.IcosahedronGeometry(1, 2)
+  const positions = geometry.getAttribute('position')
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index)
+    const y = positions.getY(index)
+    const z = positions.getZ(index)
+    const variation =
+      1 + Math.sin(index * 2.31 + x * 3.7) * 0.08 + Math.cos(y * 5.1) * 0.05
+    positions.setXYZ(index, x * variation, y * variation, z * variation)
+  }
+  positions.needsUpdate = true
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+function paradiseTreePositions(): Array<[number, number, number]> {
+  const positions: Array<[number, number, number]> = []
+  for (let row = 0; row < 4; row += 1) {
+    const z = -18.5 - row * 5.8
+    for (let column = 0; column < 21; column += 1) {
+      const phase = row * 23 + column
+      positions.push([
+        -44 + column * 4.4 + (row % 2) * 2.1 + Math.sin(phase * 1.73) * 0.55,
+        z + Math.cos(phase * 1.31) * 0.62,
+        0.88 + (phase % 7) * 0.035,
+      ])
+    }
+  }
+  for (const side of [-1, 1] as const) {
+    for (let index = 0; index < 9; index += 1) {
+      positions.push([
+        side * (30.5 + Math.sin(index * 1.57) * 0.8),
+        -13 + index * 4.4 + Math.cos(index * 1.91) * 0.45,
+        0.9 + (index % 5) * 0.04,
+      ])
+    }
+  }
+  return positions
+}
+
+function addParadiseForest(root: THREE.Object3D) {
+  const treePositions = paradiseTreePositions()
+  const transform = new THREE.Object3D()
+  const trunks = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.2, 0.35, 4.2, 10, 5),
+    mat('#674837', 0.96),
+    treePositions.length,
+  )
+  trunks.name = 'landscape-paradise-forest-trunks'
+  trunks.receiveShadow = true
+
+  const crownMaterial = new THREE.MeshStandardMaterial({
+    color: '#ffffff',
+    roughness: 0.94,
+  })
+  const crownsPerTree = 3
+  const crowns = new THREE.InstancedMesh(
+    createOrganicCrownGeometry(),
+    crownMaterial,
+    treePositions.length * crownsPerTree,
+  )
+  crowns.name = 'landscape-paradise-forest-crowns'
+  crowns.receiveShadow = true
+  const crownColors = ['#287944', '#368b4b', '#4d9f55', '#67ad59']
+  const crownLobes: Array<[number, number, number, number, number, number]> = [
+    [0, 4.75, 0, 2.45, 2.15, 2.25],
+    [-1.2, 4.45, 0.15, 1.8, 1.65, 1.8],
+    [1.15, 4.55, -0.18, 1.88, 1.72, 1.76],
+  ]
+
+  let crownIndex = 0
+  for (const [treeIndex, [x, z, scale]] of treePositions.entries()) {
+    transform.position.set(x, 2.1 * scale, z)
+    transform.rotation.set(0, Math.sin(treeIndex * 1.47) * 0.28, 0)
+    transform.scale.set(scale, scale, scale)
+    transform.updateMatrix()
+    trunks.setMatrixAt(treeIndex, transform.matrix)
+
+    for (const [lobeIndex, [lx, ly, lz, sx, sy, sz]] of crownLobes.entries()) {
+      transform.position.set(x + lx * scale, ly * scale, z + lz * scale)
+      transform.rotation.set(
+        Math.sin(treeIndex + lobeIndex) * 0.08,
+        treeIndex * 0.71 + lobeIndex,
+        Math.cos(treeIndex * 0.9 + lobeIndex) * 0.07,
+      )
+      transform.scale.set(sx * scale, sy * scale, sz * scale)
+      transform.updateMatrix()
+      crowns.setMatrixAt(crownIndex, transform.matrix)
+      crowns.setColorAt(
+        crownIndex,
+        new THREE.Color(
+          crownColors[(treeIndex + lobeIndex) % crownColors.length],
+        ),
+      )
+      crownIndex += 1
+    }
+  }
+  trunks.instanceMatrix.needsUpdate = true
+  crowns.instanceMatrix.needsUpdate = true
+  if (crowns.instanceColor) crowns.instanceColor.needsUpdate = true
+  root.add(trunks, crowns)
 }
 
 function pump(
@@ -656,16 +789,10 @@ function buildStation(
     blue = mat('#123a88', 0.26, 0.35),
     white = mat('#f4f4f1', 0.4, 0.15),
     steel = mat('#77818a', 0.3, 0.65),
-    grass = pbrSurfaceMaterial(visualAssets.grass, {
-      color: '#a4d28d',
-      roughness: 1,
-      repeat: [28, 20],
-      seed: 9471,
-      bumpScale: 0.055,
-    })
+    grass = parkGrassMaterial(visualAssets.grass)
   const surroundings = mesh(
     root,
-    new THREE.PlaneGeometry(360, 280),
+    createParkTerrainGeometry(),
     grass,
     [0, -0.045, -22],
     'surrounding-landscape',
@@ -1334,10 +1461,11 @@ function buildStation(
   box(
     root,
     [18, 0.34, 2.1],
-    mat('#86b96f', 0.95),
+    mat('#72bb62', 0.95),
     [0, 0.22, 11.95],
     'landscape-bed',
   )
+  addParadiseForest(root)
   if (visualAssets.foliageMesh)
     addAssetVegetation(root, visualAssets.foliageMesh)
   else {

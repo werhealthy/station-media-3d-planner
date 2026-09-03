@@ -73,9 +73,10 @@ describe('proceduralAdapter composition', () => {
     expect(sceneNames).toContain('shop-checkout-oblique-front')
     expect(sceneNames).toContain('shop-interior-svolta-brand-white')
     expect(sceneNames).toContain('shop-track-light')
-    expect(
-      sceneNames.filter((name) => name.startsWith('landscape-tree-')).length,
-    ).toBeGreaterThanOrEqual(36)
+    expect(sceneNames).toContain('landscape-park-tree-trunks')
+    expect(sceneNames).toContain('landscape-park-tree-crowns')
+    expect(sceneNames.some((name) => name.includes('shrub'))).toBe(false)
+    expect(sceneNames.some((name) => name.includes('foliage'))).toBe(false)
     expect(sceneNames).toContain('price-pylon')
     expect(sceneNames).not.toContain('price-pylon-stendardo-panel')
     expect(sceneNames).toContain('q8-easy-main-body')
@@ -100,19 +101,22 @@ describe('proceduralAdapter composition', () => {
     proceduralAdapter.dispose(handle)
   })
 
-  it('always builds a dense forest belt around the station', async () => {
+  it('distributes distinct park trees across the wider landscape', async () => {
     const handle = await proceduralAdapter.load()
-    const crowns = handle.root.getObjectByName(
-      'landscape-paradise-forest-crowns',
-    )
+    const trunks = handle.root.getObjectByName('landscape-park-tree-trunks')
+    const crowns = handle.root.getObjectByName('landscape-park-tree-crowns')
 
+    expect(trunks).toBeInstanceOf(THREE.InstancedMesh)
     expect(crowns).toBeInstanceOf(THREE.InstancedMesh)
-    expect((crowns as THREE.InstancedMesh).count).toBeGreaterThan(300)
+    const treeCount = (trunks as THREE.InstancedMesh).count
+    expect(treeCount).toBeGreaterThan(60)
+    expect(treeCount).toBeLessThan(90)
+    expect((crowns as THREE.InstancedMesh).count).toBe(treeCount * 3)
     const bounds = new THREE.Box3().setFromObject(crowns!)
     const size = bounds.getSize(new THREE.Vector3())
-    expect(size.x).toBeGreaterThan(80)
-    expect(size.y).toBeGreaterThan(6)
-    expect(size.z).toBeGreaterThan(35)
+    expect(size.x).toBeGreaterThan(150)
+    expect(size.y).toBeGreaterThan(6.5)
+    expect(size.z).toBeGreaterThan(120)
 
     proceduralAdapter.dispose(handle)
   })

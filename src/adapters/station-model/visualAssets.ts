@@ -1,9 +1,7 @@
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 const POLY_HAVEN_TEXTURE_ROOT =
   'https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k'
-const POLY_HAVEN_MODEL_ROOT = 'https://dl.polyhaven.org/file/ph-assets/Models'
 
 export interface SurfaceTextureSet {
   map: THREE.Texture
@@ -15,7 +13,6 @@ export interface ProceduralVisualAssets {
   asphalt: SurfaceTextureSet
   concrete: SurfaceTextureSet
   grass: SurfaceTextureSet
-  foliageMesh: THREE.Mesh | null
 }
 
 function configureTexture(
@@ -50,40 +47,6 @@ async function loadSurfaceTextureSet(
   }
 }
 
-async function loadFoliageMesh() {
-  const manager = new THREE.LoadingManager()
-  manager.setURLModifier((url) =>
-    url.replace(
-      '/Models/gltf/1k/shrub_04/textures/',
-      '/Models/jpg/1k/shrub_04/',
-    ),
-  )
-  const gltf = await new GLTFLoader(manager).loadAsync(
-    `${POLY_HAVEN_MODEL_ROOT}/gltf/1k/shrub_04/shrub_04_1k.gltf`,
-  )
-  let foliageMesh: THREE.Mesh | null = null
-  gltf.scene.updateMatrixWorld(true)
-  gltf.scene.traverse((object) => {
-    if (!foliageMesh && object instanceof THREE.Mesh)
-      foliageMesh = bakeMeshWorldTransform(object)
-  })
-  return foliageMesh
-}
-
-/**
- * GLTF plant assets commonly keep their real scale/offset on scene nodes.
- * Instancing the raw child geometry drops those transforms, producing tiny,
- * displaced foliage. Baking the world matrix makes the geometry standalone.
- */
-export function bakeMeshWorldTransform(source: THREE.Mesh) {
-  source.updateWorldMatrix(true, false)
-  const geometry = source.geometry.clone()
-  geometry.applyMatrix4(source.matrixWorld)
-  geometry.computeBoundingBox()
-  geometry.computeBoundingSphere()
-  return new THREE.Mesh(geometry, source.material)
-}
-
 /**
  * Loads the small CC0 asset set used by the procedural station's visual slice.
  * Each promise is independent so a CDN failure degrades only that layer.
@@ -92,17 +55,14 @@ export async function loadProceduralVisualAssets(): Promise<
   Partial<ProceduralVisualAssets>
 > {
   const textureLoader = new THREE.TextureLoader()
-  const [asphalt, concrete, grass, foliageMesh] = await Promise.allSettled([
+  const [asphalt, concrete, grass] = await Promise.allSettled([
     loadSurfaceTextureSet(textureLoader, 'asphalt_07', [18, 13]),
     loadSurfaceTextureSet(textureLoader, 'rough_concrete', [15, 9]),
     loadSurfaceTextureSet(textureLoader, 'leafy_grass', [24, 18]),
-    loadFoliageMesh(),
   ])
   return {
     asphalt: asphalt.status === 'fulfilled' ? asphalt.value : undefined,
     concrete: concrete.status === 'fulfilled' ? concrete.value : undefined,
     grass: grass.status === 'fulfilled' ? grass.value : undefined,
-    foliageMesh:
-      foliageMesh.status === 'fulfilled' ? foliageMesh.value : undefined,
   }
 }

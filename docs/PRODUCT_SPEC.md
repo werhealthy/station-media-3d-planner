@@ -99,7 +99,7 @@ di supporto e istanza fisica nella stazione restano entità distinte.
 
 ## 7. Stazione dimostrativa
 
-In assenza di un modello 3D reale fornito dal committente, l'applicazione genera proceduralmente una stazione dimostrativa completa (pavimentazione, strada d'accesso, pensilina, quattro pompe, edificio del punto vendita, parcheggio, segnaletica essenziale, illuminazione semplice) con almeno sei punti pubblicitari rappresentativi (due display digitali vicino alle pompe, un banner sulla pensilina, un poster vicino all'ingresso, un totem, un banner più lontano/difficile da osservare), almeno quattro hotspot e un percorso completo. Nessun marchio reale o materiale protetto viene utilizzato.
+In assenza di un modello 3D reale fornito dal committente, l'applicazione genera proceduralmente una stazione dimostrativa completa (pavimentazione, strada d'accesso, pensilina, quattro erogatori, edificio del punto vendita, parcheggio, segnaletica essenziale, illuminazione semplice) con almeno sei punti pubblicitari rappresentativi (due display digitali vicino agli erogatori, un banner sulla pensilina, un poster vicino all'ingresso, un totem, un banner più lontano/difficile da osservare), almeno quattro hotspot e un percorso completo. Nessun marchio reale o materiale protetto viene utilizzato.
 
 ## 8. Persistenza e multi-stazione
 

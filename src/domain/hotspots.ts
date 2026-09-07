@@ -17,7 +17,7 @@ export const HOTSPOTS: StationHotspot[] = [
   },
   {
     id: 'pump-front',
-    name: 'Fronte pompe',
+    name: 'Fronte erogatori',
     position: [1.5, 3.1, 14.2],
     target: [0, 2.05, 1.1],
     fov: 43,

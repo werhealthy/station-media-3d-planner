@@ -20,7 +20,7 @@ export const WALKTHROUGH_ROUTE: WalkthroughStep[] = [
   },
   {
     id: 'approach',
-    label: 'Avvicinamento alle pompe',
+    label: 'Avvicinamento agli erogatori',
     position: [-15, 1.72, 12],
     gazeTarget: [-13, 1.8, 9],
     duration: 5,

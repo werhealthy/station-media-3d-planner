@@ -104,7 +104,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('6', {
     id: 'mp-06',
     number: 3,
-    location: 'Lato destro del percorso di ingresso',
+    location: 'Accanto all’ingresso dello shop Svolta',
     surface: 'Sagomato autoportante',
     heightFromGround: 0.25,
     position: [
@@ -117,7 +117,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('5', {
     id: 'mp-07',
     number: 9,
-    location: 'Fondale dietro le pompe',
+    location: 'Fondale dietro gli erogatori',
     surface: 'Fondale 2880 x 1380 mm',
     heightFromGround: 1.8,
     position: [-3.1, 2.49, -4.28],

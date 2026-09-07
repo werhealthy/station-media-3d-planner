@@ -41,9 +41,10 @@ export const STATION_LAYOUT = {
     stendardoX: 27.4,
     stendardoZ: 10.3,
     stendardoYaw: 90,
-    standardSignX: 15.9,
-    standardSignZ: 2.9,
-    // Frontale all'auto durante l'ingresso, non di taglio rispetto alla corsia.
+    // Affiancato all'ingresso dello shop: visibile frontalmente dal piazzale,
+    // senza occupare l'asse delle porte automatiche.
+    standardSignX: 12,
+    standardSignZ: -3.15,
     standardSignYaw: 0,
   },
 } as const

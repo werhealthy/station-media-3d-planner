@@ -54,7 +54,7 @@ describe('media point physical layout', () => {
     })
   })
 
-  it('distribuisce Stendardo e Beach Flag lungo l’ingresso e li orienta verso la strada', () => {
+  it('distribuisce i supporti di ingresso senza bloccare l’accesso allo shop', () => {
     expect(point('mp-08')).toMatchObject({
       position: [
         STATION_LAYOUT.entry.stendardoX,
@@ -64,7 +64,22 @@ describe('media point physical layout', () => {
       rotation: [0, STATION_LAYOUT.entry.stendardoYaw, 0],
     })
     expect(point('mp-09').rotation[1]).toBeGreaterThan(45)
-    expect(point('mp-06').rotation[1]).toBe(0)
+
+    const standard = point('mp-06')
+    expect(standard).toMatchObject({
+      position: [
+        STATION_LAYOUT.entry.standardSignX,
+        0.9425,
+        STATION_LAYOUT.entry.standardSignZ,
+      ],
+      rotation: [0, 0, 0],
+      location: 'Accanto all’ingresso dello shop Svolta',
+    })
+    const shopFrontZ = STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2
+    expect(Math.abs(standard.position[2] - shopFrontZ)).toBeLessThan(1.2)
+    expect(
+      Math.abs(standard.position[0] - STATION_LAYOUT.shop.x),
+    ).toBeGreaterThan(1.5)
 
     const stendardo = point('mp-08')
     const beachFlag = point('mp-09')

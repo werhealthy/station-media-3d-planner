@@ -24,7 +24,7 @@ Le fasi si implementano **una alla volta**. Dopo ogni fase: build, type-check, l
 - Canvas React Three Fiber, illuminazione base.
 - Camere: overview (leggermente prospettica) e camera "umana" per hotspot/walkthrough.
 - Controlli orbit/zoom/pan.
-- `StationModelAdapter`: interfaccia + `proceduralAdapter` con la stazione dimostrativa (pavimentazione, strada, pensilina, 4 pompe, edificio, parcheggio, segnaletica, illuminazione semplice).
+- `StationModelAdapter`: interfaccia + `proceduralAdapter` con la stazione dimostrativa (pavimentazione, strada, pensilina, 4 erogatori, edificio, parcheggio, segnaletica, illuminazione semplice).
 - `glbAdapter` predisposto (caricamento GLB, gestione errori/loading), anche se non ancora usato con un modello reale.
 
 **Verifica**: la stazione demo è visibile e navigabile in 3D; stati di caricamento/errore gestiti; nessun errore console.

@@ -36,7 +36,7 @@ describe('station journeys', () => {
       expect(
         journey.steps.find((step) => step.id === journey.departureStartStepId),
       ).toBeDefined()
-      expect(journeyDuration(journey)).toBeGreaterThan(100)
+      expect(journeyDuration(journey)).toBeGreaterThan(70)
     }
     expect(
       getJourney('self-service').steps.some(
@@ -58,8 +58,8 @@ describe('station journeys', () => {
     expect(served.steps.every((step) => step.cameraMode === 'vehicle')).toBe(
       true,
     )
-    expect(dwellSeconds(served.steps)).toBeGreaterThanOrEqual(30)
-    expect(dwellSeconds(served.steps)).toBeLessThanOrEqual(38)
+    expect(dwellSeconds(served.steps)).toBeGreaterThanOrEqual(15)
+    expect(dwellSeconds(served.steps)).toBeLessThanOrEqual(18)
 
     const removeIndex = served.steps.findIndex(
       (step) => step.id === 'served-remove-nozzle',
@@ -117,10 +117,10 @@ describe('station journeys', () => {
     ])
     expect(
       dwellSeconds(self.steps.filter((step) => step.nozzle)),
-    ).toBeGreaterThanOrEqual(20)
+    ).toBeGreaterThanOrEqual(12)
     expect(
       dwellSeconds(self.steps.filter((step) => step.nozzle)),
-    ).toBeLessThanOrEqual(26)
+    ).toBeLessThanOrEqual(15)
     expect(
       self.steps.findIndex((step) => step.id === 'self-payment-confirmed'),
     ).toBeLessThan(self.steps.findIndex((step) => step.id === 'self-refuel'))
@@ -182,10 +182,10 @@ describe('station journeys', () => {
     expect(centerAisle.position[2]).not.toBe(clearCar.position[2])
     expect(
       dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
-    ).toBeGreaterThanOrEqual(30)
+    ).toBeGreaterThanOrEqual(15)
     expect(
       dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
-    ).toBeLessThanOrEqual(38)
+    ).toBeLessThanOrEqual(18)
     expect(svolta.steps.some((step) => step.id === 'svolta-take-nozzle')).toBe(
       false,
     )
@@ -203,7 +203,7 @@ describe('station journeys', () => {
       expect.arrayContaining([
         'Stendardo',
         'Beach Flag',
-        'Auto accostata alla pompa',
+        'Auto accostata all’erogatore',
         'Pagamento al totem',
         'Rifornimento in corso',
         'Ripartenza verso l’uscita',

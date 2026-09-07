@@ -123,6 +123,64 @@ export function projectPointToCurveProgress(
   return closestProgress
 }
 
+/**
+ * Monotone cubic interpolation for authored route checkpoints. The curve
+ * reaches every narrative key without resetting vehicle speed at each label.
+ */
+export function monotonicTimelineValueAt(
+  times: readonly number[],
+  values: readonly number[],
+  time: number,
+): number {
+  if (times.length !== values.length || times.length < 2)
+    throw new Error('La timeline richiede almeno due coppie tempo/valore.')
+
+  const lastIndex = times.length - 1
+  if (time <= times[0]!) return values[0]!
+  if (time >= times[lastIndex]!) return values[lastIndex]!
+
+  const intervals = times.slice(0, -1).map((item, index) => {
+    const duration = times[index + 1]! - item
+    if (duration <= 0)
+      throw new Error('I tempi della timeline devono essere crescenti.')
+    return {
+      duration,
+      slope: (values[index + 1]! - values[index]!) / duration,
+    }
+  })
+  const tangents = new Array<number>(times.length).fill(0)
+  for (let index = 1; index < lastIndex; index += 1) {
+    const before = intervals[index - 1]!
+    const after = intervals[index]!
+    if (before.slope <= 0 || after.slope <= 0) continue
+    const beforeWeight = 2 * after.duration + before.duration
+    const afterWeight = after.duration + 2 * before.duration
+    tangents[index] =
+      (beforeWeight + afterWeight) /
+      (beforeWeight / before.slope + afterWeight / after.slope)
+  }
+
+  const segmentIndex = Math.min(
+    lastIndex - 1,
+    times.findIndex((item) => item > time) - 1,
+  )
+  const interval = intervals[segmentIndex]!
+  const local = (time - times[segmentIndex]!) / interval.duration
+  const localSquared = local * local
+  const localCubed = localSquared * local
+  const startBasis = 2 * localCubed - 3 * localSquared + 1
+  const startTangentBasis = localCubed - 2 * localSquared + local
+  const endBasis = -2 * localCubed + 3 * localSquared
+  const endTangentBasis = localCubed - localSquared
+
+  return (
+    startBasis * values[segmentIndex]! +
+    startTangentBasis * interval.duration * tangents[segmentIndex]! +
+    endBasis * values[segmentIndex + 1]! +
+    endTangentBasis * interval.duration * tangents[segmentIndex + 1]!
+  )
+}
+
 export function vehicleYawFromTangent(tangent: THREE.Vector3): number {
   return Math.atan2(-tangent.x, -tangent.z)
 }

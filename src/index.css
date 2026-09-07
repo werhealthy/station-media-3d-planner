@@ -181,6 +181,16 @@ button {
   background: #e6a51c;
   box-shadow: 0 0 0 4px rgb(230 165 28 / 0.18);
 }
+.step-dots button.decision {
+  width: 25px;
+  height: 25px;
+  border-color: #fff4cc;
+  background: #d99a0b;
+  box-shadow: 0 0 0 4px rgb(230 165 28 / 0.2);
+}
+.step-dots button.blocked:not(.decision) {
+  background: #aab4c4;
+}
 .attention-chip {
   justify-self: end;
   min-width: 112px;

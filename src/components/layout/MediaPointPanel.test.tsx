@@ -44,8 +44,11 @@ describe('MediaPointPanel', () => {
     })
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Apri analisi creatività' }),
+    )
 
-    expect(screen.getByText('Proporzioni diverse dal supporto')).toBeVisible()
+    expect(screen.getByText('Asset da adattare al supporto')).toBeVisible()
     expect(
       screen.getByText(/non viene mai ritagliata o deformata/),
     ).toBeVisible()
@@ -95,7 +98,7 @@ describe('MediaPointPanel', () => {
     })
   })
 
-  it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', () => {
+  it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', async () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportShape === 'beach-flag',
     )!
@@ -116,16 +119,22 @@ describe('MediaPointPanel', () => {
     })
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Apri analisi creatività' }),
+    )
 
     expect(screen.getByText(/ruotata automaticamente di 90°/)).toBeVisible()
   })
 
-  it('consente il caricamento di una creatività PDF', () => {
+  it('consente il caricamento di una creatività PDF', async () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
     useViewerStore.getState().selectMediaPoint(point.id)
 
     const { container } = render(
       <MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />,
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Carica creatività' }),
     )
 
     expect(screen.getByText('Carica JPEG, PNG o PDF')).toBeVisible()
@@ -149,13 +158,16 @@ describe('MediaPointPanel', () => {
     ).toBeVisible()
   })
 
-  it('mostra la schermata idle Q8 sul terminale smartOPT Maxi', () => {
+  it('mostra la schermata idle Q8 sul terminale smartOPT Maxi', async () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportTypeId === '11',
     )!
     useViewerStore.getState().selectMediaPoint(point.id)
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Carica creatività' }),
+    )
 
     expect(
       screen.getByRole('img', {

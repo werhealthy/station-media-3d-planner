@@ -4,6 +4,7 @@ import { getJourney } from './journeys'
 import {
   arrivalCurveCollisions,
   createArrivalCurve,
+  monotonicTimelineValueAt,
   pedestrianCollisionAt,
   pedestrianVehicleCollisionAt,
   projectPointToCurveProgress,
@@ -54,6 +55,24 @@ function segmentCrossesParkedVehicle(
 }
 
 describe('journey physical safety', () => {
+  it('attraversa i checkpoint senza salti di velocità ai cambi di titolo', () => {
+    const times = [0, 4, 8, 11]
+    const progresses = [0, 0.25, 0.58, 1]
+    const epsilon = 0.001
+
+    for (const boundary of times.slice(1, -1)) {
+      const velocityBefore =
+        (monotonicTimelineValueAt(times, progresses, boundary) -
+          monotonicTimelineValueAt(times, progresses, boundary - epsilon)) /
+        epsilon
+      const velocityAfter =
+        (monotonicTimelineValueAt(times, progresses, boundary + epsilon) -
+          monotonicTimelineValueAt(times, progresses, boundary)) /
+        epsilon
+      expect(velocityAfter).toBeCloseTo(velocityBefore, 3)
+    }
+  })
+
   it.each(['servito', 'self-service', 'servito-svolta'] as const)(
     'sincronizza i capitoli di arrivo %s con punti progressivi della spline',
     (journeyId) => {

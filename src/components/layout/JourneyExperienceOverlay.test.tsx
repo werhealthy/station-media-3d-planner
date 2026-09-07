@@ -17,7 +17,7 @@ describe('JourneyExperienceOverlay', () => {
       activeRouteId: 'self-service',
       isPlaying: false,
       progress: 0,
-      activeStepIndex: 5,
+      activeStepIndex: 4,
       pendingDecision: 'service-mode',
       serviceChoice: null,
       paymentChoice: null,

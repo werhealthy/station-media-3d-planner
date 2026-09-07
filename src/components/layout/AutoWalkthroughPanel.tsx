@@ -23,6 +23,7 @@ export function AutoWalkthroughPanel() {
   const resetInteractiveJourney = usePlaybackStore(
     (s) => s.resetInteractiveJourney,
   )
+  const openDecision = usePlaybackStore((s) => s.openDecision)
   const journey = getJourney(activeRouteId)
   const activeStep = journey.steps[activeStepIndex] ?? journey.steps[0]!
   const [phaseCode, ...phaseWords] = activeStep.phase.split(' · ')
@@ -40,18 +41,20 @@ export function AutoWalkthroughPanel() {
       stepIndex: number
       progress: number
       ordinal: number
+      decision: boolean
     }>
   >((markers, item, stepIndex) => {
     const elapsed = journey.steps
       .slice(0, stepIndex)
       .reduce((total, step) => total + step.duration, 0)
     const markerProgress = elapsed / duration
-    if (item.checkpoint && markerProgress <= choiceLimit)
+    if (item.checkpoint)
       markers.push({
         label: item.checkpoint,
         stepIndex,
         progress: markerProgress,
         ordinal: markers.length + 1,
+        decision: Boolean(item.decision),
       })
     return markers
   }, [])
@@ -63,6 +66,28 @@ export function AutoWalkthroughPanel() {
     seekTo(seconds / duration)
     setActiveStep(index, journey.steps[index]!.mediaPointId ?? null)
     pause()
+  }
+
+  const selectCheckpoint = (marker: (typeof checkpoints)[number]) => {
+    if (marker.progress > choiceLimit + 0.0001) {
+      if (!serviceChoice) {
+        const decisionIndex = journey.steps.findIndex(
+          (step) => step.decision === 'service-mode',
+        )
+        if (decisionIndex >= 0) seekStep(decisionIndex)
+        openDecision('service-mode')
+        return
+      }
+      if (serviceChoice === 'servito' && !paymentChoice) {
+        const decisionIndex = journey.steps.findIndex(
+          (step) => step.decision === 'operator-payment',
+        )
+        if (decisionIndex >= 0) seekStep(decisionIndex)
+        openDecision('operator-payment')
+        return
+      }
+    }
+    seekStep(marker.stepIndex)
   }
 
   return (
@@ -115,10 +140,10 @@ export function AutoWalkthroughPanel() {
                 aria-label={`Vai a ${marker.label} e metti in pausa`}
                 title={marker.label}
                 style={{
-                  left: `${(marker.progress / Math.max(choiceLimit, 0.001)) * 100}%`,
+                  left: `${marker.progress * 100}%`,
                 }}
-                className={activeStepIndex === marker.stepIndex ? 'active' : ''}
-                onClick={() => seekStep(marker.stepIndex)}
+                className={`${activeStepIndex === marker.stepIndex ? 'active' : ''} ${marker.decision ? 'decision' : ''} ${marker.progress > choiceLimit + 0.0001 ? 'blocked' : ''}`}
+                onClick={() => selectCheckpoint(marker)}
               >
                 <b>{marker.ordinal}</b>
                 <span>{marker.label}</span>

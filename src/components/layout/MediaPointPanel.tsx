@@ -218,7 +218,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               >
                 {point.number}
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h2 className="truncate text-xl font-bold text-slate-900">
                   {point.name}
                 </h2>
@@ -229,6 +229,19 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   </p>
                 )}
               </div>
+              <button
+                type="button"
+                title={
+                  pointHidden
+                    ? 'Mostra il supporto nella scena'
+                    : 'Nascondi il supporto dalla scena'
+                }
+                aria-label={`${pointHidden ? 'Mostra' : 'Nascondi'} ${point.name}`}
+                onClick={() => toggleVisibility(point.id)}
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition ${pointHidden ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50 hover:text-[#1954c6]'}`}
+              >
+                {pointHidden ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
             </div>
           </div>
           <div className="flex-1 space-y-6 overflow-y-auto p-5">
@@ -260,12 +273,12 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                         ? analyzedAssetIds[point.id] === asset.id
                           ? point.supportTypeId === '2' &&
                             asset.id !== PUMP_LEADER_OPTIMIZED_ASSET_ID
-                            ? '3 criticità · vista circa 1-2 s.'
+                            ? '4 criticità rilevate.'
                             : assetNeedsAdaptation
                               ? 'Formato da adattare.'
                               : asset.id === PUMP_LEADER_OPTIMIZED_ASSET_ID
                                 ? 'Versione ottimizzata applicata.'
-                              : 'Verifica AI completata.'
+                                : 'Verifica AI completata.'
                           : 'Pronta per la verifica.'
                         : 'Carica la grafica in uno spazio dedicato.'}
                     </p>
@@ -297,7 +310,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                           setCreativeWorkspaceOpen(true)
                         }}
                       />
-                      Sostituisci
+                      Sostituisci immagine
                     </label>
                   )}
                 </div>
@@ -305,7 +318,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
             )}
             <section>
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Proprietà
+                Dettagli del supporto
               </h3>
               <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2.5 text-sm">
                 <dt className="text-slate-500">Tipologia</dt>
@@ -324,19 +337,25 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                 <dd className="text-right font-semibold">
                   {point.width >= point.height ? 'Orizzontale' : 'Verticale'}
                 </dd>
-                <dt className="text-slate-500">Quota da terra</dt>
-                <dd className="text-right font-semibold tabular-nums">
-                  {millimetres(point.heightFromGround ?? point.position[1])} mm
-                </dd>
+                {support && (
+                  <>
+                    <dt className="border-t border-slate-100 pt-3 text-slate-500">
+                      Distanza di lettura
+                    </dt>
+                    <dd className="border-t border-slate-100 pt-3 text-right font-semibold">
+                      {support.targetDistance}
+                    </dd>
+                    <dt className="text-slate-500">Tempo disponibile</dt>
+                    <dd className="text-right font-semibold">
+                      {support.eyesOn}
+                    </dd>
+                    <dt className="text-slate-500">Testo consigliato</dt>
+                    <dd className="text-right font-semibold">
+                      {support.maxWords}
+                    </dd>
+                  </>
+                )}
               </dl>
-              <button
-                type="button"
-                onClick={() => toggleVisibility(point.id)}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
-              >
-                {pointHidden ? <Eye size={16} /> : <EyeOff size={16} />}
-                {pointHidden ? 'Mostra nella scena' : 'Nascondi dalla scena'}
-              </button>
               {support && (
                 <div
                   className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${support.dimensions.source === 'estimated' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-blue-100 bg-blue-50/70 text-blue-950'}`}
@@ -353,34 +372,6 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                 </div>
               )}
             </section>
-
-            {support && (
-              <section>
-                <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Regole di lettura
-                </h3>
-                <dl className="space-y-3 text-sm">
-                  <div>
-                    <dt className="text-xs text-slate-500">Distanza target</dt>
-                    <dd className="font-semibold text-slate-800">
-                      {support.targetDistance}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-slate-500">Tempo eyes-on</dt>
-                    <dd className="font-semibold text-slate-800">
-                      {support.eyesOn}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-slate-500">Volume massimo</dt>
-                    <dd className="font-semibold text-slate-800">
-                      {support.maxWords}
-                    </dd>
-                  </div>
-                </dl>
-              </section>
-            )}
 
             {referencePhotos.length > 0 && (
               <section>

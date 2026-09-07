@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   CheckCircle2,
   CircleAlert,
   ImagePlus,
@@ -6,7 +7,6 @@ import {
   RotateCcw,
   Sparkles,
   WandSparkles,
-  X,
 } from 'lucide-react'
 import { useEffect, useId, useState } from 'react'
 import type { MediaAsset } from '@/domain/schemas/media'
@@ -26,6 +26,7 @@ export const PUMP_LEADER_OPTIMIZED_URL =
 export const PUMP_LEADER_OPTIMIZED_ASSET_ID = 'mvp-ai-pump-leader-optimized'
 
 type ActionStage = 'review' | 'generating' | 'ready'
+type FramingMode = 'fit' | 'fill' | 'manual'
 
 interface CreativeWorkspaceProps {
   point: ConfigMediaPoint
@@ -39,9 +40,17 @@ interface CreativeWorkspaceProps {
 }
 
 const pumpIssues = [
-  'Headline troppo piccola per una lettura di 1–2 secondi',
+  'Headline troppo piccola per una lettura da lontano in 1–2 secondi',
   'Prodotto poco protagonista rispetto allo spazio disponibile',
   'La data domina il messaggio principale nel footer',
+  'Manca la sfumatura blu: il testo bianco può perdersi sulla fotografia',
+]
+
+const pumpFixes = [
+  'Headline ingrandita per la lettura rapida da lontano',
+  'Prodotto reso più grande e immediatamente riconoscibile',
+  'Footer riordinato dando priorità al messaggio principale',
+  'Sfumatura blu ripristinata per proteggere il contrasto del testo',
 ]
 
 function ReviewMarker({
@@ -98,8 +107,8 @@ function BeforeAfterSlider({ originalUrl }: { originalUrl: string }) {
       <input
         aria-label="Confronta originale e versione ottimizzata"
         type="range"
-        min={8}
-        max={92}
+        min={0}
+        max={100}
         value={reveal}
         onChange={(event) => setReveal(Number(event.target.value))}
         className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
@@ -128,6 +137,17 @@ export function CreativeWorkspace({
   )
   const display = { ...DEFAULT_CREATIVE_DISPLAY, ...storedDisplay }
   const [actionStage, setActionStage] = useState<ActionStage>('review')
+  const [framingMode, setFramingMode] = useState<FramingMode>(() => {
+    const hasManualTransform = Boolean(
+      storedDisplay &&
+      (storedDisplay.zoom !== 1 ||
+        storedDisplay.offsetX !== 0 ||
+        storedDisplay.offsetY !== 0 ||
+        storedDisplay.rotation !== 0),
+    )
+    if (hasManualTransform) return 'manual'
+    return storedDisplay?.fitMode === 'cover' ? 'fill' : 'fit'
+  })
   const stage = !asset ? 'upload' : analyzed ? actionStage : 'analyzing'
   const support = getSupportType(point.supportTypeId)
   const isPumpLeader = point.supportTypeId === '2'
@@ -176,20 +196,20 @@ export function CreativeWorkspace({
     onClose()
   }
 
-  const fillAndConfirm = () => {
-    updateCreativeDisplay(point.id, { fitMode: 'cover' })
-    onClose()
-  }
-
-  const resetFraming = () =>
+  const selectFramingMode = (mode: FramingMode) => {
+    setFramingMode(mode)
+    if (mode === 'manual') return
     updateCreativeDisplay(point.id, {
       ...DEFAULT_CREATIVE_DISPLAY,
-      fitMode: display.fitMode,
+      fitMode: mode === 'fill' ? 'cover' : 'contain',
     })
+  }
+
+  const resetFraming = () => selectFramingMode('fit')
   const transformedImageStyle = {
     transform: `translate(${display.offsetX * 16}%, ${display.offsetY * 16}%) scale(${display.zoom}) rotate(${display.rotation}deg)`,
   }
-  const replaceControl = (label = 'Sostituisci') => (
+  const replaceControl = (label = 'Sostituisci immagine') => (
     <label
       htmlFor={replaceId}
       className="cursor-pointer rounded-full px-4 py-2.5 text-sm font-bold text-[#1954c6] transition hover:bg-blue-50"
@@ -217,8 +237,16 @@ export function CreativeWorkspace({
         className="flex h-[min(820px,calc(100dvh-40px))] w-full max-w-[1180px] flex-col overflow-hidden rounded-[28px] bg-[#f7f9fc] shadow-[0_30px_100px_rgba(15,23,42,.38)]"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-7">
-          <div className="min-w-0">
+        <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-5">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Torna ai dettagli del supporto"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#1954c6]">
               AI Creative Check · Supporto {point.number}
             </p>
@@ -226,14 +254,6 @@ export function CreativeWorkspace({
               {point.name}
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Chiudi verifica creatività"
-            className="grid h-10 w-10 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <X size={20} />
-          </button>
         </header>
 
         {stage === 'upload' ? (
@@ -333,6 +353,10 @@ export function CreativeWorkspace({
                         number={3}
                         className="left-[12%] top-[78%]"
                       />
+                      <ReviewMarker
+                        number={4}
+                        className="left-[43%] top-[7%]"
+                      />
                     </>
                   )}
                 </div>
@@ -348,10 +372,23 @@ export function CreativeWorkspace({
                     <h3 className="mt-1.5 text-xl font-bold text-slate-950">
                       Più leggibile nel tempo disponibile
                     </h3>
-                    <p className="mt-2 text-sm leading-5 text-slate-600">
-                      Prodotto più grande, headline più leggibile e gerarchia
-                      del footer corretta.
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Ottimizzazioni applicate per questo touchpoint:
                     </p>
+                    <ul className="mt-4 space-y-2.5">
+                      {pumpFixes.map((fix) => (
+                        <li
+                          key={fix}
+                          className="flex gap-2.5 text-xs leading-5 text-slate-700"
+                        >
+                          <CheckCircle2
+                            size={18}
+                            className="shrink-0 text-emerald-600"
+                          />
+                          {fix}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : hasCreativeIssues ? (
                   <div>
@@ -363,8 +400,9 @@ export function CreativeWorkspace({
                       Il messaggio non emerge abbastanza
                     </h3>
                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                      Dati del supporto: vista {support?.eyesOn ?? '1–2 s'} ·
-                      distanza {support?.targetDistance ?? '1,5–3 m'}.
+                      Questo touchpoint viene visto da{' '}
+                      {support?.targetDistance ?? '1,5–3 m'} per circa 1–2
+                      secondi: il messaggio deve funzionare anche da lontano.
                     </p>
                     <ol className="mt-4 space-y-2.5">
                       {pumpIssues.map((issue, index) => (
@@ -409,7 +447,7 @@ export function CreativeWorkspace({
                   </div>
                 )}
 
-                {stage === 'review' && (
+                {stage === 'review' && hasFormatIssue && (
                   <div className="mt-auto border-t border-slate-100 pt-4">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-slate-700">
@@ -424,91 +462,99 @@ export function CreativeWorkspace({
                         <RotateCcw size={14} />
                       </button>
                     </div>
-                    <div className="mt-2 grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-xs font-bold">
-                      {(['contain', 'cover'] as const).map((fitMode) => (
+                    <div className="mt-2 grid grid-cols-3 rounded-xl bg-slate-100 p-1 text-xs font-bold">
+                      {(
+                        [
+                          ['fit', 'Adatta'],
+                          ['fill', 'Riempi'],
+                          ['manual', 'Manuale'],
+                        ] as const
+                      ).map(([mode, label]) => (
                         <button
-                          key={fitMode}
+                          key={mode}
                           type="button"
-                          aria-pressed={display.fitMode === fitMode}
-                          onClick={() =>
-                            updateCreativeDisplay(point.id, { fitMode })
-                          }
-                          className={`rounded-lg px-3 py-2 transition ${display.fitMode === fitMode ? 'bg-white text-[#1954c6] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                          aria-pressed={framingMode === mode}
+                          onClick={() => selectFramingMode(mode)}
+                          className={`rounded-lg px-2 py-2 transition ${framingMode === mode ? 'bg-white text-[#1954c6] shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                         >
-                          {fitMode === 'contain' ? 'Intera' : 'Riempi'}
+                          {label}
                         </button>
                       ))}
                     </div>
-                    <label className="mt-3 block text-[11px] font-semibold text-slate-500">
-                      Dimensione
-                      <input
-                        aria-label="Dimensione creatività"
-                        type="range"
-                        min={0.65}
-                        max={1.8}
-                        step={0.01}
-                        value={display.zoom}
-                        onChange={(event) =>
-                          updateCreativeDisplay(point.id, {
-                            zoom: Number(event.target.value),
-                          })
-                        }
-                        className="mt-1 block w-full accent-[#1954c6]"
-                      />
-                    </label>
-                    <div className="mt-2 grid grid-cols-2 gap-3">
-                      <label className="text-[11px] font-semibold text-slate-500">
-                        Orizzontale
-                        <input
-                          aria-label="Posizione orizzontale creatività"
-                          type="range"
-                          min={-1}
-                          max={1}
-                          step={0.01}
-                          value={display.offsetX}
-                          onChange={(event) =>
-                            updateCreativeDisplay(point.id, {
-                              offsetX: Number(event.target.value),
-                            })
-                          }
-                          className="mt-1 block w-full accent-[#1954c6]"
-                        />
-                      </label>
-                      <label className="text-[11px] font-semibold text-slate-500">
-                        Verticale
-                        <input
-                          aria-label="Posizione verticale creatività"
-                          type="range"
-                          min={-1}
-                          max={1}
-                          step={0.01}
-                          value={display.offsetY}
-                          onChange={(event) =>
-                            updateCreativeDisplay(point.id, {
-                              offsetY: Number(event.target.value),
-                            })
-                          }
-                          className="mt-1 block w-full accent-[#1954c6]"
-                        />
-                      </label>
-                    </div>
-                    <label className="mt-2 block text-[11px] font-semibold text-slate-500">
-                      Rotazione
-                      <input
-                        aria-label="Rotazione creatività"
-                        type="range"
-                        min={-20}
-                        max={20}
-                        step={0.5}
-                        value={display.rotation}
-                        onChange={(event) =>
-                          updateCreativeDisplay(point.id, {
-                            rotation: Number(event.target.value),
-                          })
-                        }
-                        className="mt-1 block w-full accent-[#1954c6]"
-                      />
-                    </label>
+                    {framingMode === 'manual' && (
+                      <div className="mt-3 rounded-xl border border-slate-100 p-3">
+                        <label className="block text-[11px] font-semibold text-slate-500">
+                          Dimensione
+                          <input
+                            aria-label="Dimensione creatività"
+                            type="range"
+                            min={0.65}
+                            max={1.8}
+                            step={0.01}
+                            value={display.zoom}
+                            onChange={(event) =>
+                              updateCreativeDisplay(point.id, {
+                                zoom: Number(event.target.value),
+                              })
+                            }
+                            className="mt-1 block w-full accent-[#1954c6]"
+                          />
+                        </label>
+                        <div className="mt-2 grid grid-cols-2 gap-3">
+                          <label className="text-[11px] font-semibold text-slate-500">
+                            Orizzontale
+                            <input
+                              aria-label="Posizione orizzontale creatività"
+                              type="range"
+                              min={-1}
+                              max={1}
+                              step={0.01}
+                              value={display.offsetX}
+                              onChange={(event) =>
+                                updateCreativeDisplay(point.id, {
+                                  offsetX: Number(event.target.value),
+                                })
+                              }
+                              className="mt-1 block w-full accent-[#1954c6]"
+                            />
+                          </label>
+                          <label className="text-[11px] font-semibold text-slate-500">
+                            Verticale
+                            <input
+                              aria-label="Posizione verticale creatività"
+                              type="range"
+                              min={-1}
+                              max={1}
+                              step={0.01}
+                              value={display.offsetY}
+                              onChange={(event) =>
+                                updateCreativeDisplay(point.id, {
+                                  offsetY: Number(event.target.value),
+                                })
+                              }
+                              className="mt-1 block w-full accent-[#1954c6]"
+                            />
+                          </label>
+                        </div>
+                        <label className="mt-2 block text-[11px] font-semibold text-slate-500">
+                          Rotazione
+                          <input
+                            aria-label="Rotazione creatività"
+                            type="range"
+                            min={-20}
+                            max={20}
+                            step={0.5}
+                            value={display.rotation}
+                            onChange={(event) =>
+                              updateCreativeDisplay(point.id, {
+                                rotation: Number(event.target.value),
+                              })
+                            }
+                            className="mt-1 block w-full accent-[#1954c6]"
+                          />
+                        </label>
+                      </div>
+                    )}
                   </div>
                 )}
               </aside>
@@ -520,11 +566,11 @@ export function CreativeWorkspace({
                   <button
                     type="button"
                     onClick={() => setActionStage('generating')}
-                    className="rounded-full px-4 py-2.5 text-sm font-bold text-[#1954c6] hover:bg-blue-50"
+                    className="mr-1 flex items-center gap-2 rounded-full bg-blue-50 px-5 py-2.5 text-sm font-bold text-[#1954c6] hover:bg-blue-100"
                   >
-                    Genera di nuovo
+                    <Sparkles size={17} /> Genera nuova variante
                   </button>
-                  {replaceControl('Sostituisci')}
+                  {replaceControl()}
                   <button
                     type="button"
                     onClick={applyOptimized}
@@ -535,25 +581,18 @@ export function CreativeWorkspace({
                 </>
               ) : hasCreativeIssues ? (
                 <>
-                  {replaceControl('Sostituisci')}
+                  {replaceControl()}
                   <button
                     type="button"
                     onClick={() => setActionStage('generating')}
                     className="ml-2 flex items-center gap-2 rounded-full bg-[#1954c6] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#123f99]"
                   >
-                    <Sparkles size={17} /> Genera versione
+                    <Sparkles size={17} /> Genera versione ottimizzata
                   </button>
                 </>
               ) : (
                 <>
-                  {replaceControl('Sostituisci')}
-                  <button
-                    type="button"
-                    onClick={fillAndConfirm}
-                    className="rounded-full px-4 py-2.5 text-sm font-bold text-[#1954c6] hover:bg-blue-50"
-                  >
-                    Riempi
-                  </button>
+                  {replaceControl()}
                   <button
                     type="button"
                     onClick={onClose}

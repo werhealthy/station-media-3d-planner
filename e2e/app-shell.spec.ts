@@ -8,11 +8,18 @@ test('seleziona un media point e mostra il dettaglio upload', async ({
     .getByRole('button', { name: /Sovrapompa \/ Cappuccio/ })
     .first()
     .click()
-  await expect(page.getByText('1600 × 400 mm')).toBeVisible()
-  await expect(page.getByText('Carica JPEG, PNG o PDF')).toBeVisible()
+  await expect(page.getByText('550 × 450 mm')).toBeVisible()
+  await page.getByRole('button', { name: 'Carica creatività' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByText('Carica la creatività')).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Torna ai dettagli del supporto' }),
+  ).toBeVisible()
 })
 
-test('ordina i supporti secondo la sequenza della journey', async ({ page }) => {
+test('ordina i supporti secondo la sequenza della journey', async ({
+  page,
+}) => {
   await page.goto('/')
   const inventory = page.locator('aside').getByRole('button', { name: /ID / })
 

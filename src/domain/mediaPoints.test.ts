@@ -64,7 +64,7 @@ describe('media point physical layout', () => {
       rotation: [0, STATION_LAYOUT.entry.stendardoYaw, 0],
     })
     expect(point('mp-09').rotation[1]).toBeGreaterThan(45)
-    expect(point('mp-06').rotation[1]).toBeGreaterThan(25)
+    expect(point('mp-06').rotation[1]).toBe(0)
 
     const stendardo = point('mp-08')
     const beachFlag = point('mp-09')

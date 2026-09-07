@@ -10,7 +10,7 @@ export interface CreativeDisplaySettings {
 }
 
 export const DEFAULT_CREATIVE_DISPLAY: CreativeDisplaySettings = {
-  fitMode: 'cover',
+  fitMode: 'contain',
   backgroundColor: '#ffffff',
   rotation: 0,
   zoom: 1,

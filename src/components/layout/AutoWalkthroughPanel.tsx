@@ -5,6 +5,7 @@ import {
   journeyElapsedAfterStep,
 } from '@/domain/journeys'
 import { usePlaybackStore } from '@/stores/playbackStore'
+import { useJourneyCopyStore } from '@/stores/journeyCopyStore'
 
 const formatTime = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
@@ -24,9 +25,12 @@ export function AutoWalkthroughPanel() {
     (s) => s.resetInteractiveJourney,
   )
   const openDecision = usePlaybackStore((s) => s.openDecision)
+  const copyOverrides = useJourneyCopyStore((s) => s.overrides)
   const journey = getJourney(activeRouteId)
   const activeStep = journey.steps[activeStepIndex] ?? journey.steps[0]!
-  const [phaseCode, ...phaseWords] = activeStep.phase.split(' · ')
+  const activeCopy = copyOverrides[activeStep.id]
+  const activePhase = activeCopy?.phase ?? activeStep.phase
+  const [phaseCode, ...phaseWords] = activePhase.split(' · ')
   const phaseTitle = phaseWords.join(' · ') || phaseCode
   const journeyLabel = !serviceChoice ? 'Ingresso Q8' : journey.name
   const duration = journeyDuration(journey)
@@ -50,7 +54,7 @@ export function AutoWalkthroughPanel() {
     const markerProgress = elapsed / duration
     if (item.checkpoint)
       markers.push({
-        label: item.checkpoint,
+        label: copyOverrides[item.id]?.checkpoint ?? item.checkpoint,
         stepIndex,
         progress: markerProgress,
         ordinal: markers.length + 1,
@@ -97,7 +101,7 @@ export function AutoWalkthroughPanel() {
           <Sparkles size={14} /> {journeyLabel}
         </span>
         <strong>{phaseTitle}</strong>
-        <span>{activeStep.label}</span>
+        <span>{activeCopy?.label ?? activeStep.label}</span>
       </div>
       <button
         className="play-button"

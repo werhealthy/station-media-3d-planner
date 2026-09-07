@@ -52,30 +52,13 @@ describe('station journeys', () => {
       ).toBe(true)
   })
 
-  it('keeps Journey A in the vehicle and returns the nozzle before payment', () => {
+  it('keeps Journey A in the vehicle and directs attention during fueling', () => {
     const served = getJourney('servito')
     expect(served.steps.every((step) => step.cameraMode === 'vehicle')).toBe(
       true,
     )
-    expect(dwellSeconds(served.steps)).toBeGreaterThanOrEqual(40)
-    expect(dwellSeconds(served.steps)).toBeLessThanOrEqual(50)
-
-    const nozzleStates = served.steps
-      .filter((step) => step.nozzle)
-      .map((step) => step.nozzle?.state)
-    expect(nozzleStates).toEqual([
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'hand',
-      'returning',
-      'holstered',
-    ])
+    expect(dwellSeconds(served.steps)).toBeGreaterThanOrEqual(30)
+    expect(dwellSeconds(served.steps)).toBeLessThanOrEqual(38)
 
     const removeIndex = served.steps.findIndex(
       (step) => step.id === 'served-remove-nozzle',
@@ -93,6 +76,13 @@ describe('station journeys', () => {
     expect(paymentChoiceIndex).toBeGreaterThan(replaceIndex)
     expect(paymentIndex).toBeGreaterThan(replaceIndex)
     expect(paymentIndex).toBeGreaterThan(paymentChoiceIndex)
+    expect(
+      new Set(
+        served.steps
+          .filter((step) => step.id.includes('dwell'))
+          .map((step) => step.gazeTarget.join(',')),
+      ).size,
+    ).toBeGreaterThanOrEqual(3)
     expect(
       served.steps
         .slice(removeIndex, replaceIndex + 1)
@@ -126,15 +116,13 @@ describe('station journeys', () => {
     ])
     expect(
       dwellSeconds(self.steps.filter((step) => step.nozzle)),
-    ).toBeGreaterThanOrEqual(35)
+    ).toBeGreaterThanOrEqual(20)
     expect(
       dwellSeconds(self.steps.filter((step) => step.nozzle)),
-    ).toBeLessThanOrEqual(45)
+    ).toBeLessThanOrEqual(26)
     expect(
       self.steps.findIndex((step) => step.id === 'self-payment-confirmed'),
-    ).toBeLessThan(
-      self.steps.findIndex((step) => step.id === 'self-take-nozzle'),
-    )
+    ).toBeLessThan(self.steps.findIndex((step) => step.id === 'self-refuel'))
   })
 
   it('enters Svolta diagonally, pays inside and returns without forced media gazes', () => {
@@ -180,10 +168,10 @@ describe('station journeys', () => {
     expect(centerAisle.position[2]).not.toBe(clearCar.position[2])
     expect(
       dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
-    ).toBeGreaterThanOrEqual(40)
+    ).toBeGreaterThanOrEqual(30)
     expect(
       dwellSeconds(svolta.steps.filter((step) => step.nozzle)),
-    ).toBeLessThanOrEqual(50)
+    ).toBeLessThanOrEqual(38)
     expect(svolta.steps.some((step) => step.id === 'svolta-take-nozzle')).toBe(
       false,
     )

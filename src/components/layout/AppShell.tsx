@@ -20,6 +20,7 @@ import { loadStationConfig } from '@/adapters/station-config/stationConfigLoader
 import { restoreStationConfig } from '@/adapters/station-config/stationConfigPersistence'
 import { StationSetupPanel } from './StationSetupPanel'
 import { JourneyExperienceOverlay } from './JourneyExperienceOverlay'
+import { JourneySettingsDialog } from './JourneySettingsDialog'
 export function AppShell() {
   const mode = useViewerStore((s) => s.navigationMode)
   const active = useViewerStore((s) => s.activeHotspotId)
@@ -80,6 +81,7 @@ export function AppShell() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
       <TopBar />
+      <JourneySettingsDialog />
       <main className="flex min-h-0 flex-1">
         <section className="relative min-w-0 flex-1">
           <Canvas />

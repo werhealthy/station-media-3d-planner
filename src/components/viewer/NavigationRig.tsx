@@ -722,14 +722,21 @@ export function NavigationRig() {
         target.x += Math.sin(autoTime.current * 2.15) * 0.026
       }
 
-      const smoothPedestrianPosition =
-        current.cameraMode === 'pedestrian' && !isFadeCut
-      if (resetAutoPose.current || !smoothPedestrianPosition)
+      const smoothAutoPosition = !isFadeCut
+      if (resetAutoPose.current || !smoothAutoPosition)
         smoothedAutoPosition.current.copy(destination)
       else
         smoothedAutoPosition.current.lerp(
           destination,
-          1 - Math.exp(-delta * (current.motion === 'walk' ? 9 : 6.5)),
+          1 -
+            Math.exp(
+              -delta *
+                (current.motion === 'walk'
+                  ? 8
+                  : current.motion === 'drive' || current.motion === 'brake'
+                    ? 6.2
+                    : 5.4),
+            ),
         )
       camera.position.copy(smoothedAutoPosition.current)
       if (isFadeCut) smoothedAutoTarget.current.copy(target)
@@ -744,7 +751,7 @@ export function NavigationRig() {
                   : current.motion === 'walk'
                     ? 3.2
                     : current.motion === 'glance'
-                      ? 1.15
+                      ? 1.8
                       : current.motion === 'hold'
                         ? 1.7
                         : 3.1),

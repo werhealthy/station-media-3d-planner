@@ -16,6 +16,7 @@ import { usePlaybackStore } from '@/stores/playbackStore'
 import { STATIONS, type StationId } from '@/domain/stations'
 import { useStationStore } from '@/stores/stationStore'
 import { useStationSetupStore } from '@/stores/stationSetupStore'
+import { useJourneyCopyStore } from '@/stores/journeyCopyStore'
 
 export function TopBar() {
   const projectName = useProjectStore((s) => s.projectName)
@@ -31,6 +32,7 @@ export function TopBar() {
   const station = STATIONS.find((item) => item.id === stationId) ?? STATIONS[0]
   const setupEnabled = useStationSetupStore((s) => s.enabled)
   const enterSetup = useStationSetupStore((s) => s.enterSetup)
+  const openJourneySettings = useJourneyCopyStore((s) => s.openEditor)
   const modes = [
     ['overview', 'Esplora', Grid2X2],
     ['walkthrough', 'Walkthrough', Footprints],
@@ -130,6 +132,15 @@ export function TopBar() {
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        onClick={openJourneySettings}
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        aria-label="Impostazioni testi journey"
+        title="Impostazioni journey"
+      >
+        <Settings size={20} />
+      </button>
       <button
         className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
         aria-label="Guida"

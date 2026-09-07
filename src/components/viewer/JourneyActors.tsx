@@ -14,7 +14,6 @@ import {
   sampleHumanGait,
   sampleIdleMotion,
 } from '@/three/humanMotion'
-import { FuelNozzleModel } from './FuelNozzleModel'
 
 const gaze = new THREE.Vector3()
 
@@ -25,7 +24,6 @@ const gaze = new THREE.Vector3()
  */
 function StylizedStaffPerson({
   uniform = 'attendant',
-  holdingNozzle = false,
   leftArmRef,
   rightArmRef,
   leftLegRef,
@@ -35,7 +33,6 @@ function StylizedStaffPerson({
   headRef,
 }: {
   uniform?: 'attendant' | 'cashier'
-  holdingNozzle?: boolean
   leftArmRef?: RefObject<THREE.Group | null>
   rightArmRef?: RefObject<THREE.Group | null>
   leftLegRef?: RefObject<THREE.Group | null>
@@ -137,23 +134,6 @@ function StylizedStaffPerson({
               <capsuleGeometry args={[0.052, 0.2, 7, 15]} />
               <meshStandardMaterial color={skin} roughness={0.78} />
             </mesh>
-            <RoundedBox
-              args={[0.105, 0.13, 0.085]}
-              radius={0.035}
-              smoothness={4}
-              position={[0, -0.34, 0.02]}
-              castShadow
-            >
-              <meshStandardMaterial color={skin} roughness={0.78} />
-            </RoundedBox>
-            {side === 1 && holdingNozzle && (
-              <group
-                position={[0.05, -0.36, 0.1]}
-                rotation={[0.08, 0.42, -0.72]}
-              >
-                <FuelNozzleModel scale={0.56} />
-              </group>
-            )}
           </group>
         </group>
       ))}
@@ -279,10 +259,6 @@ export function JourneyActors() {
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const cue = mode === 'auto' ? step?.actor : undefined
-  const operatorHoldsNozzle =
-    step?.nozzle?.owner === 'attendant' &&
-    step.nozzle.state !== 'holstered' &&
-    step.nozzle.state !== 'returning'
   const locksFuelingPose = cue?.action === 'refuel'
 
   useEffect(() => {
@@ -377,9 +353,8 @@ export function JourneyActors() {
       )
     }
 
-    const actionArmTarget = operatorHoldsNozzle
-      ? -0.68
-      : cue.action === 'payment'
+    const actionArmTarget =
+      cue.action === 'payment'
         ? -1.02
         : [
               'take-nozzle',
@@ -456,7 +431,6 @@ export function JourneyActors() {
       >
         <group ref={attendantMotion}>
           <StylizedStaffPerson
-            holdingNozzle={operatorHoldsNozzle}
             leftArmRef={leftArm}
             rightArmRef={rightArm}
             leftLegRef={leftLeg}

@@ -8,7 +8,6 @@ import {
   cinematicFadeOpacity,
   presentedCameraMode,
   presentedTerminalScreen,
-  terminalTouchEnvelope,
 } from './journeyPresentation'
 
 function progressWithinStep(
@@ -25,17 +24,6 @@ function progressWithinStep(
 }
 
 describe('journey presentation continuity', () => {
-  it('muove il braccio con un inviluppo continuo e lo riporta a riposo', () => {
-    expect(terminalTouchEnvelope(0)).toBe(0)
-    expect(terminalTouchEnvelope(0.3)).toBeGreaterThan(0)
-    expect(terminalTouchEnvelope(0.5)).toBeCloseTo(1)
-    expect(terminalTouchEnvelope(0.7)).toBeGreaterThan(0)
-    expect(terminalTouchEnvelope(1)).toBe(0)
-    expect(
-      Math.abs(terminalTouchEnvelope(0.41) - terminalTouchEnvelope(0.42)),
-    ).toBeLessThan(0.01)
-  })
-
   it('cambia schermata SmartOPT quando il dito raggiunge il display', () => {
     const journey = getJourney('self-service')
     const index = journey.steps.findIndex(

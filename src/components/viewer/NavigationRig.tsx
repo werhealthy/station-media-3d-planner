@@ -15,6 +15,7 @@ import {
   createArrivalCurve,
   pedestrianCollisionAt,
   pedestrianVehicleCollisionAt,
+  monotonicTimelineValueAt,
   projectPointToCurveProgress,
   vehicleCollisionAt,
   vehicleYawFromTangent,
@@ -139,6 +140,12 @@ export function NavigationRig() {
         ),
     [activeJourney, arrivalCurve, arrivalEndIndex],
   )
+  const arrivalTimeline = useMemo(() => {
+    const times = [0]
+    for (const step of activeJourney.steps.slice(0, arrivalEndIndex + 1))
+      times.push(times.at(-1)! + step.duration)
+    return { times, progresses: [0, ...arrivalStepProgresses] }
+  }, [activeJourney, arrivalEndIndex, arrivalStepProgresses])
   const departureCurve = useMemo(
     () => createArrivalCurve(activeJourney.departurePath),
     [activeJourney],
@@ -350,24 +357,10 @@ export function NavigationRig() {
       if (initialStepIndex < 0)
         initialStepIndex = activeJourney.steps.length - 1
       const initialStep = activeJourney.steps[initialStepIndex]
-      const elapsedBeforeInitialStep = activeJourney.steps
-        .slice(0, Math.max(0, initialStepIndex))
-        .reduce((total, item) => total + item.duration, 0)
-      const initialLocal = initialStep
-        ? THREE.MathUtils.clamp(
-            (routeTime - elapsedBeforeInitialStep) / initialStep.duration,
-            0,
-            1,
-          )
-        : 0
-      const initialArrivalProgress = THREE.MathUtils.lerp(
-        initialStepIndex > 0
-          ? (arrivalStepProgresses[initialStepIndex - 1] ?? 0)
-          : 0,
-        arrivalStepProgresses[initialStepIndex] ?? 1,
-        initialStep
-          ? easeJourneyMotion(initialLocal, initialStep.motion)
-          : initialLocal,
+      const initialArrivalProgress = monotonicTimelineValueAt(
+        arrivalTimeline.times,
+        arrivalTimeline.progresses,
+        routeTime,
       )
       const start =
         initialStepIndex <= arrivalEndIndex
@@ -388,6 +381,7 @@ export function NavigationRig() {
     arrivalCurve,
     arrivalEndIndex,
     arrivalStepProgresses,
+    arrivalTimeline,
     camera,
     config.modelType,
     config.walkPath.length,
@@ -585,14 +579,10 @@ export function NavigationRig() {
       )
 
       if (inContinuousArrival) {
-        const arrivalProgress = THREE.MathUtils.lerp(
-          stepIndex > 0 ? (arrivalStepProgresses[stepIndex - 1] ?? 0) : 0,
-          arrivalStepProgresses[stepIndex] ?? 1,
-          current.motion === 'hold'
-            ? 0
-            : current.motion === 'brake'
-              ? easeJourneyMotion(local, current.motion)
-              : local,
+        const arrivalProgress = monotonicTimelineValueAt(
+          arrivalTimeline.times,
+          arrivalTimeline.progresses,
+          autoTime.current,
         )
         const candidate = arrivalCurve.getPointAt(arrivalProgress)
         const tangent = arrivalCurve.getTangentAt(arrivalProgress).normalize()

@@ -62,6 +62,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   )
   const [error, setError] = useState('')
   const [referenceIndex, setReferenceIndex] = useState<number | null>(null)
+  const [creativeWorkspaceOpen, setCreativeWorkspaceOpen] = useState(false)
   const inventoryPoints = points
     .filter((item) => item.assignable)
     .sort((left, right) => left.number - right.number)
@@ -255,6 +256,44 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
             </div>
           </div>
           <div className="flex-1 space-y-6 overflow-y-auto p-5">
+            {point.assignable && (
+              <section className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3.5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  {asset ? (
+                    <img
+                      src={asset.url}
+                      alt="Anteprima creatività assegnata"
+                      className="h-16 w-14 shrink-0 rounded-lg border border-white bg-white object-contain shadow-sm"
+                    />
+                  ) : (
+                    <span className="grid h-16 w-14 shrink-0 place-items-center rounded-lg bg-[#1954c6] text-white shadow-sm">
+                      <ImagePlus size={23} />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#1954c6]">
+                      Area creatività
+                    </p>
+                    <p className="mt-1 truncate text-sm font-bold text-slate-900">
+                      {asset ? asset.name : 'Nessun asset caricato'}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
+                      {asset
+                        ? 'Apri l’anteprima e il feedback di qualità.'
+                        : 'Carica e valuta la grafica in uno spazio dedicato.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreativeWorkspaceOpen(true)}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1954c6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#123f99]"
+                >
+                  <ImagePlus size={17} />
+                  {asset ? 'Apri analisi creatività' : 'Carica creatività'}
+                </button>
+              </section>
+            )}
             <section>
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Proprietà
@@ -382,262 +421,321 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               </section>
             )}
 
-            <section>
-              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Creatività assegnata
-              </h3>
-              {!point.assignable ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                  Questo elemento ha funzione strutturale o normativa e non è
-                  configurabile come spazio pubblicitario.
-                </div>
-              ) : asset ? (
-                <>
-                  <div className="overflow-hidden rounded-xl border border-slate-200">
-                    <img
-                      src={asset.url}
-                      alt="Anteprima creatività"
-                      className="aspect-video w-full bg-slate-100 object-contain"
-                    />
-                    <div className="flex items-center justify-between p-3">
-                      <span className="max-w-[230px] truncate text-sm font-medium">
-                        {asset.name}
-                      </span>
-                      <button
-                        aria-label="Rimuovi creatività"
-                        onClick={() => clear(point.id)}
-                        className="rounded-md p-1 text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+            {creativeWorkspaceOpen && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Area creatività ${point.name}`}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-5 backdrop-blur-sm"
+                onClick={() => setCreativeWorkspaceOpen(false)}
+              >
+                <div
+                  className="flex h-[min(900px,calc(100vh-40px))] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-[#f7f9fc] shadow-2xl"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#1954c6]">
+                        Creative workspace · Supporto {point.number}
+                      </p>
+                      <h2 className="mt-1 text-xl font-bold text-slate-950">
+                        {point.name}
+                      </h2>
                     </div>
-                    <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-                      {asset.mimeType === 'application/pdf' && (
-                        <span className="mr-1.5 rounded bg-red-50 px-1.5 py-0.5 font-bold text-red-700">
-                          PDF · prima pagina
-                        </span>
-                      )}
-                      {asset.width} × {asset.height} px ·{' '}
-                      {ratioLabel(asset.aspectRatio)}
-                      {asset.originalSize && (
-                        <span className="ml-1 font-semibold text-emerald-700">
-                          · compressa automaticamente da{' '}
-                          {(asset.originalSize / 1024 / 1024).toFixed(1)} MB
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {orientedAsset?.rotationRadians !== 0 && (
-                    <p className="mt-2 rounded-lg bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
-                      La creatività orizzontale viene ruotata automaticamente di
-                      90° sulla Beach Flag, senza stretching.
-                    </p>
-                  )}
-                  {point.supportTypeId === '2' && (
-                    <PumpLeaderAiReview
-                      key={asset.id}
-                      asset={asset}
-                      onApply={(optimizedAsset) =>
-                        assign(point.id, optimizedAsset)
-                      }
-                    />
-                  )}
-                  {fit && (
-                    <div
-                      role="status"
-                      className={`mt-3 rounded-xl border p-3 text-sm ${fit.status === 'exact' ? 'border-emerald-200 bg-emerald-50 text-emerald-950' : 'border-amber-200 bg-amber-50 text-amber-950'}`}
+                    <button
+                      type="button"
+                      aria-label="Chiudi area creatività"
+                      onClick={() => setCreativeWorkspaceOpen(false)}
+                      className="rounded-full border border-slate-200 bg-slate-50 p-2.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <div className="flex items-center gap-2 font-bold">
-                        {fit.status === 'exact' ? (
-                          <CheckCircle2 size={17} />
-                        ) : (
-                          <AlertTriangle size={17} />
-                        )}
-                        {fit.status === 'exact'
-                          ? 'Proporzioni corrette'
-                          : 'Proporzioni diverse dal supporto'}
-                      </div>
-                      <p className="mt-1 text-xs leading-5 opacity-80">
-                        Richiesto {ratioLabel(fit.surfaceRatio)} · caricato{' '}
-                        {ratioLabel(fit.assetRatio)} · differenza{' '}
-                        {fit.differencePercent.toFixed(1)}%
-                      </p>
-                    </div>
-                  )}
-                  {fit && fit.status !== 'exact' && (
-                    <p className="mt-2 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                      {point.supportShape === 'beach-flag' &&
-                      (displaySettings?.fitMode ?? 'contain') === 'cover'
-                        ? 'La creatività riempie la bandiera senza deformazioni; la parte eccedente viene ritagliata.'
-                        : `La creatività viene mostrata interamente e non viene mai ritagliata o deformata. Circa ${fit.containUnusedPercent.toFixed(0)}% del supporto rimane libero.`}
-                    </p>
-                  )}
-                  {point.supportShape === 'beach-flag' && (
-                    <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Posizionamento sulla bandiera
-                        </p>
-                        <p className="mt-1 text-[11px] leading-4 text-slate-500">
-                          “Ritaglia” riempie l’area senza deformare la grafica.
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(['contain', 'cover'] as const).map((fitMode) => (
-                          <button
-                            key={fitMode}
-                            type="button"
-                            onClick={() =>
-                              updateCreativeDisplay(point.id, { fitMode })
-                            }
-                            className={`rounded-lg border px-3 py-2 text-xs font-bold ${
-                              (displaySettings?.fitMode ?? 'contain') ===
-                              fitMode
-                                ? 'border-[#1954c6] bg-blue-50 text-[#1954c6]'
-                                : 'border-slate-200 bg-white text-slate-600'
-                            }`}
-                          >
-                            {fitMode === 'contain'
-                              ? 'Mostra intera'
-                              : 'Ritaglia'}
-                          </button>
-                        ))}
-                      </div>
-                      <label className="flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
-                        Sfondo supporto
-                        <input
-                          type="color"
-                          value={displaySettings?.backgroundColor ?? '#ffffff'}
-                          onChange={(event) =>
-                            updateCreativeDisplay(point.id, {
-                              backgroundColor: event.target.value,
-                            })
-                          }
-                          className="h-8 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1"
-                        />
-                      </label>
-                      {[
-                        ['Zoom', 'zoom', 0.75, 2, 0.05],
-                        ['Rotazione', 'rotation', -20, 20, 1],
-                        ['Orizzontale', 'offsetX', -1, 1, 0.05],
-                        ['Verticale', 'offsetY', -1, 1, 0.05],
-                      ].map(([label, key, min, max, step]) => (
-                        <label
-                          key={String(key)}
-                          className="block text-xs font-semibold text-slate-600"
-                        >
-                          <span className="mb-1 flex justify-between">
-                            {label}
-                            <span className="tabular-nums text-slate-400">
-                              {(displaySettings?.[
-                                key as keyof typeof displaySettings
-                              ] as number | undefined) ??
-                                (key === 'zoom' ? 1 : 0)}
-                            </span>
-                          </span>
+                      <X size={20} />
+                    </button>
+                  </header>
+                  <div className="min-h-0 flex-1 overflow-y-auto p-6">
+                    <section className="mx-auto max-w-3xl">
+                      <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Creatività e controllo qualità
+                      </h3>
+                      {!point.assignable ? (
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                          Questo elemento ha funzione strutturale o normativa e
+                          non è configurabile come spazio pubblicitario.
+                        </div>
+                      ) : asset ? (
+                        <>
+                          {point.supportTypeId === '2' && (
+                            <PumpLeaderAiReview
+                              key={asset.id}
+                              asset={asset}
+                              onApply={(optimizedAsset) =>
+                                assign(point.id, optimizedAsset)
+                              }
+                            />
+                          )}
+                          {fit && point.supportTypeId !== '2' && (
+                            <div
+                              role="status"
+                              className={`mb-4 rounded-xl border p-4 text-sm shadow-sm ${fit.status === 'exact' ? 'border-emerald-200 bg-emerald-50 text-emerald-950' : 'border-amber-200 bg-amber-50 text-amber-950'}`}
+                            >
+                              <div className="flex items-center gap-2 font-bold">
+                                {fit.status === 'exact' ? (
+                                  <CheckCircle2 size={19} />
+                                ) : (
+                                  <AlertTriangle size={19} />
+                                )}
+                                {fit.status === 'exact'
+                                  ? 'Asset compatibile con il supporto'
+                                  : 'Asset da adattare al supporto'}
+                              </div>
+                              <p className="mt-1 text-xs leading-5 opacity-80">
+                                Richiesto {ratioLabel(fit.surfaceRatio)} ·
+                                caricato {ratioLabel(fit.assetRatio)} ·
+                                differenza {fit.differencePercent.toFixed(1)}%
+                              </p>
+                            </div>
+                          )}
+                          {fit &&
+                            point.supportTypeId !== '2' &&
+                            fit.status !== 'exact' && (
+                              <p className="mb-4 rounded-lg bg-white p-3 text-xs leading-5 text-slate-600 shadow-sm">
+                                {point.supportShape === 'beach-flag' &&
+                                (displaySettings?.fitMode ?? 'contain') ===
+                                  'cover'
+                                  ? 'La creatività riempie la bandiera senza deformazioni; la parte eccedente viene ritagliata.'
+                                  : `La creatività viene mostrata interamente e non viene mai ritagliata o deformata. Circa ${fit.containUnusedPercent.toFixed(0)}% del supporto rimane libero.`}
+                              </p>
+                            )}
+                          <div className="overflow-hidden rounded-xl border border-slate-200">
+                            <img
+                              src={asset.url}
+                              alt="Anteprima creatività"
+                              className="max-h-[58vh] w-full bg-slate-100 object-contain"
+                            />
+                            <div className="flex items-center justify-between p-3">
+                              <span className="max-w-[230px] truncate text-sm font-medium">
+                                {asset.name}
+                              </span>
+                              <button
+                                aria-label="Rimuovi creatività"
+                                onClick={() => clear(point.id)}
+                                className="rounded-md p-1 text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                            <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+                              {asset.mimeType === 'application/pdf' && (
+                                <span className="mr-1.5 rounded bg-red-50 px-1.5 py-0.5 font-bold text-red-700">
+                                  PDF · prima pagina
+                                </span>
+                              )}
+                              {asset.width} × {asset.height} px ·{' '}
+                              {ratioLabel(asset.aspectRatio)}
+                              {asset.originalSize && (
+                                <span className="ml-1 font-semibold text-emerald-700">
+                                  · compressa automaticamente da{' '}
+                                  {(asset.originalSize / 1024 / 1024).toFixed(
+                                    1,
+                                  )}{' '}
+                                  MB
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {orientedAsset?.rotationRadians !== 0 && (
+                            <p className="mt-2 rounded-lg bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900">
+                              La creatività orizzontale viene ruotata
+                              automaticamente di 90° sulla Beach Flag, senza
+                              stretching.
+                            </p>
+                          )}
+                          {point.supportShape === 'beach-flag' && (
+                            <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                  Posizionamento sulla bandiera
+                                </p>
+                                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                                  “Ritaglia” riempie l’area senza deformare la
+                                  grafica.
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {(['contain', 'cover'] as const).map(
+                                  (fitMode) => (
+                                    <button
+                                      key={fitMode}
+                                      type="button"
+                                      onClick={() =>
+                                        updateCreativeDisplay(point.id, {
+                                          fitMode,
+                                        })
+                                      }
+                                      className={`rounded-lg border px-3 py-2 text-xs font-bold ${
+                                        (displaySettings?.fitMode ??
+                                          'contain') === fitMode
+                                          ? 'border-[#1954c6] bg-blue-50 text-[#1954c6]'
+                                          : 'border-slate-200 bg-white text-slate-600'
+                                      }`}
+                                    >
+                                      {fitMode === 'contain'
+                                        ? 'Mostra intera'
+                                        : 'Ritaglia'}
+                                    </button>
+                                  ),
+                                )}
+                              </div>
+                              <label className="flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+                                Sfondo supporto
+                                <input
+                                  type="color"
+                                  value={
+                                    displaySettings?.backgroundColor ??
+                                    '#ffffff'
+                                  }
+                                  onChange={(event) =>
+                                    updateCreativeDisplay(point.id, {
+                                      backgroundColor: event.target.value,
+                                    })
+                                  }
+                                  className="h-8 w-12 cursor-pointer rounded border border-slate-200 bg-white p-1"
+                                />
+                              </label>
+                              {[
+                                ['Zoom', 'zoom', 0.75, 2, 0.05],
+                                ['Rotazione', 'rotation', -20, 20, 1],
+                                ['Orizzontale', 'offsetX', -1, 1, 0.05],
+                                ['Verticale', 'offsetY', -1, 1, 0.05],
+                              ].map(([label, key, min, max, step]) => (
+                                <label
+                                  key={String(key)}
+                                  className="block text-xs font-semibold text-slate-600"
+                                >
+                                  <span className="mb-1 flex justify-between">
+                                    {label}
+                                    <span className="tabular-nums text-slate-400">
+                                      {(displaySettings?.[
+                                        key as keyof typeof displaySettings
+                                      ] as number | undefined) ??
+                                        (key === 'zoom' ? 1 : 0)}
+                                    </span>
+                                  </span>
+                                  <input
+                                    type="range"
+                                    min={Number(min)}
+                                    max={Number(max)}
+                                    step={Number(step)}
+                                    value={
+                                      (displaySettings?.[
+                                        key as keyof typeof displaySettings
+                                      ] as number | undefined) ??
+                                      (key === 'zoom' ? 1 : 0)
+                                    }
+                                    onChange={(event) =>
+                                      updateCreativeDisplay(point.id, {
+                                        [String(key)]: Number(
+                                          event.target.value,
+                                        ),
+                                      })
+                                    }
+                                    className="w-full accent-[#1954c6]"
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                          {recommendations.length > 0 && (
+                            <div className="mt-4">
+                              <p className="text-xs font-bold text-slate-500">
+                                Supporti consigliati per questo formato
+                              </p>
+                              <div className="mt-2 space-y-1.5">
+                                {recommendations.map((recommendation) => (
+                                  <button
+                                    type="button"
+                                    key={recommendation.point.id}
+                                    onClick={() =>
+                                      select(recommendation.point.id)
+                                    }
+                                    className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-xs hover:border-blue-300 hover:bg-blue-50"
+                                  >
+                                    <span className="font-semibold text-slate-700">
+                                      {recommendation.point.number}.{' '}
+                                      {recommendation.point.name}
+                                    </span>
+                                    <span className="tabular-nums text-slate-400">
+                                      Δ{' '}
+                                      {recommendation.fit.differencePercent.toFixed(
+                                        1,
+                                      )}
+                                      %
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {usesSmartOptIdle && (
+                            <div className="mb-3 overflow-hidden rounded-xl border border-blue-100 bg-[#eef2f7]">
+                              <img
+                                src={BRAND_ASSETS.smartOptIdle}
+                                alt="Schermata idle Q8 del terminale smartOPT Maxi"
+                                className="mx-auto h-64 object-contain p-3"
+                              />
+                              <div className="border-t border-blue-100 bg-white px-3 py-2">
+                                <p className="text-xs font-bold text-[#153276]">
+                                  Schermata idle Q8 predefinita
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-500">
+                                  Visualizzata nel display verticale finché non
+                                  assegni una creatività diversa.
+                                </p>
+                              </div>
+                            </div>
+                          )}
                           <input
-                            type="range"
-                            min={Number(min)}
-                            max={Number(max)}
-                            step={Number(step)}
-                            value={
-                              (displaySettings?.[
-                                key as keyof typeof displaySettings
-                              ] as number | undefined) ??
-                              (key === 'zoom' ? 1 : 0)
-                            }
+                            id={`creative-upload-${point.id}`}
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf,.pdf"
+                            className="sr-only"
                             onChange={(event) =>
-                              updateCreativeDisplay(point.id, {
-                                [String(key)]: Number(event.target.value),
-                              })
+                              void upload(event.target.files?.[0])
                             }
-                            className="w-full accent-[#1954c6]"
                           />
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                  {recommendations.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-xs font-bold text-slate-500">
-                        Supporti consigliati per questo formato
-                      </p>
-                      <div className="mt-2 space-y-1.5">
-                        {recommendations.map((recommendation) => (
-                          <button
-                            type="button"
-                            key={recommendation.point.id}
-                            onClick={() => select(recommendation.point.id)}
-                            className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-xs hover:border-blue-300 hover:bg-blue-50"
+                          <label
+                            htmlFor={`creative-upload-${point.id}`}
+                            className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 px-4 py-8 text-center hover:bg-blue-50"
                           >
-                            <span className="font-semibold text-slate-700">
-                              {recommendation.point.number}.{' '}
-                              {recommendation.point.name}
+                            <ImagePlus className="mb-3 text-[#1954c6]" />
+                            <span className="font-semibold text-slate-800">
+                              {usesSmartOptIdle
+                                ? 'Sostituisci la schermata idle'
+                                : 'Carica JPEG, PNG o PDF'}
                             </span>
-                            <span className="tabular-nums text-slate-400">
-                              Δ{' '}
-                              {recommendation.fit.differencePercent.toFixed(1)}%
+                            <span className="mt-1 text-xs text-slate-500">
+                              Rapporto richiesto{' '}
+                              {ratioLabel(point.width / point.height)} · output
+                              massimo 15 MB
+                              <br />
+                              Immagini fino a 100 MB compresse automaticamente;
+                              per i PDF viene visualizzata la prima pagina
                             </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  {usesSmartOptIdle && (
-                    <div className="mb-3 overflow-hidden rounded-xl border border-blue-100 bg-[#eef2f7]">
-                      <img
-                        src={BRAND_ASSETS.smartOptIdle}
-                        alt="Schermata idle Q8 del terminale smartOPT Maxi"
-                        className="mx-auto h-64 object-contain p-3"
-                      />
-                      <div className="border-t border-blue-100 bg-white px-3 py-2">
-                        <p className="text-xs font-bold text-[#153276]">
-                          Schermata idle Q8 predefinita
+                          </label>
+                        </>
+                      )}
+                      {error && (
+                        <p role="alert" className="mt-2 text-sm text-red-600">
+                          {error}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-500">
-                          Visualizzata nel display verticale finché non assegni
-                          una creatività diversa.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <input
-                    id={`creative-upload-${point.id}`}
-                    type="file"
-                    accept="image/jpeg,image/png,application/pdf,.pdf"
-                    className="sr-only"
-                    onChange={(event) => void upload(event.target.files?.[0])}
-                  />
-                  <label
-                    htmlFor={`creative-upload-${point.id}`}
-                    className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 px-4 py-8 text-center hover:bg-blue-50"
-                  >
-                    <ImagePlus className="mb-3 text-[#1954c6]" />
-                    <span className="font-semibold text-slate-800">
-                      {usesSmartOptIdle
-                        ? 'Sostituisci la schermata idle'
-                        : 'Carica JPEG, PNG o PDF'}
-                    </span>
-                    <span className="mt-1 text-xs text-slate-500">
-                      Rapporto richiesto{' '}
-                      {ratioLabel(point.width / point.height)} · output massimo
-                      15 MB
-                      <br />
-                      Immagini fino a 100 MB compresse automaticamente; per i
-                      PDF viene visualizzata la prima pagina
-                    </span>
-                  </label>
-                </>
-              )}
-              {error && (
-                <p role="alert" className="mt-2 text-sm text-red-600">
-                  {error}
-                </p>
-              )}
-            </section>
+                      )}
+                    </section>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

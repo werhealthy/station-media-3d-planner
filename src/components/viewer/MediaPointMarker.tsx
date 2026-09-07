@@ -16,6 +16,7 @@ import {
 } from '@/core/creative/creativeFit'
 import { BRAND_ASSETS, SMARTOPT_SCREEN_SIZE } from '@/config/brandAssets'
 import { getJourney } from '@/domain/journeys'
+import { presentedTerminalScreen } from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { MediaSupportGeometry } from './MediaSupportGeometry'
 import { createBeachFlagGeometry } from '@/three/beachFlagGeometry'
@@ -32,8 +33,9 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   )
   const routeId = usePlaybackStore((s) => s.activeRouteId)
   const stepIndex = usePlaybackStore((s) => s.activeStepIndex)
+  const progress = usePlaybackStore((s) => s.progress)
   const route = getJourney(routeId)
-  const smartOptScreen = route.steps[stepIndex]?.terminalScreen ?? 'idle'
+  const smartOptScreen = presentedTerminalScreen(route, stepIndex, progress)
   const journeyScreen =
     point.supportTypeId === '11'
       ? {

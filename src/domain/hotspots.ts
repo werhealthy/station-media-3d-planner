@@ -24,10 +24,11 @@ export const HOTSPOTS: StationHotspot[] = [
     associatedMediaPointId: 'mp-01',
   },
   {
-    id: 'station-aerial',
-    name: 'Vista dall\u2019alto',
-    position: [4, 31, 18],
-    target: [0, 0, -1],
-    fov: 48,
+    id: 'self-terminal-closeup',
+    name: 'Accettatore self',
+    position: [-9, 2.35, 5.1],
+    target: [-9, 1.38, 0.3],
+    fov: 39,
+    associatedMediaPointId: 'mp-05',
   },
 ]

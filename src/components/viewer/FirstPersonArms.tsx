@@ -2,21 +2,16 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { getJourney } from '@/domain/journeys'
-import { presentedCameraMode } from '@/domain/journeyPresentation'
+import {
+  isTerminalTouchStep,
+  journeyStepLocalProgress,
+  presentedCameraMode,
+} from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
 const cameraPosition = new THREE.Vector3()
 const cameraQuaternion = new THREE.Quaternion()
-const TERMINAL_TOUCH_STEPS = new Set([
-  'self-terminal-start',
-  'self-no-payback',
-  'self-select-pump',
-  'self-select-fuel',
-  'self-select-payment',
-  'self-review',
-])
-
 export function FirstPersonArms() {
   const rig = useRef<THREE.Group>(null)
   const leftArm = useRef<THREE.Group>(null)
@@ -41,9 +36,14 @@ export function FirstPersonArms() {
     mode === 'auto' &&
     isPlaying &&
     pedestrianView &&
-    Boolean(step && TERMINAL_TOUCH_STEPS.has(step.id))
+    isTerminalTouchStep(step?.id)
+  const stepProgress = journeyStepLocalProgress(
+    journey,
+    activeStepIndex,
+    progress,
+  )
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (!rig.current || !leftArm.current || !rightArm.current) return
     camera.getWorldPosition(cameraPosition)
     camera.getWorldQuaternion(cameraQuaternion)
@@ -71,16 +71,15 @@ export function FirstPersonArms() {
     gaitPhase.current += delta * THREE.MathUtils.lerp(5.2, 7.2, gaitWeight)
     const swing = Math.sin(gaitPhase.current) * 0.055 * gaitWeight
     const lift = Math.abs(Math.sin(gaitPhase.current)) * 0.008 * gaitWeight
-    const touchCycle = (state.clock.elapsedTime * 0.72) % 1
     const touchReach = terminalTouch
-      ? THREE.MathUtils.smoothstep(touchCycle, 0.12, 0.3) *
-        (1 - THREE.MathUtils.smoothstep(touchCycle, 0.48, 0.68))
+      ? THREE.MathUtils.smoothstep(stepProgress, 0.16, 0.42) *
+        (1 - THREE.MathUtils.smoothstep(stepProgress, 0.58, 0.82))
       : 0
-    leftArm.current.position.set(-0.34, -0.67, -0.58)
+    leftArm.current.position.set(-0.29, -0.48, -0.38)
     rightArm.current.position.set(
-      0.34 - touchReach * 0.12,
-      -0.67 + touchReach * 0.15,
-      -0.58 - touchReach * 0.23,
+      0.29 - touchReach * 0.045,
+      -0.48 + touchReach * 0.12,
+      -0.38 - touchReach * 0.34,
     )
     leftArm.current.rotation.x = swing
     rightArm.current.rotation.x = -swing - touchReach * 0.06
@@ -93,23 +92,39 @@ export function FirstPersonArms() {
         <group
           key={side}
           ref={side === -1 ? leftArm : rightArm}
-          position={[side * 0.34, -0.67, -0.58]}
+          position={[side * 0.29, -0.48, -0.38]}
         >
           <mesh
-            position={[0, 0.135, -0.12]}
-            rotation={[-0.73, 0, side * 0.04]}
+            position={[0, 0.1, -0.1]}
+            rotation={[-0.73, 0, side * 0.035]}
             castShadow
           >
-            <capsuleGeometry args={[0.105, 0.19, 7, 14]} />
+            <capsuleGeometry args={[0.09, 0.22, 5, 10]} />
             <meshStandardMaterial color="#17366f" roughness={0.82} />
           </mesh>
           <mesh
-            position={[0, 0.285, -0.255]}
-            rotation={[-0.12, 0, side * 0.04]}
-            scale={[1, 0.68, 1.15]}
+            position={[0, 0.255, -0.245]}
+            rotation={[-0.76, 0, side * 0.035]}
             castShadow
           >
-            <sphereGeometry args={[0.118, 16, 11]} />
+            <capsuleGeometry args={[0.068, 0.075, 5, 10]} />
+            <meshStandardMaterial color="#d69a7d" roughness={0.8} />
+          </mesh>
+          <mesh
+            position={[0, 0.335, -0.335]}
+            rotation={[-0.08, 0, side * 0.035]}
+            scale={[1.02, 0.72, 1.18]}
+            castShadow
+          >
+            <dodecahedronGeometry args={[0.105, 0]} />
+            <meshStandardMaterial color="#d59b7f" roughness={0.8} />
+          </mesh>
+          <mesh
+            position={[side * -0.085, 0.31, -0.35]}
+            rotation={[0, 0, side * 0.42]}
+            castShadow
+          >
+            <capsuleGeometry args={[0.035, 0.055, 4, 8]} />
             <meshStandardMaterial color="#d59b7f" roughness={0.8} />
           </mesh>
         </group>

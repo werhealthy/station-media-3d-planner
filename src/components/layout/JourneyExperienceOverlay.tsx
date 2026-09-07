@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { CreditCard, Fuel, Store, UserRound, Zap } from 'lucide-react'
 import { getJourney, journeyDuration, type JourneyId } from '@/domain/journeys'
-import { journeyStepLocalProgress } from '@/domain/journeyPresentation'
+import { cinematicFadeOpacity } from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
 
@@ -19,15 +19,7 @@ export function JourneyExperienceOverlay() {
   const step = journey.steps[activeStepIndex]
   const journeyHeading = !serviceChoice ? 'Ingresso Q8' : journey.name
   const duration = journeyDuration(journey)
-  const stepLocalProgress = journeyStepLocalProgress(
-    journey,
-    activeStepIndex,
-    progress,
-  )
-  const cinematicFade =
-    step?.cameraTransition === 'fade-cut'
-      ? Math.max(0, 1 - Math.abs(stepLocalProgress - 0.5) / 0.22)
-      : 0
+  const cinematicFade = cinematicFadeOpacity(journey, activeStepIndex, progress)
   const fuelStepIndexes = journey.steps.flatMap((item, index) =>
     item.nozzle && item.dwellSeconds ? [index] : [],
   )
@@ -91,7 +83,7 @@ export function JourneyExperienceOverlay() {
 
   return (
     <>
-      {step.cameraTransition === 'fade-cut' && (
+      {cinematicFade > 0 && (
         <div
           aria-hidden="true"
           className="journey-cinematic-cut"

@@ -18,18 +18,17 @@ describe('station journeys', () => {
       'servito-svolta',
     ])
     const commonIds = [
-      'common-station',
-      'common-beach-flag',
       'common-stendardo',
+      'common-beach-flag',
       'common-open',
       'common-standard-sign',
       'common-service-choice',
     ]
     for (const journey of STATION_JOURNEYS) {
-      expect(journey.steps.slice(0, 6).map((step) => step.id)).toEqual(
+      expect(journey.steps.slice(0, 5).map((step) => step.id)).toEqual(
         commonIds,
       )
-      expect(journey.steps[5]?.decision).toBe('service-mode')
+      expect(journey.steps[4]?.decision).toBe('service-mode')
       expect(
         journey.steps.find((step) => step.id === journey.arrivalEndStepId),
       ).toBeDefined()
@@ -200,7 +199,8 @@ describe('station journeys', () => {
       .filter(Boolean)
     expect(checkpoints).toEqual(
       expect.arrayContaining([
-        'Ingresso dalla corsia destra',
+        'Stendardo',
+        'Beach Flag',
         'Auto accostata alla pompa',
         'Pagamento al totem',
         'Rifornimento in corso',

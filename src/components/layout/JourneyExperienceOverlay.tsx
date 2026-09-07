@@ -4,6 +4,7 @@ import { getJourney, journeyDuration, type JourneyId } from '@/domain/journeys'
 import { cinematicFadeOpacity } from '@/domain/journeyPresentation'
 import { usePlaybackStore } from '@/stores/playbackStore'
 import { useViewerStore } from '@/stores/viewerStore'
+import { useJourneyCopyStore } from '@/stores/journeyCopyStore'
 
 export function JourneyExperienceOverlay() {
   const mode = useViewerStore((state) => state.navigationMode)
@@ -15,6 +16,7 @@ export function JourneyExperienceOverlay() {
   const progress = usePlaybackStore((state) => state.progress)
   const openDecision = usePlaybackStore((state) => state.openDecision)
   const continueOnRoute = usePlaybackStore((state) => state.continueOnRoute)
+  const copyOverrides = useJourneyCopyStore((state) => state.overrides)
   const journey = getJourney(routeId)
   const step = journey.steps[activeStepIndex]
   const journeyHeading = !serviceChoice ? 'Ingresso Q8' : journey.name
@@ -60,7 +62,10 @@ export function JourneyExperienceOverlay() {
 
   if (mode !== 'auto' || !step) return null
 
-  const [phaseCode, ...phaseWords] = step.phase.split(' · ')
+  const stepCopy = copyOverrides[step.id]
+  const [phaseCode, ...phaseWords] = (stepCopy?.phase ?? step.phase).split(
+    ' · ',
+  )
   const phaseTitle = phaseWords.join(' · ') || phaseCode
 
   const continueAfterDecision = (
@@ -97,7 +102,7 @@ export function JourneyExperienceOverlay() {
             {phaseWords.length > 0 && <b>{phaseCode}</b>}
           </div>
           <strong>{phaseTitle}</strong>
-          <p>{step.label}</p>
+          <p>{stepCopy?.label ?? step.label}</p>
         </div>
       )}
 

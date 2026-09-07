@@ -25,10 +25,8 @@ import {
 import { StationDebugHelpers } from './StationDebugHelpers'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
-import { JourneyFuelNozzle } from './JourneyFuelNozzle'
 import { SvoltaDoorController } from './SvoltaDoorController'
 import { useViewerStore } from '@/stores/viewerStore'
-import { FirstPersonArms } from './FirstPersonArms'
 
 function DaySky() {
   const geometry = useMemo(() => {
@@ -335,10 +333,8 @@ export function Canvas() {
           far={24}
         />
         <NavigationRig />
-        <FirstPersonArms />
         <JourneyVehicle />
         <JourneyActors />
-        <JourneyFuelNozzle />
         <SvoltaDoorController />
         {setupEnabled && <StationDebugHelpers />}
         {loadWarning && (

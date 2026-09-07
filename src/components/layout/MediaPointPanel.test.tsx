@@ -49,15 +49,13 @@ describe('MediaPointPanel', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
     expect(screen.getByText('Sto analizzando la creatività…')).toBeVisible()
-    await act(() => vi.advanceTimersByTimeAsync(950))
+    await act(() => vi.advanceTimersByTimeAsync(1450))
 
     expect(
-      screen.getByText('Il formato non riempie correttamente il supporto'),
+      screen.getByText('Il formato lascia margini sul supporto'),
     ).toBeVisible()
-    expect(screen.getByText(/ritaglio proporzionale ai margini/)).toBeVisible()
-    expect(
-      screen.getByRole('button', { name: 'Adatta e conferma' }),
-    ).toBeVisible()
+    expect(screen.getByText(/Usa “Riempi”/)).toBeVisible()
+    expect(screen.getAllByRole('button', { name: 'Riempi' })).toHaveLength(2)
   })
 
   it('toglie il sagomato prezzo strutturale dall’inventario caricabile', () => {
@@ -122,9 +120,9 @@ describe('MediaPointPanel', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
     expect(screen.getByText('Sto analizzando la creatività…')).toBeVisible()
-    await act(() => vi.advanceTimersByTimeAsync(950))
+    await act(() => vi.advanceTimersByTimeAsync(1450))
     expect(
-      screen.getByText('Il formato non riempie correttamente il supporto'),
+      screen.getByText('Il formato lascia margini sul supporto'),
     ).toBeVisible()
   })
 
@@ -159,7 +157,7 @@ describe('MediaPointPanel', () => {
     ).toBeVisible()
   })
 
-  it('usa tutta l’area disponibile per il caricamento', async () => {
+  it('usa una modale ampia lasciando visibile il contesto dell’app', async () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportTypeId === '11',
     )!
@@ -173,6 +171,8 @@ describe('MediaPointPanel', () => {
     const upload = screen.getByText('Carica la creatività').closest('label')
     expect(upload).toHaveClass('flex-1')
     expect(upload).toHaveClass('justify-center')
+    expect(screen.getByRole('dialog')).toHaveClass('max-w-[1180px]')
+    expect(screen.getByRole('dialog')).not.toHaveClass('w-screen')
   })
 
   it('non rianalizza lo stesso asset quando il workspace viene riaperto', async () => {
@@ -196,7 +196,7 @@ describe('MediaPointPanel', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
-    await act(() => vi.advanceTimersByTimeAsync(950))
+    await act(() => vi.advanceTimersByTimeAsync(1450))
     expect(screen.getByText('La creatività è pronta')).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: /Chiudi/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
@@ -230,20 +230,22 @@ describe('MediaPointPanel', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
-    await act(() => vi.advanceTimersByTimeAsync(950))
-    expect(
-      screen.getByText('Il messaggio non emerge nel tempo disponibile'),
-    ).toBeVisible()
-    expect(screen.getByText(/vista media circa 1-2 s/)).toBeVisible()
+    await act(() => vi.advanceTimersByTimeAsync(1450))
+    expect(screen.getByText('Il messaggio non emerge abbastanza')).toBeVisible()
+    expect(screen.getAllByText(/vista circa 1-2 s/)).toHaveLength(2)
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Genera versione ottimizzata' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Genera versione' }))
     expect(screen.getByText('Creo la versione ottimizzata…')).toBeVisible()
-    await act(() => vi.advanceTimersByTimeAsync(900))
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Usa questa versione nel 3D' }),
-    )
+    await act(() => vi.advanceTimersByTimeAsync(1950))
+    expect(
+      screen.getByRole('slider', {
+        name: 'Confronta originale e versione ottimizzata',
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Genera di nuovo' }),
+    ).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Conferma' }))
 
     expect(useProjectStore.getState().assignments[point.id]?.id).toBe(
       PUMP_LEADER_OPTIMIZED_ASSET_ID,

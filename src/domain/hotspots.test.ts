@@ -5,31 +5,25 @@ import { STATION_LAYOUT } from './stationLayout'
 describe('curated station hotspots', () => {
   it('mantiene solo le tre viste utili richieste', () => {
     expect(HOTSPOTS.map((hotspot) => hotspot.name)).toEqual([
-      'Ingresso strada',
+      'Vista esterna',
       'Fronte pompe',
-      'Interno Svolta',
+      'Vista dall’alto',
     ])
   })
 
-  it('posiziona Interno Svolta davanti alla cassa e lo orienta verso la stazione', () => {
-    const hotspot = HOTSPOTS.find((item) => item.id === 'inside-svolta')
-    expect(hotspot).toBeDefined()
-    expect(hotspot!.position[0]).toBeGreaterThan(
-      STATION_LAYOUT.shop.x - STATION_LAYOUT.shop.width / 2,
-    )
-    expect(hotspot!.position[0]).toBeLessThan(
-      STATION_LAYOUT.shop.x + STATION_LAYOUT.shop.width / 2,
-    )
-    expect(hotspot!.position[2]).toBeLessThan(
-      STATION_LAYOUT.shop.z + STATION_LAYOUT.shop.depth / 2,
-    )
-    expect(hotspot!.target[0]).toBeLessThan(hotspot!.position[0])
-    expect(hotspot!.target[2]).toBeGreaterThan(hotspot!.position[2])
+  it('riusa come prima vista l’inquadratura iniziale della stazione', () => {
+    const hotspot = HOTSPOTS.find((item) => item.id === 'station-overview')
+    expect(hotspot).toMatchObject({
+      position: [30, 16, 31],
+      target: [0, 2.2, -2],
+      fov: 43,
+    })
   })
 
-  it('sposta l’hotspot di ingresso sul lato destro della strada', () => {
-    const hotspot = HOTSPOTS.find((item) => item.id === 'road-entry')
-    expect(hotspot!.position[0]).toBeGreaterThan(STATION_LAYOUT.road.entryX)
-    expect(hotspot!.position[2]).toBeGreaterThan(STATION_LAYOUT.road.nearLaneZ)
+  it('offre una terza vista realmente aerea dell’intero impianto', () => {
+    const hotspot = HOTSPOTS.find((item) => item.id === 'station-aerial')
+    expect(hotspot).toBeDefined()
+    expect(hotspot!.position[1]).toBeGreaterThan(25)
+    expect(hotspot!.target[1]).toBeLessThan(STATION_LAYOUT.canopy.height)
   })
 })

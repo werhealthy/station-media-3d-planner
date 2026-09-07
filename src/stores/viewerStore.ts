@@ -5,12 +5,14 @@ interface ViewerState {
   navigationMode: 'overview' | 'hotspot' | 'walkthrough' | 'auto'
   activeHotspotId: string | null
   selectedMediaPointId: string | null
+  focusedMediaPointId: string | null
   hoveredMediaPointId: string | null
   overviewUnlocked: boolean
   personHeight: number
   timeOfDay: TimeOfDay
   focusRequestId: number
   selectMediaPoint: (id: string | null) => void
+  focusMediaPoint: (id: string | null) => void
   hoverMediaPoint: (id: string | null) => void
   setNavigationMode: (mode: ViewerState['navigationMode']) => void
   setActiveHotspot: (id: string | null) => void
@@ -32,6 +34,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   navigationMode: 'overview',
   activeHotspotId: null,
   selectedMediaPointId: null,
+  focusedMediaPointId: null,
   hoveredMediaPointId: null,
   overviewUnlocked: false,
   personHeight: 1.8,
@@ -40,6 +43,19 @@ export const useViewerStore = create<ViewerState>((set) => ({
   selectMediaPoint: (id) =>
     set((state) => ({
       selectedMediaPointId: id,
+      ...(id
+        ? {
+            focusedMediaPointId: id,
+            navigationMode: 'overview' as const,
+            activeHotspotId: null,
+            overviewUnlocked: false,
+            focusRequestId: state.focusRequestId + 1,
+          }
+        : {}),
+    })),
+  focusMediaPoint: (id) =>
+    set((state) => ({
+      focusedMediaPointId: id,
       ...(id
         ? {
             navigationMode: 'overview' as const,
@@ -54,15 +70,21 @@ export const useViewerStore = create<ViewerState>((set) => ({
     set({
       navigationMode,
       activeHotspotId: null,
+      focusedMediaPointId: null,
       overviewUnlocked: false,
     }),
   setActiveHotspot: (activeHotspotId) =>
-    set({ activeHotspotId, navigationMode: 'hotspot' }),
+    set({
+      activeHotspotId,
+      navigationMode: 'hotspot',
+      focusedMediaPointId: null,
+    }),
   setOverviewUnlocked: (overviewUnlocked) =>
     set((state) => ({
       overviewUnlocked,
       navigationMode: overviewUnlocked ? 'overview' : state.navigationMode,
       activeHotspotId: overviewUnlocked ? null : state.activeHotspotId,
+      focusedMediaPointId: overviewUnlocked ? null : state.focusedMediaPointId,
     })),
   setPersonHeight: (personHeight) =>
     set({
@@ -77,6 +99,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
       navigationMode: 'overview',
       activeHotspotId: null,
       selectedMediaPointId: null,
+      focusedMediaPointId: null,
       hoveredMediaPointId: null,
       overviewUnlocked: false,
     }),

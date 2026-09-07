@@ -3,8 +3,10 @@ import * as THREE from 'three'
 import { getJourney } from './journeys'
 import {
   arrivalCurveCollisions,
+  createArrivalCurve,
   pedestrianCollisionAt,
   pedestrianVehicleCollisionAt,
+  projectPointToCurveProgress,
 } from './journeySafety'
 
 function segmentCollisions(
@@ -52,6 +54,27 @@ function segmentCrossesParkedVehicle(
 }
 
 describe('journey physical safety', () => {
+  it.each(['servito', 'self-service', 'servito-svolta'] as const)(
+    'sincronizza i capitoli di arrivo %s con punti progressivi della spline',
+    (journeyId) => {
+      const journey = getJourney(journeyId)
+      const arrivalEndIndex = journey.steps.findIndex(
+        (step) => step.id === journey.arrivalEndStepId,
+      )
+      const curve = createArrivalCurve(journey.arrivalPath)
+      const progresses = journey.steps
+        .slice(0, arrivalEndIndex + 1)
+        .map((step) => projectPointToCurveProgress(curve, step.position))
+
+      for (let index = 1; index < progresses.length; index += 1) {
+        expect(progresses[index]!).toBeGreaterThanOrEqual(
+          progresses[index - 1]! - 0.005,
+        )
+      }
+      expect(progresses.at(-1)).toBeGreaterThan(0.98)
+    },
+  )
+
   it.each(['servito', 'self-service', 'servito-svolta'] as const)(
     'keeps the full %s vehicle footprint outside every obstacle',
     (journeyId) => {

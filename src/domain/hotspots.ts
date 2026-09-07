@@ -9,12 +9,11 @@ export interface StationHotspot {
 
 export const HOTSPOTS: StationHotspot[] = [
   {
-    id: 'road-entry',
-    name: 'Ingresso strada',
-    position: [31, 4.25, 19.8],
-    target: [17.5, 2.15, 6.2],
-    fov: 46,
-    associatedMediaPointId: 'mp-09',
+    id: 'station-overview',
+    name: 'Vista esterna',
+    position: [30, 16, 31],
+    target: [0, 2.2, -2],
+    fov: 43,
   },
   {
     id: 'pump-front',
@@ -25,10 +24,10 @@ export const HOTSPOTS: StationHotspot[] = [
     associatedMediaPointId: 'mp-01',
   },
   {
-    id: 'inside-svolta',
-    name: 'Interno Svolta',
-    position: [10.45, 1.7, -7.85],
-    target: [1.8, 1.75, 1.6],
-    fov: 53,
+    id: 'station-aerial',
+    name: 'Vista dall\u2019alto',
+    position: [4, 31, 18],
+    target: [0, 0, -1],
+    fov: 48,
   },
 ]

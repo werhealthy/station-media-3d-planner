@@ -15,6 +15,7 @@ import {
   createArrivalCurve,
   pedestrianCollisionAt,
   pedestrianVehicleCollisionAt,
+  projectPointToCurveProgress,
   vehicleCollisionAt,
   vehicleYawFromTangent,
 } from '@/domain/journeySafety'
@@ -79,7 +80,7 @@ export function NavigationRig() {
   const overviewUnlocked = useViewerStore((s) => s.overviewUnlocked)
   const personHeight = useViewerStore((s) => s.personHeight)
   const eyeHeight = eyeHeightFromPersonHeight(personHeight)
-  const selectedMediaPointId = useViewerStore((s) => s.selectedMediaPointId)
+  const focusedMediaPointId = useViewerStore((s) => s.focusedMediaPointId)
   const { camera, gl } = useThree()
   const perspectiveCamera = camera as THREE.PerspectiveCamera
   const orbit = useRef<OrbitControlsImpl>(null)
@@ -88,6 +89,7 @@ export function NavigationRig() {
   const target = useMemo(() => new THREE.Vector3(), [])
   const authoredGaze = useMemo(() => new THREE.Vector3(), [])
   const gazeDirection = useMemo(() => new THREE.Vector3(), [])
+  const requestedGaze = useMemo(() => new THREE.Vector3(), [])
   const flatTangent = useMemo(() => new THREE.Vector3(), [])
   const smoothedAutoTarget = useRef(new THREE.Vector3())
   const velocity = useRef(new THREE.Vector3())
@@ -128,12 +130,14 @@ export function NavigationRig() {
       ),
     [activeJourney],
   )
-  const arrivalDuration = useMemo(
+  const arrivalStepProgresses = useMemo(
     () =>
       activeJourney.steps
         .slice(0, arrivalEndIndex + 1)
-        .reduce((total, step) => total + step.duration, 0),
-    [activeJourney, arrivalEndIndex],
+        .map((step) =>
+          projectPointToCurveProgress(arrivalCurve, step.position),
+        ),
+    [activeJourney, arrivalCurve, arrivalEndIndex],
   )
   const departureCurve = useMemo(
     () => createArrivalCurve(activeJourney.departurePath),
@@ -337,25 +341,37 @@ export function NavigationRig() {
     if (config.modelType === 'procedural') {
       const currentProgress = usePlaybackStore.getState().progress
       const routeTime = currentProgress * activeJourneyDuration
-      const initialStep = activeJourney.steps.find((_, index) => {
+      let initialStepIndex = activeJourney.steps.findIndex((_, index) => {
         const elapsed = activeJourney.steps
           .slice(0, index + 1)
           .reduce((total, item) => total + item.duration, 0)
         return routeTime < elapsed
       })
+      if (initialStepIndex < 0)
+        initialStepIndex = activeJourney.steps.length - 1
+      const initialStep = activeJourney.steps[initialStepIndex]
+      const elapsedBeforeInitialStep = activeJourney.steps
+        .slice(0, Math.max(0, initialStepIndex))
+        .reduce((total, item) => total + item.duration, 0)
+      const initialLocal = initialStep
+        ? THREE.MathUtils.clamp(
+            (routeTime - elapsedBeforeInitialStep) / initialStep.duration,
+            0,
+            1,
+          )
+        : 0
+      const initialArrivalProgress = THREE.MathUtils.lerp(
+        initialStepIndex > 0
+          ? (arrivalStepProgresses[initialStepIndex - 1] ?? 0)
+          : 0,
+        arrivalStepProgresses[initialStepIndex] ?? 1,
+        initialStep
+          ? easeJourneyMotion(initialLocal, initialStep.motion)
+          : initialLocal,
+      )
       const start =
-        routeTime <= arrivalDuration
-          ? arrivalCurve.getPointAt(
-              THREE.MathUtils.smoothstep(
-                THREE.MathUtils.clamp(
-                  routeTime / Math.max(arrivalDuration, 0.001),
-                  0,
-                  1,
-                ),
-                0,
-                1,
-              ),
-            )
+        initialStepIndex <= arrivalEndIndex
+          ? arrivalCurve.getPointAt(initialArrivalProgress)
           : new THREE.Vector3(...(initialStep?.position ?? [0, 1.28, 0]))
       if (initialStep) {
         camera.position.copy(start)
@@ -370,7 +386,8 @@ export function NavigationRig() {
     activeJourney,
     activeJourneyDuration,
     arrivalCurve,
-    arrivalDuration,
+    arrivalEndIndex,
+    arrivalStepProgresses,
     camera,
     config.modelType,
     config.walkPath.length,
@@ -568,17 +585,14 @@ export function NavigationRig() {
       )
 
       if (inContinuousArrival) {
-        const rawArrivalProgress = THREE.MathUtils.clamp(
-          autoTime.current / Math.max(arrivalDuration, 0.001),
-          0,
-          1,
-        )
-        // A single acceleration/deceleration envelope: no easing reset and no
-        // artificial stop at the intermediate narrative labels.
-        const arrivalProgress = THREE.MathUtils.smoothstep(
-          rawArrivalProgress,
-          0,
-          1,
+        const arrivalProgress = THREE.MathUtils.lerp(
+          stepIndex > 0 ? (arrivalStepProgresses[stepIndex - 1] ?? 0) : 0,
+          arrivalStepProgresses[stepIndex] ?? 1,
+          current.motion === 'hold'
+            ? 0
+            : current.motion === 'brake'
+              ? easeJourneyMotion(local, current.motion)
+              : local,
         )
         const candidate = arrivalCurve.getPointAt(arrivalProgress)
         const tangent = arrivalCurve.getTangentAt(arrivalProgress).normalize()
@@ -592,16 +606,17 @@ export function NavigationRig() {
           authoredGaze.set(...current.gazeTarget)
           gazeDirection.copy(authoredGaze).sub(destination).setY(0)
           flatTangent.copy(tangent).setY(0).normalize()
-          if (
-            gazeDirection.lengthSq() > 0.001 &&
-            gazeDirection.normalize().dot(flatTangent) > 0.18
-          ) {
-            const angle = flatTangent.angleTo(gazeDirection)
+          if (gazeDirection.lengthSq() > 0.001) {
+            requestedGaze.copy(gazeDirection).normalize()
+            const angle = flatTangent.angleTo(requestedGaze)
             const blend = Math.min(
-              0.72,
-              THREE.MathUtils.degToRad(34) / Math.max(angle, 0.001),
+              1,
+              THREE.MathUtils.degToRad(62) / Math.max(angle, 0.001),
             )
-            gazeDirection.lerp(flatTangent, 1 - blend).normalize()
+            gazeDirection
+              .copy(flatTangent)
+              .lerp(requestedGaze, blend)
+              .normalize()
             target.copy(destination).addScaledVector(gazeDirection, 9)
             target.y = THREE.MathUtils.lerp(1.3, authoredGaze.y, 0.55)
           }
@@ -794,7 +809,7 @@ export function NavigationRig() {
     if (mode === 'overview' && overviewUnlocked) return
 
     const focusPoint = config.mediaPoints.find(
-      (item) => item.id === selectedMediaPointId,
+      (item) => item.id === focusedMediaPointId,
     )
     const hotspot = config.hotspots.find((item) => item.id === activeHotspotId)
     const isFocusing = mode === 'overview' && Boolean(focusPoint)

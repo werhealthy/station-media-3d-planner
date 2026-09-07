@@ -24,7 +24,7 @@ describe('stationSetupStore', () => {
       ...config,
       hiddenMeshes: ['station/shell'],
       overviewCamera: view,
-      hotspots: [{ ...view, id: 'front', name: 'Fronte pompe' }],
+      hotspots: [{ ...view, id: 'front', name: 'Fronte erogatori' }],
     }))
     const config = useStationSetupStore.getState().config
     expect(config.hiddenMeshes).toEqual(['station/shell'])

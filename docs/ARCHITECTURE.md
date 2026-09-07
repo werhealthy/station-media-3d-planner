@@ -90,7 +90,7 @@ Pipeline di funzioni per lo più pure, con un solo confine esplicito verso Three
 
 Interfaccia comune con quattro operazioni: caricare una stazione, ottenere le mesh da usare per l'occlusione, ottenere il bounding box (per inquadrare la camera iniziale), liberare le risorse quando la stazione viene cambiata.
 
-- **`proceduralAdapter`** — genera la stazione dimostrativa da una configurazione parametrica (numero pompe, dimensioni pensilina, ecc.), usato nel primo MVP.
+- **`proceduralAdapter`** — genera la stazione dimostrativa da una configurazione parametrica (numero erogatori, dimensioni pensilina, ecc.), usato nel primo MVP.
 - **`glbAdapter`** — carica un file GLB/glTF (`GLTFLoader`, con supporto Draco se necessario), normalizza scala/orientamento secondo le convenzioni in `DATA_MODEL.md`; le mesh occludenti sono determinate genericamente (tutte le mesh, o una lista di esclusione configurabile), **mai** per nome hardcoded — questo è il motivo per cui i banner non sono mai legati a una mesh specifica di un modello.
 - **`ifcAdapter`** — stub documentato per una fase futura: stessa interfaccia, con un punto di estensione per metadati semantici BIM (`getSemanticMetadata`). Non implementato nell'MVP, escluso dal registro di adapter di default.
 

@@ -30,7 +30,7 @@ osservato nel parser è riportato di seguito.
 - 210 mesh, 22 materiali distinti, profondità massima 4.
 - I nodi principali sono quasi esclusivamente numerici (`10_obj(4002336)`,
   `11_obj(4002336)`, …, `251_obj(4002336)`), oltre a luci e camere V-Ray. Non esistono nomi
-  affidabili per pompe, shop, canopy, totem o ground: la semantica del modello è quindi **scarsa**
+  affidabili per erogatori, shop, canopy, totem o ground: la semantica del modello è quindi **scarsa**
   e l'associazione futura dovrà essere salvata nella configurazione esterna.
 - Il file fa riferimento a 13 nomi, da `Maps/1_map(4002336).jpg` a
   `Maps/13_map(4002336).jpg`; tutti sono presenti in `public/models/q8-station/Maps/`.

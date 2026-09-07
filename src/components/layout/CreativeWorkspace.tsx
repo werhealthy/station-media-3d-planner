@@ -79,6 +79,9 @@ function BeforeAfterSlider({ originalUrl }: { originalUrl: string }) {
         alt="Creatività originale"
         className="absolute inset-0 h-full w-full object-cover"
       />
+      <span className="absolute right-3 top-3 rounded-full bg-slate-950/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur">
+        Originale
+      </span>
       <div
         className="absolute inset-0 overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - reveal}% 0 0)` }}
@@ -88,13 +91,10 @@ function BeforeAfterSlider({ originalUrl }: { originalUrl: string }) {
           alt="Creatività ottimizzata"
           className="absolute inset-0 h-full w-full object-cover"
         />
+        <span className="absolute left-3 top-3 whitespace-nowrap rounded-full bg-slate-950/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur">
+          Ottimizzata
+        </span>
       </div>
-      <span className="absolute left-3 top-3 rounded-full bg-slate-950/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur">
-        Ottimizzata
-      </span>
-      <span className="absolute right-3 top-3 rounded-full bg-slate-950/75 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur">
-        Originale
-      </span>
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow-[0_0_0_1px_rgba(15,23,42,.25)]"

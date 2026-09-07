@@ -6,7 +6,7 @@ describe('curated station hotspots', () => {
   it('mantiene solo le tre viste utili richieste', () => {
     expect(HOTSPOTS.map((hotspot) => hotspot.name)).toEqual([
       'Vista esterna',
-      'Fronte pompe',
+      'Fronte erogatori',
       'Ingresso e fondale',
     ])
   })
@@ -20,7 +20,7 @@ describe('curated station hotspots', () => {
     })
   })
 
-  it('offre una terza vista dall’ingresso verso pompe e fondale', () => {
+  it('offre una terza vista dall’ingresso verso erogatori e fondale', () => {
     const hotspot = HOTSPOTS.find((item) => item.id === 'entrance-forecourt')
     expect(hotspot).toBeDefined()
     expect(hotspot!.associatedMediaPointId).toBe('mp-07')

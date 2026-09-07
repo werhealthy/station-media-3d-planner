@@ -254,16 +254,20 @@ describe('MediaPointPanel', () => {
     )
     expect(screen.getByText('Creo la versione ottimizzata…')).toBeVisible()
     await act(() => vi.advanceTimersByTimeAsync(1950))
-    expect(
-      screen.getByRole('slider', {
-        name: 'Confronta originale e versione ottimizzata',
-      }),
-    ).toHaveAttribute('min', '0')
-    expect(
-      screen.getByRole('slider', {
-        name: 'Confronta originale e versione ottimizzata',
-      }),
-    ).toHaveAttribute('max', '100')
+    const comparisonSlider = screen.getByRole('slider', {
+      name: 'Confronta originale e versione ottimizzata',
+    })
+    expect(comparisonSlider).toHaveAttribute('min', '0')
+    expect(comparisonSlider).toHaveAttribute('max', '100')
+
+    fireEvent.change(comparisonSlider, { target: { value: '0' } })
+    expect(screen.getByText('Ottimizzata').parentElement).toHaveStyle({
+      clipPath: 'inset(0 100% 0 0)',
+    })
+    fireEvent.change(comparisonSlider, { target: { value: '100' } })
+    expect(screen.getByText('Ottimizzata').parentElement).toHaveStyle({
+      clipPath: 'inset(0 0% 0 0)',
+    })
     expect(
       screen.getByRole('button', { name: 'Genera nuova variante' }),
     ).toBeVisible()

@@ -78,6 +78,23 @@ describe('MediaPointPanel', () => {
     expect(inventoryItems).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
   })
 
+  it('inquadra un supporto lasciando aperto l’inventario', async () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
+      (item) => item.supportTypeId === '2',
+    )!
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: `Inquadra ${point.name}` }),
+    )
+
+    expect(screen.getByText('9 supporti caricabili')).toBeVisible()
+    expect(useViewerStore.getState()).toMatchObject({
+      selectedMediaPointId: null,
+      focusedMediaPointId: point.id,
+    })
+  })
+
   it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportShape === 'beach-flag',

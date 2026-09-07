@@ -18,6 +18,10 @@ export const DEFAULT_CREATIVE_DISPLAY: CreativeDisplaySettings = {
   offsetY: 0,
 }
 
+function revokeLocalAsset(asset?: MediaAsset) {
+  if (asset?.url.startsWith('blob:')) URL.revokeObjectURL(asset.url)
+}
+
 interface ProjectState {
   projectName: string
   assignments: Record<string, MediaAsset>
@@ -40,14 +44,14 @@ export const useProjectStore = create<ProjectState>((set) => ({
   assignAsset: (id, asset) =>
     set((state) => {
       const previous = state.assignments[id]
-      if (previous) URL.revokeObjectURL(previous.url)
+      revokeLocalAsset(previous)
       return { assignments: { ...state.assignments, [id]: asset } }
     }),
   clearAsset: (id) =>
     set((state) => {
       const next = { ...state.assignments }
       const previous = next[id]
-      if (previous) URL.revokeObjectURL(previous.url)
+      revokeLocalAsset(previous)
       delete next[id]
       return { assignments: next }
     }),

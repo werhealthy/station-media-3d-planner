@@ -102,6 +102,27 @@ export function createArrivalCurve(
   )
 }
 
+export function projectPointToCurveProgress(
+  curve: THREE.Curve<THREE.Vector3>,
+  point: readonly [number, number, number],
+  samples = 360,
+): number {
+  const target = new THREE.Vector3(...point)
+  let closestProgress = 0
+  let closestDistance = Number.POSITIVE_INFINITY
+
+  for (let index = 0; index <= samples; index += 1) {
+    const progress = index / samples
+    const distance = curve.getPointAt(progress).distanceToSquared(target)
+    if (distance < closestDistance) {
+      closestDistance = distance
+      closestProgress = progress
+    }
+  }
+
+  return closestProgress
+}
+
 export function vehicleYawFromTangent(tangent: THREE.Vector3): number {
   return Math.atan2(-tangent.x, -tangent.z)
 }

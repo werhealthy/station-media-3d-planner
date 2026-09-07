@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Crosshair,
   Eye,
   EyeOff,
   Images,
@@ -28,6 +29,7 @@ import {
   SUPPORT_REFERENCES,
   type SupportReferencePhoto,
 } from '@/domain/supportReferences'
+import { PumpLeaderAiReview } from './PumpLeaderAiReview'
 
 const millimetres = (metres: number) => Math.round(metres * 1000)
 const ratioLabel = (ratio: number) => `${ratio.toFixed(2)}:1`
@@ -41,7 +43,9 @@ const dimensionSourceLabel = {
 
 export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const selectedId = useViewerStore((state) => state.selectedMediaPointId)
+  const focusedId = useViewerStore((state) => state.focusedMediaPointId)
   const select = useViewerStore((state) => state.selectMediaPoint)
+  const focus = useViewerStore((state) => state.focusMediaPoint)
   const assignments = useProjectStore((state) => state.assignments)
   const assign = useProjectStore((state) => state.assignAsset)
   const clear = useProjectStore((state) => state.clearAsset)
@@ -172,7 +176,7 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               return (
                 <div
                   key={item.id}
-                  className={`flex items-center rounded-xl border transition ${isHidden ? 'border-slate-200 bg-slate-50 opacity-65' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
+                  className={`flex items-center rounded-xl border transition ${isHidden ? 'border-slate-200 bg-slate-50 opacity-65' : focusedId === item.id ? 'border-blue-400 bg-blue-50 ring-1 ring-blue-200' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50'}`}
                 >
                   <button
                     type="button"
@@ -195,6 +199,15 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                     {assignments[item.id] && (
                       <Check size={18} className="text-emerald-600" />
                     )}
+                  </button>
+                  <button
+                    type="button"
+                    title={`Inquadra ${item.name} nella scena`}
+                    aria-label={`Inquadra ${item.name}`}
+                    onClick={() => focus(item.id)}
+                    className={`rounded-lg p-2 transition ${focusedId === item.id ? 'bg-[#1954c6] text-white' : 'text-[#1954c6] hover:bg-blue-100'}`}
+                  >
+                    <Crosshair size={17} />
                   </button>
                   <button
                     type="button"
@@ -419,6 +432,15 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                       La creatività orizzontale viene ruotata automaticamente di
                       90° sulla Beach Flag, senza stretching.
                     </p>
+                  )}
+                  {point.supportTypeId === '2' && (
+                    <PumpLeaderAiReview
+                      key={asset.id}
+                      asset={asset}
+                      onApply={(optimizedAsset) =>
+                        assign(point.id, optimizedAsset)
+                      }
+                    />
                   )}
                   {fit && (
                     <div

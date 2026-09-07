@@ -12,6 +12,7 @@ describe('viewerStore', () => {
       navigationMode: 'overview',
       activeHotspotId: null,
       selectedMediaPointId: null,
+      focusedMediaPointId: null,
       overviewUnlocked: false,
       personHeight: 1.8,
       timeOfDay: 'day',
@@ -30,6 +31,18 @@ describe('viewerStore', () => {
       navigationMode: 'overview',
       activeHotspotId: null,
       selectedMediaPointId: 'mp-05',
+      focusedMediaPointId: 'mp-05',
+      overviewUnlocked: false,
+    })
+  })
+
+  it('inquadra un supporto senza aprirne la scheda informativa', () => {
+    useViewerStore.getState().focusMediaPoint('mp-02')
+
+    expect(useViewerStore.getState()).toMatchObject({
+      navigationMode: 'overview',
+      selectedMediaPointId: null,
+      focusedMediaPointId: 'mp-02',
       overviewUnlocked: false,
     })
   })

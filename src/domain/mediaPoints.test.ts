@@ -54,7 +54,7 @@ describe('media point physical layout', () => {
     })
   })
 
-  it('raggruppa Stendardo e Beach Flag sul lato destro e li orienta verso la strada', () => {
+  it('distribuisce Stendardo e Beach Flag lungo l’ingresso e li orienta verso la strada', () => {
     expect(point('mp-08')).toMatchObject({
       position: [
         STATION_LAYOUT.entry.stendardoX,
@@ -69,7 +69,7 @@ describe('media point physical layout', () => {
     const stendardo = point('mp-08')
     const beachFlag = point('mp-09')
     const lateralClearance = Math.abs(
-      stendardo.position[2] - beachFlag.position[2],
+      stendardo.position[0] - beachFlag.position[0],
     )
     expect(lateralClearance).toBeGreaterThan(
       (stendardo.width + beachFlag.width) / 2 + 0.25,

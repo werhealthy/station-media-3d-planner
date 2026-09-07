@@ -19,6 +19,13 @@ export function isTerminalTouchStep(stepId?: string) {
   return Boolean(stepId && TERMINAL_TOUCH_STEP_IDS.has(stepId))
 }
 
+export function terminalTouchEnvelope(localProgress: number) {
+  return (
+    smoothstep(localProgress, 0.16, 0.42) *
+    (1 - smoothstep(localProgress, 0.58, 0.82))
+  )
+}
+
 export function journeyStepLocalProgress(
   journey: StationJourney,
   stepIndex: number,

@@ -87,7 +87,7 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
         note: 'Formato grafico Pump Leader fornito: 841 x 1189 mm.',
       },
       targetDistance: '1,5-3 m',
-      eyesOn: '2-3 s',
+      eyesOn: 'circa 1-2 s',
       maxWords: '6-8 parole',
       qrPolicy: 'prohibited',
       qrNote: 'Non adatto a una lettura prolungata durante la manovra.',

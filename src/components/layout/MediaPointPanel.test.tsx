@@ -55,7 +55,14 @@ describe('MediaPointPanel', () => {
       screen.getByText('Il formato lascia margini sul supporto'),
     ).toBeVisible()
     expect(screen.getByText(/Usa “Riempi”/)).toBeVisible()
-    expect(screen.getAllByRole('button', { name: 'Riempi' })).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Riempi' })).toBeVisible()
+    expect(
+      screen.queryByRole('slider', { name: 'Dimensione creatività' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Manuale' }))
+    expect(
+      screen.getByRole('slider', { name: 'Dimensione creatività' }),
+    ).toBeVisible()
   })
 
   it('toglie il sagomato prezzo strutturale dall’inventario caricabile', () => {
@@ -198,7 +205,14 @@ describe('MediaPointPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
     await act(() => vi.advanceTimersByTimeAsync(1450))
     expect(screen.getByText('La creatività è pronta')).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: /Chiudi/ }))
+    expect(
+      screen.queryByRole('button', { name: 'Riempi' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Torna ai dettagli del supporto',
+      }),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
 
     expect(
@@ -232,19 +246,28 @@ describe('MediaPointPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
     await act(() => vi.advanceTimersByTimeAsync(1450))
     expect(screen.getByText('Il messaggio non emerge abbastanza')).toBeVisible()
-    expect(screen.getAllByText(/vista circa 1-2 s/)).toHaveLength(2)
+    expect(screen.getByText(/deve funzionare anche da lontano/)).toBeVisible()
+    expect(screen.getByText(/Manca la sfumatura blu/)).toBeVisible()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Genera versione' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Genera versione ottimizzata' }),
+    )
     expect(screen.getByText('Creo la versione ottimizzata…')).toBeVisible()
     await act(() => vi.advanceTimersByTimeAsync(1950))
     expect(
       screen.getByRole('slider', {
         name: 'Confronta originale e versione ottimizzata',
       }),
-    ).toBeVisible()
+    ).toHaveAttribute('min', '0')
     expect(
-      screen.getByRole('button', { name: 'Genera di nuovo' }),
+      screen.getByRole('slider', {
+        name: 'Confronta originale e versione ottimizzata',
+      }),
+    ).toHaveAttribute('max', '100')
+    expect(
+      screen.getByRole('button', { name: 'Genera nuova variante' }),
     ).toBeVisible()
+    expect(screen.getByText(/Sfumatura blu ripristinata/)).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Conferma' }))
 
     expect(useProjectStore.getState().assignments[point.id]?.id).toBe(

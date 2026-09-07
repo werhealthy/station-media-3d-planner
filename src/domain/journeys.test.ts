@@ -5,6 +5,7 @@ import {
   STATION_JOURNEYS,
   type JourneyStep,
 } from './journeys'
+import { STATION_LAYOUT as L } from './stationLayout'
 
 function dwellSeconds(steps: JourneyStep[]): number {
   return steps.reduce((total, step) => total + (step.dwellSeconds ?? 0), 0)
@@ -123,6 +124,19 @@ describe('station journeys', () => {
     expect(
       self.steps.findIndex((step) => step.id === 'self-payment-confirmed'),
     ).toBeLessThan(self.steps.findIndex((step) => step.id === 'self-refuel'))
+
+    const start = self.steps.find((step) => step.id === 'self-refuel')!
+    const column = self.steps.find((step) => step.id === 'self-dwell-column')!
+    const triad = self.steps.find((step) => step.id === 'self-dwell-triad')!
+    expect(start.gazeTarget[1]).toBeLessThan(1)
+    expect(column.gazeTarget).toEqual([L.canopy.columnX, 1.65, -0.86])
+    expect(column.mediaPointId).toBe('mp-03')
+    expect(triad.gazeTarget).toEqual([
+      -L.islands.pumpX,
+      2.82,
+      L.islands.frontZ + 0.49,
+    ])
+    expect(triad.mediaPointId).toBe('mp-01')
   })
 
   it('enters Svolta diagonally, pays inside and returns without forced media gazes', () => {

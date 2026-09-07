@@ -30,20 +30,25 @@ function Panel({
 function GroundPost({
   x,
   panelBottom,
+  panelHeight,
   color,
 }: {
   x: number
   panelBottom: number
+  panelHeight: number
   color: string
 }) {
   if (panelBottom <= 0.04) return null
+  const panelBottomY = -panelHeight / 2
+  const postCenterY = panelBottomY - panelBottom / 2
+  const groundY = panelBottomY - panelBottom
   return (
     <>
-      <mesh position={[x, -panelBottom / 2 - 0.02, -0.03]} castShadow>
+      <mesh position={[x, postCenterY, -0.03]} castShadow>
         <boxGeometry args={[0.08, panelBottom, 0.1]} />
         <meshStandardMaterial color={color} metalness={0.7} roughness={0.25} />
       </mesh>
-      <mesh position={[x, -panelBottom - 0.02, -0.03]} receiveShadow>
+      <mesh position={[x, groundY + 0.04, -0.03]} receiveShadow>
         <boxGeometry args={[0.3, 0.08, 0.32]} />
         <meshStandardMaterial
           color="#9aa2a9"
@@ -77,11 +82,13 @@ export function MediaSupportGeometry({
           <GroundPost
             x={-point.width * 0.42}
             panelBottom={panelBottom}
+            panelHeight={point.height}
             color="#848d95"
           />
           <GroundPost
             x={point.width * 0.42}
             panelBottom={panelBottom}
+            panelHeight={point.height}
             color="#848d95"
           />
         </>
@@ -241,11 +248,13 @@ export function MediaSupportGeometry({
           <GroundPost
             x={-point.width * 0.38}
             panelBottom={panelBottom}
+            panelHeight={point.height}
             color="#616d77"
           />
           <GroundPost
             x={point.width * 0.38}
             panelBottom={panelBottom}
+            panelHeight={point.height}
             color="#616d77"
           />
         </>

@@ -43,6 +43,7 @@ export const STATION_LAYOUT = {
     stendardoYaw: 90,
     standardSignX: 15.9,
     standardSignZ: 2.9,
-    standardSignYaw: 90,
+    // Frontale all'auto durante l'ingresso, non di taglio rispetto alla corsia.
+    standardSignYaw: 0,
   },
 } as const

@@ -637,7 +637,13 @@ export function NavigationRig() {
         const gazeAmount =
           current.motion === 'walk'
             ? THREE.MathUtils.clamp(local * 1.4, 0, 1)
-            : easeJourneyMotion(local, current.motion)
+            : current.motion === 'glance'
+              ? THREE.MathUtils.smootherstep(
+                  THREE.MathUtils.clamp(local / 0.32, 0, 1),
+                  0,
+                  1,
+                )
+              : easeJourneyMotion(local, current.motion)
         if (isFadeCut) {
           const afterCut = local >= 0.5
           const cutStep = afterCut ? current : previous
@@ -720,6 +726,10 @@ export function NavigationRig() {
       } else if (current.motion === 'hold') {
         destination.y += Math.sin(autoTime.current * 1.8) * 0.004
         target.x += Math.sin(autoTime.current * 2.15) * 0.026
+      } else if (current.motion === 'glance' && local > 0.34) {
+        const settle = THREE.MathUtils.smoothstep(local, 0.34, 1)
+        target.x += Math.sin(autoTime.current * 1.35) * 0.024 * settle
+        target.y += Math.sin(autoTime.current * 0.9) * 0.012 * settle
       }
 
       const smoothAutoPosition = !isFadeCut
@@ -751,7 +761,7 @@ export function NavigationRig() {
                   : current.motion === 'walk'
                     ? 3.2
                     : current.motion === 'glance'
-                      ? 1.8
+                      ? 5.4
                       : current.motion === 'hold'
                         ? 1.7
                         : 3.1),
@@ -772,7 +782,7 @@ export function NavigationRig() {
             Math.exp(
               -delta *
                 (current.motion === 'glance'
-                  ? 3.2
+                  ? 6.8
                   : current.motion === 'hold'
                     ? 4.2
                     : 7.5),

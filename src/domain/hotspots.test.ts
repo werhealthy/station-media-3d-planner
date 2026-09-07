@@ -7,7 +7,7 @@ describe('curated station hotspots', () => {
     expect(HOTSPOTS.map((hotspot) => hotspot.name)).toEqual([
       'Vista esterna',
       'Fronte pompe',
-      'Accettatore self',
+      'Ingresso e fondale',
     ])
   })
 
@@ -20,16 +20,13 @@ describe('curated station hotspots', () => {
     })
   })
 
-  it('offre una terza vista ravvicinata davanti all’accettatore self', () => {
-    const hotspot = HOTSPOTS.find((item) => item.id === 'self-terminal-closeup')
+  it('offre una terza vista dall’ingresso verso pompe e fondale', () => {
+    const hotspot = HOTSPOTS.find((item) => item.id === 'entrance-forecourt')
     expect(hotspot).toBeDefined()
-    expect(hotspot!.associatedMediaPointId).toBe('mp-05')
-    expect(hotspot!.position[0]).toBeCloseTo(STATION_LAYOUT.terminal.x)
-    expect(hotspot!.position[2]).toBeGreaterThan(STATION_LAYOUT.terminal.z)
-    expect(hotspot!.target).toEqual([
-      STATION_LAYOUT.terminal.x,
-      1.38,
-      STATION_LAYOUT.terminal.z,
-    ])
+    expect(hotspot!.associatedMediaPointId).toBe('mp-07')
+    expect(hotspot!.position[0]).toBeLessThan(STATION_LAYOUT.totem.x)
+    expect(hotspot!.position[2]).toBeLessThan(STATION_LAYOUT.totem.z)
+    expect(hotspot!.target[0]).toBeLessThan(STATION_LAYOUT.islands.pumpX)
+    expect(hotspot!.target[2]).toBeLessThan(0)
   })
 })

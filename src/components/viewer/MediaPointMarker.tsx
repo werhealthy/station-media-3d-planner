@@ -123,13 +123,19 @@ export function MediaPointMarker({ point }: { point: ConfigMediaPoint }) {
   )
   const surfaceSize = useMemo<[number, number]>(() => {
     if (!displayedAsset) return availableSurface
+    if (creativeDisplay.fitMode === 'cover') return availableSurface
     return containedSurfaceSize(
       availableSurface[0],
       availableSurface[1],
       orientedCreative?.width ?? displayedAsset.width,
       orientedCreative?.height ?? displayedAsset.height,
     )
-  }, [availableSurface, displayedAsset, orientedCreative])
+  }, [
+    availableSurface,
+    creativeDisplay.fitMode,
+    displayedAsset,
+    orientedCreative,
+  ])
   const frameColor = selected
     ? '#55a5ff'
     : hovered

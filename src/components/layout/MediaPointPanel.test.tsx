@@ -1,9 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PROCEDURAL_STATION_CONFIG } from '@/domain/stationConfigDefaults'
 import { useProjectStore } from '@/stores/projectStore'
 import { useViewerStore } from '@/stores/viewerStore'
+import { PUMP_LEADER_OPTIMIZED_ASSET_ID } from './CreativeWorkspace'
 import { MediaPointPanel } from './MediaPointPanel'
 
 describe('MediaPointPanel', () => {
@@ -17,6 +18,7 @@ describe('MediaPointPanel', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     useViewerStore.getState().resetForStation()
     useProjectStore.setState({
       assignments: {},
@@ -26,6 +28,7 @@ describe('MediaPointPanel', () => {
   })
 
   it('segnala le proporzioni errate senza proporre stretching', async () => {
+    vi.useFakeTimers()
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
     useViewerStore.getState().selectMediaPoint(point.id)
     useProjectStore.setState({
@@ -44,19 +47,16 @@ describe('MediaPointPanel', () => {
     })
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Apri analisi creatività' }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+    expect(screen.getByText('Sto analizzando la creatività…')).toBeVisible()
+    await act(() => vi.advanceTimersByTimeAsync(950))
 
-    expect(screen.getByText('Asset da adattare al supporto')).toBeVisible()
     expect(
-      screen.getByText(/non viene mai ritagliata o deformata/),
+      screen.getByText('Il formato non riempie correttamente il supporto'),
     ).toBeVisible()
+    expect(screen.getByText(/ritaglio proporzionale ai margini/)).toBeVisible()
     expect(
-      screen.queryByRole('button', { name: 'Riempi e ritaglia' }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.getByText('Supporti consigliati per questo formato'),
+      screen.getByRole('button', { name: 'Adatta e conferma' }),
     ).toBeVisible()
   })
 
@@ -98,7 +98,8 @@ describe('MediaPointPanel', () => {
     })
   })
 
-  it('comunica la rotazione automatica di una creatività orizzontale sulla Beach Flag', async () => {
+  it('analizza anche una creatività caricata sulla Beach Flag', async () => {
+    vi.useFakeTimers()
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportShape === 'beach-flag',
     )!
@@ -119,11 +120,12 @@ describe('MediaPointPanel', () => {
     })
 
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Apri analisi creatività' }),
-    )
-
-    expect(screen.getByText(/ruotata automaticamente di 90°/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+    expect(screen.getByText('Sto analizzando la creatività…')).toBeVisible()
+    await act(() => vi.advanceTimersByTimeAsync(950))
+    expect(
+      screen.getByText('Il formato non riempie correttamente il supporto'),
+    ).toBeVisible()
   })
 
   it('consente il caricamento di una creatività PDF', async () => {
@@ -137,12 +139,11 @@ describe('MediaPointPanel', () => {
       screen.getByRole('button', { name: 'Carica creatività' }),
     )
 
-    expect(screen.getByText('Carica JPEG, PNG o PDF')).toBeVisible()
+    expect(screen.getByText('Carica la creatività')).toBeVisible()
     expect(container.querySelector('input[type="file"]')).toHaveAttribute(
       'accept',
       'image/jpeg,image/png,application/pdf,.pdf',
     )
-    expect(screen.getByText(/prima pagina/)).toBeVisible()
   })
 
   it('permette di nascondere e ripristinare un supporto', async () => {
@@ -158,7 +159,7 @@ describe('MediaPointPanel', () => {
     ).toBeVisible()
   })
 
-  it('mostra la schermata idle Q8 sul terminale smartOPT Maxi', async () => {
+  it('usa tutta l’area disponibile per il caricamento', async () => {
     const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
       (item) => item.supportTypeId === '11',
     )!
@@ -169,11 +170,84 @@ describe('MediaPointPanel', () => {
       screen.getByRole('button', { name: 'Carica creatività' }),
     )
 
+    const upload = screen.getByText('Carica la creatività').closest('label')
+    expect(upload).toHaveClass('flex-1')
+    expect(upload).toHaveClass('justify-center')
+  })
+
+  it('non rianalizza lo stesso asset quando il workspace viene riaperto', async () => {
+    vi.useFakeTimers()
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    useViewerStore.getState().selectMediaPoint(point.id)
+    useProjectStore.setState({
+      assignments: {
+        [point.id]: {
+          id: 'asset-reviewed',
+          name: 'creative.png',
+          mimeType: 'image/png',
+          size: 100,
+          width: Math.round(point.width * 1000),
+          height: Math.round(point.height * 1000),
+          aspectRatio: point.width / point.height,
+          url: 'blob:reviewed',
+        },
+      },
+    })
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+    await act(() => vi.advanceTimersByTimeAsync(950))
+    expect(screen.getByText('La creatività è pronta')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: /Chiudi/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+
     expect(
-      screen.getByRole('img', {
-        name: 'Schermata idle Q8 del terminale smartOPT Maxi',
-      }),
-    ).toHaveAttribute('src', '/brand/q8/screens/smartopt-idle.png')
-    expect(screen.getByText('Schermata idle Q8 predefinita')).toBeVisible()
+      screen.queryByText('Sto analizzando la creatività…'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('La creatività è pronta')).toBeVisible()
+  })
+
+  it('integra il controllo contestuale e la variante del Pump Leader nello stesso flusso', async () => {
+    vi.useFakeTimers()
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints.find(
+      (item) => item.supportTypeId === '2',
+    )!
+    useViewerStore.getState().selectMediaPoint(point.id)
+    useProjectStore.setState({
+      assignments: {
+        [point.id]: {
+          id: 'pump-leader-review',
+          name: 'pump-leader.png',
+          mimeType: 'image/png',
+          size: 100,
+          width: 841,
+          height: 1189,
+          aspectRatio: 841 / 1189,
+          url: 'blob:pump-leader',
+        },
+      },
+    })
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+    await act(() => vi.advanceTimersByTimeAsync(950))
+    expect(
+      screen.getByText('Il messaggio non emerge nel tempo disponibile'),
+    ).toBeVisible()
+    expect(screen.getByText(/vista media circa 1-2 s/)).toBeVisible()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Genera versione ottimizzata' }),
+    )
+    expect(screen.getByText('Creo la versione ottimizzata…')).toBeVisible()
+    await act(() => vi.advanceTimersByTimeAsync(900))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Usa questa versione nel 3D' }),
+    )
+
+    expect(useProjectStore.getState().assignments[point.id]?.id).toBe(
+      PUMP_LEADER_OPTIMIZED_ASSET_ID,
+    )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

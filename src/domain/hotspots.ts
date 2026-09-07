@@ -24,11 +24,11 @@ export const HOTSPOTS: StationHotspot[] = [
     associatedMediaPointId: 'mp-01',
   },
   {
-    id: 'self-terminal-closeup',
-    name: 'Accettatore self',
-    position: [-9, 2.35, 5.1],
-    target: [-9, 1.38, 0.3],
-    fov: 39,
-    associatedMediaPointId: 'mp-05',
+    id: 'entrance-forecourt',
+    name: 'Ingresso e fondale',
+    position: [19.4, 3.2, 9.2],
+    target: [-2.7, 2.25, -3],
+    fov: 44,
+    associatedMediaPointId: 'mp-07',
   },
 ]

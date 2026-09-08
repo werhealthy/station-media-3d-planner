@@ -4,6 +4,7 @@ import {
   CircleAlert,
   ImagePlus,
   LoaderCircle,
+  Pipette,
   RotateCcw,
   Sparkles,
   WandSparkles,
@@ -18,6 +19,7 @@ import {
 import { getSupportType } from '@/domain/supportCatalog'
 import {
   DEFAULT_CREATIVE_DISPLAY,
+  type CreativeDisplaySettings,
   useProjectStore,
 } from '@/stores/projectStore'
 
@@ -31,11 +33,12 @@ type FramingMode = 'fit' | 'fill' | 'manual'
 interface CreativeWorkspaceProps {
   point: ConfigMediaPoint
   asset?: MediaAsset
+  assetIsDraft: boolean
   analyzed: boolean
   error: string
   onUpload: (file?: File) => void
   onAnalyzed: (assetId: string) => void
-  onApply: (asset: MediaAsset) => void
+  onApply: (asset: MediaAsset, display: CreativeDisplaySettings) => void
   onClose: () => void
 }
 
@@ -120,6 +123,7 @@ function BeforeAfterSlider({ originalUrl }: { originalUrl: string }) {
 export function CreativeWorkspace({
   point,
   asset,
+  assetIsDraft,
   analyzed,
   error,
   onUpload,
@@ -132,10 +136,11 @@ export function CreativeWorkspace({
   const storedDisplay = useProjectStore(
     (state) => state.creativeDisplay[point.id],
   )
-  const updateCreativeDisplay = useProjectStore(
-    (state) => state.updateCreativeDisplay,
+  const [display, setDisplay] = useState<CreativeDisplaySettings>(() =>
+    assetIsDraft
+      ? { ...DEFAULT_CREATIVE_DISPLAY }
+      : { ...DEFAULT_CREATIVE_DISPLAY, ...storedDisplay },
   )
-  const display = { ...DEFAULT_CREATIVE_DISPLAY, ...storedDisplay }
   const [actionStage, setActionStage] = useState<ActionStage>('review')
   const [framingMode, setFramingMode] = useState<FramingMode>(() => {
     const hasManualTransform = Boolean(
@@ -192,20 +197,47 @@ export function CreativeWorkspace({
       url: PUMP_LEADER_OPTIMIZED_URL,
     }
     onAnalyzed(optimized.id)
-    onApply(optimized)
-    onClose()
+    onApply(optimized, { ...DEFAULT_CREATIVE_DISPLAY })
   }
 
   const selectFramingMode = (mode: FramingMode) => {
     setFramingMode(mode)
-    if (mode === 'manual') return
-    updateCreativeDisplay(point.id, {
-      ...DEFAULT_CREATIVE_DISPLAY,
-      fitMode: mode === 'fill' ? 'cover' : 'contain',
-    })
+    setDisplay((current) =>
+      mode === 'manual'
+        ? { ...current, fitMode: 'contain' }
+        : {
+            ...current,
+            fitMode: mode === 'fill' ? 'cover' : 'contain',
+            rotation: 0,
+            zoom: 1,
+            offsetX: 0,
+            offsetY: 0,
+          },
+    )
   }
 
-  const resetFraming = () => selectFramingMode('fit')
+  const resetFraming = () => {
+    setFramingMode('fit')
+    setDisplay({ ...DEFAULT_CREATIVE_DISPLAY })
+  }
+  const updateDisplay = (patch: Partial<CreativeDisplaySettings>) =>
+    setDisplay((current) => ({ ...current, ...patch }))
+  const pickBackgroundColor = async () => {
+    const EyeDropper = (
+      window as typeof window & {
+        EyeDropper?: new () => {
+          open: () => Promise<{ sRGBHex: string }>
+        }
+      }
+    ).EyeDropper
+    if (!EyeDropper) return
+    try {
+      const result = await new EyeDropper().open()
+      updateDisplay({ backgroundColor: result.sRGBHex })
+    } catch {
+      // The native picker was cancelled; keep the current color.
+    }
+  }
   const transformedImageStyle = {
     transform: `translate(${display.offsetX * 16}%, ${display.offsetY * 16}%) scale(${display.zoom}) rotate(${display.rotation}deg)`,
   }
@@ -362,7 +394,7 @@ export function CreativeWorkspace({
                 </div>
               </section>
 
-              <aside className="flex min-h-0 flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-sm">
+              <aside className="flex min-h-0 flex-col overflow-y-auto rounded-3xl bg-white p-6 shadow-sm">
                 {stage === 'ready' ? (
                   <div>
                     <CheckCircle2 className="text-emerald-600" size={30} />
@@ -447,7 +479,7 @@ export function CreativeWorkspace({
                   </div>
                 )}
 
-                {stage === 'review' && hasFormatIssue && (
+                {stage === 'review' && (
                   <div className="mt-auto border-t border-slate-100 pt-4">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-slate-700">
@@ -493,7 +525,7 @@ export function CreativeWorkspace({
                             step={0.01}
                             value={display.zoom}
                             onChange={(event) =>
-                              updateCreativeDisplay(point.id, {
+                              updateDisplay({
                                 zoom: Number(event.target.value),
                               })
                             }
@@ -511,7 +543,7 @@ export function CreativeWorkspace({
                               step={0.01}
                               value={display.offsetX}
                               onChange={(event) =>
-                                updateCreativeDisplay(point.id, {
+                                updateDisplay({
                                   offsetX: Number(event.target.value),
                                 })
                               }
@@ -528,7 +560,7 @@ export function CreativeWorkspace({
                               step={0.01}
                               value={display.offsetY}
                               onChange={(event) =>
-                                updateCreativeDisplay(point.id, {
+                                updateDisplay({
                                   offsetY: Number(event.target.value),
                                 })
                               }
@@ -541,18 +573,57 @@ export function CreativeWorkspace({
                           <input
                             aria-label="Rotazione creatività"
                             type="range"
-                            min={-20}
-                            max={20}
-                            step={0.5}
+                            min={-180}
+                            max={180}
+                            step={1}
                             value={display.rotation}
                             onChange={(event) =>
-                              updateCreativeDisplay(point.id, {
+                              updateDisplay({
                                 rotation: Number(event.target.value),
                               })
                             }
                             className="mt-1 block w-full accent-[#1954c6]"
                           />
                         </label>
+                        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                          <div>
+                            <p className="text-[11px] font-semibold text-slate-600">
+                              Sfondo del supporto
+                            </p>
+                            <p className="mt-0.5 text-[10px] text-slate-400">
+                              Copre gli spazi lasciati dalla creatività.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              aria-label="Colore di sfondo"
+                              type="color"
+                              value={display.backgroundColor}
+                              onChange={(event) =>
+                                updateDisplay({
+                                  backgroundColor: event.target.value,
+                                })
+                              }
+                              className="h-9 w-11 cursor-pointer rounded-lg border border-slate-200 bg-white p-1"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void pickBackgroundColor()}
+                              disabled={
+                                !(
+                                  window as typeof window & {
+                                    EyeDropper?: unknown
+                                  }
+                                ).EyeDropper
+                              }
+                              aria-label="Preleva colore dall’immagine"
+                              title="Preleva colore dall’immagine"
+                              className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-[#1954c6] disabled:cursor-not-allowed disabled:opacity-35"
+                            >
+                              <Pipette size={16} />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -595,7 +666,7 @@ export function CreativeWorkspace({
                   {replaceControl()}
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={() => asset && onApply(asset, display)}
                     className="ml-2 rounded-full bg-[#1954c6] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#123f99]"
                   >
                     Conferma

@@ -37,6 +37,9 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const focus = useViewerStore((state) => state.focusMediaPoint)
   const assignments = useProjectStore((state) => state.assignments)
   const assign = useProjectStore((state) => state.assignAsset)
+  const updateCreativeDisplay = useProjectStore(
+    (state) => state.updateCreativeDisplay,
+  )
   const hiddenMediaPointIds = useProjectStore(
     (state) => state.hiddenMediaPointIds,
   )
@@ -47,6 +50,8 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const [error, setError] = useState('')
   const [referenceIndex, setReferenceIndex] = useState<number | null>(null)
   const [creativeWorkspaceOpen, setCreativeWorkspaceOpen] = useState(false)
+  const [draftAsset, setDraftAsset] =
+    useState<Awaited<ReturnType<typeof readCreativeAsset>>>()
   const [analyzedAssetIds, setAnalyzedAssetIds] = useState<
     Record<string, string>
   >({})
@@ -79,7 +84,11 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
     if (!file || !point) return
     setError('')
     try {
-      assign(point.id, await readCreativeAsset(file))
+      const nextAsset = await readCreativeAsset(file)
+      setDraftAsset((current) => {
+        if (current?.url.startsWith('blob:')) URL.revokeObjectURL(current.url)
+        return nextAsset
+      })
     } catch (uploadError) {
       setError(
         uploadError instanceof Error
@@ -87,6 +96,12 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
           : 'Upload non riuscito.',
       )
     }
+  }
+
+  function closeCreativeWorkspace() {
+    if (draftAsset?.url.startsWith('blob:')) URL.revokeObjectURL(draftAsset.url)
+    setDraftAsset(undefined)
+    setCreativeWorkspaceOpen(false)
   }
 
   function markAssetAnalyzed(assetId: string) {
@@ -399,17 +414,29 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
 
             {creativeWorkspaceOpen && (
               <CreativeWorkspace
-                key={`${point.id}:${asset?.id ?? 'empty'}`}
+                key={`${point.id}:${draftAsset?.id ?? asset?.id ?? 'empty'}`}
                 point={point}
-                asset={asset}
+                asset={draftAsset ?? asset}
+                assetIsDraft={Boolean(draftAsset)}
                 analyzed={Boolean(
-                  asset && analyzedAssetIds[point.id] === asset.id,
+                  (draftAsset ?? asset) &&
+                  analyzedAssetIds[point.id] === (draftAsset ?? asset)?.id,
                 )}
                 error={error}
                 onUpload={(file) => void upload(file)}
                 onAnalyzed={markAssetAnalyzed}
-                onApply={(nextAsset) => assign(point.id, nextAsset)}
-                onClose={() => setCreativeWorkspaceOpen(false)}
+                onApply={(nextAsset, display) => {
+                  if (
+                    draftAsset?.url.startsWith('blob:') &&
+                    draftAsset.url !== nextAsset.url
+                  )
+                    URL.revokeObjectURL(draftAsset.url)
+                  assign(point.id, nextAsset)
+                  updateCreativeDisplay(point.id, display)
+                  setDraftAsset(undefined)
+                  setCreativeWorkspaceOpen(false)
+                }}
+                onClose={closeCreativeWorkspace}
               />
             )}
           </div>

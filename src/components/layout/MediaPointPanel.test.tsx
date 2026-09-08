@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PROCEDURAL_STATION_CONFIG } from '@/domain/stationConfigDefaults'
 import { useProjectStore } from '@/stores/projectStore'
@@ -7,8 +7,24 @@ import { useViewerStore } from '@/stores/viewerStore'
 import { PUMP_LEADER_OPTIMIZED_ASSET_ID } from './CreativeWorkspace'
 import { MediaPointPanel } from './MediaPointPanel'
 
+const { readCreativeAssetMock } = vi.hoisted(() => ({
+  readCreativeAssetMock: vi.fn(),
+}))
+
+vi.mock('@/domain/schemas/media', async () => {
+  const actual = await vi.importActual<typeof import('@/domain/schemas/media')>(
+    '@/domain/schemas/media',
+  )
+  return { ...actual, readCreativeAsset: readCreativeAssetMock }
+})
+
 describe('MediaPointPanel', () => {
   beforeEach(() => {
+    readCreativeAssetMock.mockReset()
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    })
     useViewerStore.getState().resetForStation()
     useProjectStore.setState({
       assignments: {},
@@ -214,9 +230,9 @@ describe('MediaPointPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
     await act(() => vi.advanceTimersByTimeAsync(1450))
     expect(screen.getByText('La creatività è pronta')).toBeVisible()
-    expect(
-      screen.queryByRole('button', { name: 'Riempi' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Riempi' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Manuale' }))
+    expect(screen.getByLabelText('Colore di sfondo')).toBeVisible()
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Torna ai dettagli del supporto',
@@ -228,6 +244,126 @@ describe('MediaPointPanel', () => {
       screen.queryByText('Sto analizzando la creatività…'),
     ).not.toBeInTheDocument()
     expect(screen.getByText('La creatività è pronta')).toBeVisible()
+  })
+
+  it('azzera inquadratura e sfondo quando si sostituisce l’immagine', async () => {
+    vi.useFakeTimers()
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    const original = {
+      id: 'asset-original',
+      name: 'original.png',
+      mimeType: 'image/png' as const,
+      size: 100,
+      width: Math.round(point.width * 1000),
+      height: Math.round(point.height * 1000),
+      aspectRatio: point.width / point.height,
+      url: 'blob:original',
+    }
+    const replacement = {
+      ...original,
+      id: 'asset-replacement',
+      name: 'replacement.png',
+      url: 'blob:replacement',
+    }
+    useViewerStore.getState().selectMediaPoint(point.id)
+    useProjectStore.setState({
+      assignments: { [point.id]: original },
+      creativeDisplay: {
+        [point.id]: {
+          fitMode: 'contain',
+          backgroundColor: '#123456',
+          rotation: 90,
+          zoom: 0.75,
+          offsetX: 0.2,
+          offsetY: -0.1,
+        },
+      },
+    })
+    readCreativeAssetMock.mockResolvedValue(replacement)
+
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Apri creatività' }))
+    await act(() => vi.advanceTimersByTimeAsync(1450))
+    expect(
+      screen.getByRole('slider', { name: 'Rotazione creatività' }),
+    ).toHaveValue('90')
+
+    await act(async () => {
+      fireEvent.change(
+        within(screen.getByRole('dialog')).getByLabelText(
+          'Sostituisci immagine',
+        ),
+        {
+          target: { files: [new File(['new'], 'replacement.png')] },
+        },
+      )
+      await Promise.resolve()
+    })
+    expect(readCreativeAssetMock).toHaveBeenCalledOnce()
+    expect(screen.getByText('Sto analizzando la creatività…')).toBeVisible()
+    await act(() => vi.advanceTimersByTimeAsync(1450))
+    fireEvent.click(screen.getByRole('button', { name: 'Manuale' }))
+
+    expect(
+      screen.getByRole('slider', { name: 'Dimensione creatività' }),
+    ).toHaveValue('1')
+    expect(
+      screen.getByRole('slider', { name: 'Rotazione creatività' }),
+    ).toHaveValue('0')
+    expect(screen.getByLabelText('Colore di sfondo')).toHaveValue('#ffffff')
+
+    fireEvent.change(screen.getByLabelText('Colore di sfondo'), {
+      target: { value: '#173f8f' },
+    })
+    fireEvent.change(
+      screen.getByRole('slider', { name: 'Rotazione creatività' }),
+      { target: { value: '90' } },
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Conferma' }))
+
+    expect(useProjectStore.getState().assignments[point.id]).toEqual(
+      replacement,
+    )
+    expect(useProjectStore.getState().creativeDisplay[point.id]).toMatchObject({
+      backgroundColor: '#173f8f',
+      rotation: 90,
+      zoom: 1,
+    })
+  })
+
+  it('annulla un nuovo caricamento se la modale viene chiusa senza conferma', async () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    const draft = {
+      id: 'asset-draft',
+      name: 'draft.png',
+      mimeType: 'image/png' as const,
+      size: 100,
+      width: 740,
+      height: 500,
+      aspectRatio: 740 / 500,
+      url: 'blob:draft',
+    }
+    useViewerStore.getState().selectMediaPoint(point.id)
+    readCreativeAssetMock.mockResolvedValue(draft)
+
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Carica creatività' }))
+    const uploadInput = screen
+      .getByRole('dialog')
+      .querySelector<HTMLInputElement>('input[type="file"]')!
+    await act(async () => {
+      fireEvent.change(uploadInput, {
+        target: { files: [new File(['draft'], 'draft.png')] },
+      })
+      await Promise.resolve()
+    })
+    expect(readCreativeAssetMock).toHaveBeenCalledOnce()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Torna ai dettagli del supporto' }),
+    )
+
+    expect(useProjectStore.getState().assignments[point.id]).toBeUndefined()
+    expect(screen.getByText('Nessun asset caricato')).toBeVisible()
   })
 
   it('integra il controllo contestuale e la variante del Pump Leader nello stesso flusso', async () => {

@@ -65,8 +65,9 @@ export function TopBar() {
           className="max-w-[230px] cursor-pointer appearance-none bg-transparent pr-14 font-semibold outline-none"
         >
           {STATIONS.map((item) => (
-            <option key={item.id} value={item.id}>
+            <option key={item.id} value={item.id} disabled={!item.available}>
               {item.name}
+              {!item.available ? ' — In arrivo' : ''}
             </option>
           ))}
         </select>

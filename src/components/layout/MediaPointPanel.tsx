@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   ArrowLeft,
   Check,
   Crosshair,
@@ -7,7 +6,6 @@ import {
   EyeOff,
   Images,
   ImagePlus,
-  Info,
   ChevronLeft,
   ChevronRight,
   X,
@@ -32,13 +30,6 @@ import {
 } from './CreativeWorkspace'
 
 const millimetres = (metres: number) => Math.round(metres * 1000)
-const dimensionSourceLabel = {
-  documented: 'Quota documentata',
-  reference: 'Quota dal riferimento',
-  derived: 'Quota derivata',
-  estimated: 'Quota da verificare',
-} as const
-
 export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
   const selectedId = useViewerStore((state) => state.selectedMediaPointId)
   const focusedId = useViewerStore((state) => state.focusedMediaPointId)
@@ -356,21 +347,6 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
                   </>
                 )}
               </dl>
-              {support && (
-                <div
-                  className={`mt-4 rounded-xl border p-3 text-xs leading-5 ${support.dimensions.source === 'estimated' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-blue-100 bg-blue-50/70 text-blue-950'}`}
-                >
-                  <div className="flex items-center gap-2 font-bold">
-                    {support.dimensions.source === 'estimated' ? (
-                      <AlertTriangle size={15} />
-                    ) : (
-                      <Info size={15} />
-                    )}
-                    {dimensionSourceLabel[support.dimensions.source]}
-                  </div>
-                  <p className="mt-1 opacity-75">{support.dimensions.note}</p>
-                </div>
-              )}
             </section>
 
             {referencePhotos.length > 0 && (

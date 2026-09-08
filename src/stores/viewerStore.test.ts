@@ -36,6 +36,15 @@ describe('viewerStore', () => {
     })
   })
 
+  it('seleziona Vista esterna quando la stazione viene aperta', () => {
+    useViewerStore.getState().resetForStation()
+
+    expect(useViewerStore.getState()).toMatchObject({
+      navigationMode: 'hotspot',
+      activeHotspotId: 'station-overview',
+    })
+  })
+
   it('inquadra un supporto senza aprirne la scheda informativa', () => {
     useViewerStore.getState().focusMediaPoint('mp-02')
 

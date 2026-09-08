@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import * as THREE from 'three'
 
 interface TextureFitOptions {
@@ -11,9 +11,20 @@ export function useImageTexture(url?: string, fit?: TextureFitOptions) {
   const fitMode = fit?.fitMode
   const sourceAspectRatio = fit?.sourceAspectRatio
   const targetAspectRatio = fit?.targetAspectRatio
-  const texture = useMemo(() => {
-    if (!url) return null
-    const value = new THREE.TextureLoader().load(url)
+  const textureKey = `${url ?? ''}:${fitMode ?? ''}:${sourceAspectRatio ?? ''}:${targetAspectRatio ?? ''}`
+  const [loaded, setLoaded] = useState<{
+    key: string
+    texture: THREE.Texture
+  } | null>(null)
+
+  useEffect(() => {
+    if (!url) return
+    let active = true
+    const value = new THREE.TextureLoader().load(url, () => {
+      if (!active) return
+      value.needsUpdate = true
+      setLoaded({ key: textureKey, texture: value })
+    })
     value.colorSpace = THREE.SRGBColorSpace
     value.anisotropy = 8
     value.wrapS = THREE.ClampToEdgeWrapping
@@ -33,9 +44,11 @@ export function useImageTexture(url?: string, fit?: TextureFitOptions) {
         value.offset.set(0, (1 - visibleHeight) / 2)
       }
     }
-    value.needsUpdate = true
-    return value
-  }, [fitMode, sourceAspectRatio, targetAspectRatio, url])
-  useEffect(() => () => texture?.dispose(), [texture])
-  return texture
+    return () => {
+      active = false
+      value.dispose()
+    }
+  }, [fitMode, sourceAspectRatio, targetAspectRatio, textureKey, url])
+
+  return loaded?.key === textureKey ? loaded.texture : null
 }

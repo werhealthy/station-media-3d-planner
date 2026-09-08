@@ -76,6 +76,15 @@ describe('MediaPointPanel', () => {
     expect(screen.getByText('9 supporti caricabili')).toBeVisible()
   })
 
+  it('non mostra il box quota dal riferimento nei dettagli', () => {
+    const point = PROCEDURAL_STATION_CONFIG.mediaPoints[0]!
+    useViewerStore.getState().selectMediaPoint(point.id)
+
+    render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
+
+    expect(screen.queryByText('Quota dal riferimento')).not.toBeInTheDocument()
+  })
+
   it('ordina l’inventario secondo la sequenza numerica della journey', () => {
     render(<MediaPointPanel points={PROCEDURAL_STATION_CONFIG.mediaPoints} />)
 

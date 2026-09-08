@@ -21,6 +21,14 @@ describe('supportCatalog', () => {
     expect(getSupportType('8')?.assignable).toBe(false)
   })
 
+  it('usa il formato orizzontale 740 x 500 mm per il Mini / Maxi Pump Ear', () => {
+    expect(getSupportType('10')?.dimensions).toMatchObject({
+      width: 0.74,
+      height: 0.5,
+      source: 'reference',
+    })
+  })
+
   it('usa display ingrandito e quote documentate del Fortech smartOPT Maxi', () => {
     const terminal = getSupportType('11')
     expect(terminal?.name).toContain('Fortech smartOPT Maxi')
@@ -47,7 +55,7 @@ describe('supportCatalog', () => {
       '7': [0.98, 1.975],
       '8': [0.68, 1.28],
       '9': [0.8, 3.6],
-      '10': [0.52, 0.72],
+      '10': [0.74, 0.5],
     })
     expect(getSupportType('5')?.dimensions).toMatchObject({
       width: 2.88,

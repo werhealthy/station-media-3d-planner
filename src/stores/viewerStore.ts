@@ -31,8 +31,8 @@ export function eyeHeightFromPersonHeight(personHeight: number) {
 }
 
 export const useViewerStore = create<ViewerState>((set) => ({
-  navigationMode: 'overview',
-  activeHotspotId: null,
+  navigationMode: 'hotspot',
+  activeHotspotId: 'station-overview',
   selectedMediaPointId: null,
   focusedMediaPointId: null,
   hoveredMediaPointId: null,
@@ -96,8 +96,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
   resetForStation: () =>
     set({
-      navigationMode: 'overview',
-      activeHotspotId: null,
+      navigationMode: 'hotspot',
+      activeHotspotId: 'station-overview',
       selectedMediaPointId: null,
       focusedMediaPointId: null,
       hoveredMediaPointId: null,

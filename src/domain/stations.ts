@@ -9,6 +9,7 @@ export interface StationDefinition {
   textureBasePath?: string
   configPath?: string
   badge?: string
+  available: boolean
   /** Future station-config.json sections can replace these capability flags. */
   mediaPointsConfigured: boolean
 }
@@ -16,21 +17,41 @@ export interface StationDefinition {
 export const STATIONS = [
   {
     id: 'low-poly',
-    name: 'Q8 Milano Est — concept',
+    name: 'Q8 Milano Porta Est',
     description: 'Stazione configurata secondo il layout media Q8.',
     modelType: 'procedural',
     badge: 'Demo',
+    available: true,
     mediaPointsConfigured: true,
   },
   {
     id: 'random-textured',
-    name: 'Stazione casuale con texture',
-    description: 'Modello FBX esterno con texture dedicate.',
+    name: 'Q8 Roma EUR',
+    description: 'Nuovo modello di stazione in preparazione.',
     modelType: 'fbx',
     modelPath: '/models/q8-station/4002336.FBX',
     textureBasePath: '/models/q8-station/Maps/',
     configPath: '/models/q8-station/station-config.json',
-    badge: 'FBX',
+    badge: 'In arrivo',
+    available: false,
+    mediaPointsConfigured: false,
+  },
+  {
+    id: 'q8-torino-nord',
+    name: 'Q8 Torino Nord',
+    description: 'Nuovo modello di stazione in preparazione.',
+    modelType: 'procedural',
+    badge: 'In arrivo',
+    available: false,
+    mediaPointsConfigured: false,
+  },
+  {
+    id: 'q8-bologna-fiera',
+    name: 'Q8 Bologna Fiera',
+    description: 'Nuovo modello di stazione in preparazione.',
+    modelType: 'procedural',
+    badge: 'In arrivo',
+    available: false,
     mediaPointsConfigured: false,
   },
 ] as const satisfies readonly StationDefinition[]

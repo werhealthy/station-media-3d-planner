@@ -53,10 +53,10 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('1', {
     id: 'mp-01',
     number: 7,
-    location: 'Isola anteriore',
+    location: 'Secondo erogatore · Isola Self',
     surface: 'Cappuccio erogatore',
     heightFromGround: 2.595,
-    position: [pumpX, 2.82, frontZ + 0.49],
+    position: [-pumpX, 2.82, frontZ + 0.49],
     rotation: [0, 0, 0],
   }),
   supportPoint('2', {
@@ -83,7 +83,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
     location: 'Erogatore Servito',
     surface: 'Estensione erogatore',
     heightFromGround: 1.1,
-    position: [pumpX + 1.72, 1.46, frontZ + 0.7],
+    position: [pumpX + 1.84, 1.35, frontZ + 0.7],
     rotation: [0, 0, 0],
   }),
   supportPoint('11', {

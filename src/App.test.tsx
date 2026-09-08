@@ -1,11 +1,16 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import { useStationSetupStore } from './stores/stationSetupStore'
+import { useStationStore } from './stores/stationStore'
 vi.mock('./components/viewer/Canvas', () => ({ Canvas: () => null }))
 describe('App', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  beforeEach(() => useStationStore.getState().selectStation('low-poly'))
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    useStationStore.getState().selectStation('low-poly')
+  })
 
   it('mostra il planner single-view e i 10 supporti Q8', () => {
     render(<App />)
@@ -20,6 +25,18 @@ describe('App', () => {
       'aria-pressed',
       'true',
     )
+    expect(
+      screen.getByRole('button', { name: 'Vista esterna' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('combobox', { name: 'Stazione' })).toHaveValue(
+      'low-poly',
+    )
+    expect(
+      screen.getByRole('option', { name: 'Q8 Roma EUR — In arrivo' }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('option', { name: 'Q8 Torino Nord — In arrivo' }),
+    ).toBeDisabled()
   })
 
   it('consente di passare dalla scena giorno alla scena notte', async () => {
@@ -40,11 +57,8 @@ describe('App', () => {
         }),
       ),
     )
+    useStationStore.getState().selectStation('random-textured')
     render(<App />)
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Stazione' }),
-      'random-textured',
-    )
     expect(
       screen.getByText(
         'Questa stazione non è ancora configurata con media point.',
@@ -66,7 +80,7 @@ describe('App', () => {
     expect(
       screen.queryByText('Impossibile caricare la configurazione.'),
     ).not.toBeInTheDocument()
-    expect(screen.getAllByText('Stazione casuale con texture')).toHaveLength(2)
+    expect(screen.getByText('Q8 Roma EUR')).toBeVisible()
     await userEvent.click(
       screen.getByRole('button', { name: 'Seleziona elemento da nascondere' }),
     )

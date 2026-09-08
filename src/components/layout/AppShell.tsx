@@ -105,6 +105,7 @@ export function AppShell() {
                 <button
                   key={spot.id}
                   onClick={() => setHotspot(spot.id)}
+                  aria-pressed={active === spot.id}
                   className={`rounded-md px-3 py-2 text-xs font-semibold transition ${active === spot.id ? 'bg-[#1746a2] text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   {spot.name}

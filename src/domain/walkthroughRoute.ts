@@ -31,7 +31,7 @@ export const WALKTHROUGH_ROUTE: WalkthroughStep[] = [
     id: 'pump',
     label: 'Sosta erogatore',
     position: [-5, 1.72, 8],
-    gazeTarget: [5, 2.3, 3.1],
+    gazeTarget: [-5, 2.3, 3.1],
     duration: 5.5,
     mediaPointId: 'mp-01',
     dwellSeconds: 2.2,

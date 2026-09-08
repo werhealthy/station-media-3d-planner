@@ -123,10 +123,10 @@ export const SUPPORT_CATALOG: SupportCatalogEntry[] = z
       type: 'print',
       assignable: true,
       dimensions: {
-        width: 0.52,
-        height: 0.72,
+        width: 0.74,
+        height: 0.5,
         source: 'reference',
-        note: 'Formato grafico Adesivo Colonna fornito: 520 x 720 mm, associato al supporto Mini/Maxi Pump Ear della distinta.',
+        note: 'Formato grafico Mini/Maxi Pump Ear fornito: 740 x 500 mm.',
       },
       targetDistance: '0,5-1 m',
       eyesOn: '10-15 s',

@@ -44,7 +44,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
   assignAsset: (id, asset) =>
     set((state) => {
       const previous = state.assignments[id]
-      revokeLocalAsset(previous)
+      if (previous?.url !== asset.url) revokeLocalAsset(previous)
       return { assignments: { ...state.assignments, [id]: asset } }
     }),
   clearAsset: (id) =>

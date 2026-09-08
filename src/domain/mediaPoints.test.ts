@@ -36,6 +36,18 @@ describe('media point physical layout', () => {
     expect(pumpEar.position[0] - pumpEar.width / 2).toBeGreaterThan(
       pumpBodyMaxX,
     )
+    expect(pumpEar.position[1] - pumpEar.height / 2).toBeCloseTo(1.1)
+  })
+
+  it('colloca la Sovrapompa sul secondo erogatore Self', () => {
+    expect(point('mp-01')).toMatchObject({
+      location: 'Secondo erogatore · Isola Self',
+      position: [
+        -STATION_LAYOUT.islands.pumpX,
+        2.82,
+        STATION_LAYOUT.islands.frontZ + 0.49,
+      ],
+    })
   })
 
   it('usa una Beach Flag verticale e un Fondostazione rialzato', () => {

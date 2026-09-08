@@ -612,7 +612,7 @@ const servedSteps: JourneyStep[] = [
     phase: 'A3 · Attesa durante il rifornimento',
     label: 'Completa la lettura della triade durante il dwell time',
     position: SERVED_STOP,
-    gazeTarget: [4.6, 2.82, 2.09],
+    gazeTarget: [-L.islands.pumpX, 2.82, L.islands.frontZ + 0.49],
     duration: 4,
     cameraMode: 'vehicle',
     motion: 'glance',

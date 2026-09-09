@@ -37,7 +37,7 @@ interface ProjectState {
   ) => void
 }
 export const useProjectStore = create<ProjectState>((set) => ({
-  projectName: 'Station Media 3D Planner',
+  projectName: '3D Media Simulator',
   assignments: {},
   hiddenMediaPointIds: [],
   creativeDisplay: {},

@@ -397,8 +397,20 @@ describe('MediaPointPanel', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Genera versione ottimizzata' }),
     )
-    expect(screen.getByText('Creo la versione ottimizzata…')).toBeVisible()
+    expect(
+      screen.getByText(
+        'Sto creando i suggerimenti e le possibili ottimizzazioni…',
+      ),
+    ).toBeVisible()
     await act(() => vi.advanceTimersByTimeAsync(1950))
+    expect(screen.getByText('Suggerimenti pronti')).toBeVisible()
+    expect(
+      screen.getByText("MESSAGGIO OTTIMIZZATO PER LA LETTURA DELL'UTENTE"),
+    ).toBeVisible()
+    expect(
+      screen.queryByText('Sostituisci immagine'),
+    ).not.toBeInTheDocument()
+
     const comparisonSlider = screen.getByRole('slider', {
       name: 'Confronta originale e versione ottimizzata',
     })

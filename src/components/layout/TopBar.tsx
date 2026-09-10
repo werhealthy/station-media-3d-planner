@@ -42,6 +42,26 @@ export function TopBar() {
     ['walkthrough', 'Walkthrough', Footprints],
     ['auto', 'Auto tour', Route],
   ] as const
+  const sceneConditions = [
+    ['day', 'Giorno', Sun],
+    ['night', 'Notte', Moon],
+    ['cloudy', 'Nuvoloso', Cloud],
+    ['rain', 'Pioggia', CloudRain],
+  ] as const
+  const sceneCondition =
+    weatherCondition === 'clear' ? timeOfDay : weatherCondition
+  const selectSceneCondition = (
+    condition: (typeof sceneConditions)[number][0],
+  ) => {
+    if (condition === 'day' || condition === 'night') {
+      setTimeOfDay(condition)
+      setWeatherCondition('clear')
+      return
+    }
+    setTimeOfDay('day')
+    setWeatherCondition(condition)
+  }
+
   return (
     <header className="relative z-10 flex h-[80px] shrink-0 items-center gap-7 border-b border-slate-200/80 bg-white px-7 shadow-[0_1px_12px_rgba(15,23,42,0.06)]">
       <div className="flex items-center gap-3">
@@ -110,58 +130,25 @@ export function TopBar() {
       )}
       <div
         className="flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-1"
-        aria-label="Orario della scena"
+        aria-label="Condizione della scena"
       >
-        {(
-          [
-            ['day', 'Giorno', Sun],
-            ['night', 'Notte', Moon],
-          ] as const
-        ).map(([id, label, Icon]) => (
+        {sceneConditions.map(([id, label, Icon]) => (
           <button
             key={id}
             type="button"
             aria-label={label}
-            aria-pressed={timeOfDay === id}
+            aria-pressed={sceneCondition === id}
             title={label}
-            onClick={() => setTimeOfDay(id)}
+            onClick={() => selectSceneCondition(id)}
             className={`grid h-9 w-9 place-items-center rounded-lg transition ${
-              timeOfDay === id
+              sceneCondition === id
                 ? id === 'night'
                   ? 'bg-[#10265f] text-white shadow-sm'
-                  : 'bg-amber-300 text-amber-950 shadow-sm'
-                : 'text-slate-500 hover:bg-white hover:text-slate-900'
-            }`}
-          >
-            <Icon size={17} />
-          </button>
-        ))}
-      </div>
-      <div
-        className="flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-1"
-        aria-label="Condizioni meteo"
-      >
-        {(
-          [
-            ['clear', 'Sereno', Sun],
-            ['cloudy', 'Nuvoloso', Cloud],
-            ['rain', 'Pioggia', CloudRain],
-          ] as const
-        ).map(([id, label, Icon]) => (
-          <button
-            key={id}
-            type="button"
-            aria-label={label}
-            aria-pressed={weatherCondition === id}
-            title={label}
-            onClick={() => setWeatherCondition(id)}
-            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
-              weatherCondition === id
-                ? id === 'rain'
-                  ? 'bg-sky-700 text-white shadow-sm'
-                  : id === 'cloudy'
-                    ? 'bg-slate-600 text-white shadow-sm'
-                    : 'bg-amber-200 text-amber-950 shadow-sm'
+                  : id === 'rain'
+                    ? 'bg-sky-700 text-white shadow-sm'
+                    : id === 'cloudy'
+                      ? 'bg-slate-600 text-white shadow-sm'
+                      : 'bg-amber-300 text-amber-950 shadow-sm'
                 : 'text-slate-500 hover:bg-white hover:text-slate-900'
             }`}
           >

@@ -30,19 +30,27 @@ test('ordina i supporti secondo la sequenza della journey', async ({
   await expect(inventory.nth(1)).toContainText('Stendardo')
 })
 
-test('cambia le condizioni meteo mantenendo indipendente giorno e notte', async ({
+test('usa giorno, notte, nuvoloso e pioggia come alternative esclusive', async ({
   page,
 }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Notte' }).click()
-  await page.getByRole('button', { name: 'Pioggia' }).click()
-
   await expect(page.getByRole('button', { name: 'Notte' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
+
+  await page.getByRole('button', { name: 'Pioggia' }).click()
+  await expect(page.getByRole('button', { name: 'Notte' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
   await expect(page.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
     'aria-pressed',
     'true',
+  )
+  await expect(page.getByRole('button', { name: 'Giorno' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
   )
 })

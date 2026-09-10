@@ -34,9 +34,14 @@ describe('App', () => {
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('button', { name: 'Sereno' })).toHaveAttribute(
+    expect(screen.queryByRole('button', { name: 'Sereno' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Nuvoloso' })).toHaveAttribute(
       'aria-pressed',
-      'true',
+      'false',
+    )
+    expect(screen.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     )
     expect(
       screen.getByRole('button', { name: 'Vista esterna' }),
@@ -58,22 +63,41 @@ describe('App', () => {
     ).toBeDisabled()
   })
 
-  it('consente di combinare orario e condizioni meteo', async () => {
+  it('rende giorno, notte e meteo quattro alternative esclusive', async () => {
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: 'Notte' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Pioggia' }))
     expect(screen.getByRole('button', { name: 'Notte' })).toHaveAttribute(
       'aria-pressed',
       'true',
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pioggia' }))
+    expect(screen.getByRole('button', { name: 'Notte' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     )
     expect(screen.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
-    expect(screen.getByRole('button', { name: 'Nuvoloso' })).toHaveAttribute(
+    expect(useViewerStore.getState()).toMatchObject({
+      timeOfDay: 'day',
+      weatherCondition: 'rain',
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Giorno' }))
+    expect(screen.getByRole('button', { name: 'Giorno' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )
+    expect(useViewerStore.getState()).toMatchObject({
+      timeOfDay: 'day',
+      weatherCondition: 'clear',
+    })
   })
   it('cambia stazione e nasconde l’inventario procedurale', async () => {
     vi.stubGlobal(

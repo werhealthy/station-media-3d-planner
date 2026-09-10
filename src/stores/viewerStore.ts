@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 export type TimeOfDay = 'day' | 'night'
+export type WeatherCondition = 'clear' | 'cloudy' | 'rain'
 
 interface ViewerState {
   navigationMode: 'overview' | 'hotspot' | 'walkthrough' | 'auto'
@@ -10,6 +11,7 @@ interface ViewerState {
   overviewUnlocked: boolean
   personHeight: number
   timeOfDay: TimeOfDay
+  weatherCondition: WeatherCondition
   focusRequestId: number
   selectMediaPoint: (id: string | null) => void
   focusMediaPoint: (id: string | null) => void
@@ -19,6 +21,7 @@ interface ViewerState {
   setOverviewUnlocked: (unlocked: boolean) => void
   setPersonHeight: (height: number) => void
   setTimeOfDay: (timeOfDay: TimeOfDay) => void
+  setWeatherCondition: (weatherCondition: WeatherCondition) => void
   resetForStation: () => void
 }
 
@@ -39,6 +42,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   overviewUnlocked: false,
   personHeight: 1.8,
   timeOfDay: 'day',
+  weatherCondition: 'clear',
   focusRequestId: 0,
   selectMediaPoint: (id) =>
     set((state) => ({
@@ -94,6 +98,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
       ),
     }),
   setTimeOfDay: (timeOfDay) => set({ timeOfDay }),
+  setWeatherCondition: (weatherCondition) => set({ weatherCondition }),
   resetForStation: () =>
     set({
       navigationMode: 'hotspot',

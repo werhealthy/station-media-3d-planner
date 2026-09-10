@@ -337,7 +337,7 @@ export function CreativeWorkspace({
               </span>
               <h3 className="mt-5 text-2xl font-bold text-slate-950">
                 {stage === 'generating'
-                  ? 'Creo la versione ottimizzata…'
+                  ? 'Sto creando i suggerimenti e le possibili ottimizzazioni…'
                   : 'Sto analizzando la creatività…'}
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -399,10 +399,10 @@ export function CreativeWorkspace({
                   <div>
                     <CheckCircle2 className="text-emerald-600" size={30} />
                     <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-emerald-700">
-                      Variante pronta
+                      Suggerimenti pronti
                     </p>
                     <h3 className="mt-1.5 text-xl font-bold text-slate-950">
-                      Più leggibile nel tempo disponibile
+                      MESSAGGIO OTTIMIZZATO PER LA LETTURA DELL'UTENTE
                     </h3>
                     <p className="mt-2 text-xs leading-5 text-slate-500">
                       Ottimizzazioni applicate per questo touchpoint:
@@ -641,7 +641,6 @@ export function CreativeWorkspace({
                   >
                     <Sparkles size={17} /> Genera nuova variante
                   </button>
-                  {replaceControl()}
                   <button
                     type="button"
                     onClick={applyOptimized}

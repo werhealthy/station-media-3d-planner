@@ -25,7 +25,7 @@ export const HOTSPOTS: StationHotspot[] = [
   },
   {
     id: 'entrance-forecourt',
-    name: 'Ingresso e fondale',
+    name: 'Ingresso e Fondostazione',
     position: [19.4, 3.2, 9.2],
     target: [-2.7, 2.25, -3],
     fov: 44,

@@ -168,6 +168,11 @@ function getLightingProfile(
   }
 }
 
+function seededRandom(index: number, salt: number) {
+  const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
+  return value - Math.floor(value)
+}
+
 function GradientSky({ horizon, zenith }: { horizon: string; zenith: string }) {
   const geometry = useMemo(() => {
     const sky = new THREE.SphereGeometry(1, 48, 24)
@@ -189,6 +194,8 @@ function GradientSky({ horizon, zenith }: { horizon: string; zenith: string }) {
     return sky
   }, [horizon, zenith])
 
+  useEffect(() => () => geometry.dispose(), [geometry])
+
   return (
     <mesh geometry={geometry} scale={240} frustumCulled={false}>
       <meshBasicMaterial
@@ -208,10 +215,10 @@ function RainField({ groundY, isNight }: { groundY: number; isNight: boolean }) 
     const positions = new Float32Array(dropCount * 6)
     for (let index = 0; index < dropCount; index += 1) {
       const offset = index * 6
-      const x = (Math.random() - 0.5) * 80
-      const y = groundY + 1 + Math.random() * 32
-      const z = (Math.random() - 0.5) * 70
-      const length = 0.45 + Math.random() * 0.7
+      const x = (seededRandom(index, 1) - 0.5) * 80
+      const y = groundY + 1 + seededRandom(index, 2) * 32
+      const z = (seededRandom(index, 3) - 0.5) * 70
+      const length = 0.45 + seededRandom(index, 4) * 0.7
       positions[offset] = x
       positions[offset + 1] = y
       positions[offset + 2] = z
@@ -227,31 +234,45 @@ function RainField({ groundY, isNight }: { groundY: number; isNight: boolean }) 
     return rainGeometry
   }, [groundY])
 
+  useEffect(() => () => geometry.dispose(), [geometry])
+
   useFrame((_, delta) => {
     const attribute = geometry.getAttribute('position') as THREE.BufferAttribute
     const positions = attribute.array as Float32Array
     const fall = delta * 20
     const wind = delta * 1.3
     for (let offset = 0; offset < positions.length; offset += 6) {
-      positions[offset] += wind
-      positions[offset + 1] -= fall
-      positions[offset + 3] += wind
-      positions[offset + 4] -= fall
-      if (positions[offset] > 40) {
-        positions[offset] -= 80
-        positions[offset + 3] -= 80
+      const index = offset / 6
+      let startX = (positions[offset] ?? 0) + wind
+      const startY = (positions[offset + 1] ?? groundY + 25) - fall
+      const startZ = positions[offset + 2] ?? 0
+      let endX = (positions[offset + 3] ?? startX + 0.08) + wind
+      const endY = (positions[offset + 4] ?? startY - 0.7) - fall
+      const endZ = positions[offset + 5] ?? startZ + 0.03
+
+      if (startX > 40) {
+        startX -= 80
+        endX -= 80
       }
-      if (positions[offset + 1] < groundY + 0.15) {
-        const x = (Math.random() - 0.5) * 80
-        const y = groundY + 25 + Math.random() * 10
-        const z = (Math.random() - 0.5) * 70
-        const length = 0.45 + Math.random() * 0.7
+
+      if (startY < groundY + 0.15) {
+        const x = (seededRandom(index, 5) - 0.5) * 80
+        const y = groundY + 25 + seededRandom(index, 6) * 10
+        const z = (seededRandom(index, 7) - 0.5) * 70
+        const length = 0.45 + seededRandom(index, 8) * 0.7
         positions[offset] = x
         positions[offset + 1] = y
         positions[offset + 2] = z
         positions[offset + 3] = x + 0.08
         positions[offset + 4] = y - length
         positions[offset + 5] = z + 0.03
+      } else {
+        positions[offset] = startX
+        positions[offset + 1] = startY
+        positions[offset + 2] = startZ
+        positions[offset + 3] = endX
+        positions[offset + 4] = endY
+        positions[offset + 5] = endZ
       }
     }
     attribute.needsUpdate = true

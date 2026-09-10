@@ -16,6 +16,7 @@ describe('viewerStore', () => {
       overviewUnlocked: false,
       personHeight: 1.8,
       timeOfDay: 'day',
+      weatherCondition: 'clear',
     })
   })
 
@@ -74,5 +75,18 @@ describe('viewerStore', () => {
 
     useViewerStore.getState().setTimeOfDay('day')
     expect(useViewerStore.getState().timeOfDay).toBe('day')
+  })
+
+  it('switches weather independently from the time of day', () => {
+    useViewerStore.getState().setTimeOfDay('night')
+    useViewerStore.getState().setWeatherCondition('rain')
+
+    expect(useViewerStore.getState()).toMatchObject({
+      timeOfDay: 'night',
+      weatherCondition: 'rain',
+    })
+
+    useViewerStore.getState().setWeatherCondition('cloudy')
+    expect(useViewerStore.getState().weatherCondition).toBe('cloudy')
   })
 })

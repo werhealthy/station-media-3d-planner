@@ -4,33 +4,52 @@ import userEvent from '@testing-library/user-event'
 import App from './App'
 import { useStationSetupStore } from './stores/stationSetupStore'
 import { useStationStore } from './stores/stationStore'
+import { useViewerStore } from './stores/viewerStore'
 vi.mock('./components/viewer/Canvas', () => ({ Canvas: () => null }))
 describe('App', () => {
-  beforeEach(() => useStationStore.getState().selectStation('low-poly'))
+  beforeEach(() => {
+    useStationStore.getState().selectStation('low-poly')
+    useViewerStore.setState({ timeOfDay: 'day', weatherCondition: 'clear' })
+  })
   afterEach(() => {
     vi.unstubAllGlobals()
     useStationStore.getState().selectStation('low-poly')
   })
 
-  it('mostra il planner single-view e i 10 supporti Q8', () => {
+  it('mostra la media experience e i 9 supporti disponibili', () => {
     render(<App />)
-    expect(screen.getByText('Station Media 3D Planner')).toBeInTheDocument()
-    expect(screen.getByText('9 supporti caricabili')).toBeInTheDocument()
+    expect(screen.getByText('3D Media Experience')).toBeInTheDocument()
+    expect(screen.getByText('9 supporti media disponibili')).toBeInTheDocument()
+    expect(
+      screen.getByText('Specifiche tecniche: last update 14 Settembre'),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
         name: /Sovrapompa \/ Cappuccio.*ID 1/,
       }),
     ).toBeInTheDocument()
+    expect(screen.getByText('ID 2 · Linea servito')).toBeInTheDocument()
+    expect(screen.getByText('ID 11 · Accettatore DSP')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Giorno' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Sereno' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
     expect(
       screen.getByRole('button', { name: 'Vista esterna' }),
     ).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByRole('button', { name: 'Ingresso e Fondostazione' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Stazione' })).toHaveValue(
       'low-poly',
     )
+    expect(
+      screen.getByRole('option', { name: 'Q8 Milano Stazione X' }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('option', { name: 'Q8 Roma EUR — In arrivo' }),
     ).toBeDisabled()
@@ -39,12 +58,21 @@ describe('App', () => {
     ).toBeDisabled()
   })
 
-  it('consente di passare dalla scena giorno alla scena notte', async () => {
+  it('consente di combinare orario e condizioni meteo', async () => {
     render(<App />)
     await userEvent.click(screen.getByRole('button', { name: 'Notte' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Pioggia' }))
     expect(screen.getByRole('button', { name: 'Notte' })).toHaveAttribute(
       'aria-pressed',
       'true',
+    )
+    expect(screen.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Nuvoloso' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     )
   })
   it('cambia stazione e nasconde l’inventario procedurale', async () => {

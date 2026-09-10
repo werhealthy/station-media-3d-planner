@@ -10,7 +10,7 @@ describe('station registry', () => {
       'q8-bologna-fiera',
     ])
     expect(getStation('low-poly')).toMatchObject({
-      name: 'Q8 Milano Porta Est',
+      name: 'Q8 Milano Stazione X',
       available: true,
     })
     expect(getStation('random-textured')).toMatchObject({

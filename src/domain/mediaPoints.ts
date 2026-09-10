@@ -62,7 +62,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('2', {
     id: 'mp-02',
     number: 4,
-    location: 'Testata corta esterna isola Servito',
+    location: 'Linea servito',
     surface: 'Telaio bifacciale a due gambe',
     heightFromGround: 0.3655,
     position: [pumpX + 2.18, 0.96, frontZ],
@@ -89,7 +89,7 @@ export const MEDIA_POINTS: MediaPoint[] = z.array(MediaPointSchema).parse([
   supportPoint('11', {
     id: 'mp-05',
     number: 8,
-    location: 'Isola Self · terminale di pagamento',
+    location: 'Accettatore DSP',
     surface: 'Display verticale touch 21 pollici',
     heightFromGround:
       STATION_LAYOUT.terminal.screenCenterY -

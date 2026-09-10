@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/immutability -- R3F renderer exposure is mutable scene state. */
-import { Canvas as R3FCanvas, useThree } from '@react-three/fiber'
+import { Canvas as R3FCanvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Html, Stars } from '@react-three/drei'
 import { Suspense, useCallback, useEffect, useMemo } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -26,15 +26,155 @@ import { StationDebugHelpers } from './StationDebugHelpers'
 import { JourneyVehicle } from './JourneyVehicle'
 import { JourneyActors } from './JourneyActors'
 import { SvoltaDoorController } from './SvoltaDoorController'
-import { useViewerStore } from '@/stores/viewerStore'
+import {
+  type WeatherCondition,
+  useViewerStore,
+} from '@/stores/viewerStore'
 
-function DaySky() {
+interface LightingProfile {
+  background: string
+  fogColor: string
+  fogNear: number
+  fogFar: number
+  horizon: string
+  zenith: string
+  exposure: number
+  ambientIntensity: number
+  hemisphereSky: string
+  hemisphereGround: string
+  hemisphereIntensity: number
+  directionalPosition: [number, number, number]
+  directionalColor: string
+  directionalIntensity: number
+  environmentIntensity: number
+}
+
+function getLightingProfile(
+  isNight: boolean,
+  weatherCondition: WeatherCondition,
+): LightingProfile {
+  if (isNight) {
+    if (weatherCondition === 'rain') {
+      return {
+        background: '#0e1822',
+        fogColor: '#18242d',
+        fogNear: 35,
+        fogFar: 140,
+        horizon: '#26343f',
+        zenith: '#080e15',
+        exposure: 0.86,
+        ambientIntensity: 0.19,
+        hemisphereSky: '#70829b',
+        hemisphereGround: '#121820',
+        hemisphereIntensity: 0.52,
+        directionalPosition: [18, 24, -12],
+        directionalColor: '#9fb7df',
+        directionalIntensity: 0.28,
+        environmentIntensity: 0.2,
+      }
+    }
+    if (weatherCondition === 'cloudy') {
+      return {
+        background: '#18212d',
+        fogColor: '#202b38',
+        fogNear: 55,
+        fogFar: 185,
+        horizon: '#334052',
+        zenith: '#101722',
+        exposure: 0.96,
+        ambientIntensity: 0.22,
+        hemisphereSky: '#788cae',
+        hemisphereGround: '#1a2029',
+        hemisphereIntensity: 0.62,
+        directionalPosition: [18, 24, -12],
+        directionalColor: '#a9bde3',
+        directionalIntensity: 0.48,
+        environmentIntensity: 0.28,
+      }
+    }
+    return {
+      background: '#111e38',
+      fogColor: '#192844',
+      fogNear: 88,
+      fogFar: 245,
+      horizon: '#253b64',
+      zenith: '#071020',
+      exposure: 1.08,
+      ambientIntensity: 0.25,
+      hemisphereSky: '#8299c8',
+      hemisphereGround: '#202733',
+      hemisphereIntensity: 0.78,
+      directionalPosition: [18, 24, -12],
+      directionalColor: '#a9c2ff',
+      directionalIntensity: 0.92,
+      environmentIntensity: 0.38,
+    }
+  }
+
+  if (weatherCondition === 'rain') {
+    return {
+      background: '#59656d',
+      fogColor: '#69757c',
+      fogNear: 32,
+      fogFar: 150,
+      horizon: '#7f898e',
+      zenith: '#3f4b54',
+      exposure: 0.8,
+      ambientIntensity: 0.28,
+      hemisphereSky: '#d5dde1',
+      hemisphereGround: '#4c5555',
+      hemisphereIntensity: 0.66,
+      directionalPosition: [-18, 30, 22],
+      directionalColor: '#d6e0e8',
+      directionalIntensity: 0.42,
+      environmentIntensity: 0.26,
+    }
+  }
+  if (weatherCondition === 'cloudy') {
+    return {
+      background: '#8b979e',
+      fogColor: '#a9b3b7',
+      fogNear: 60,
+      fogFar: 205,
+      horizon: '#b8c1c4',
+      zenith: '#69777f',
+      exposure: 0.9,
+      ambientIntensity: 0.34,
+      hemisphereSky: '#eef2f3',
+      hemisphereGround: '#626c68',
+      hemisphereIntensity: 0.86,
+      directionalPosition: [-18, 30, 22],
+      directionalColor: '#e6edf2',
+      directionalIntensity: 0.78,
+      environmentIntensity: 0.36,
+    }
+  }
+  return {
+    background: '#83bad5',
+    fogColor: '#a2c9d8',
+    fogNear: 130,
+    fogFar: 245,
+    horizon: '#a9d2e4',
+    zenith: '#478fbe',
+    exposure: 1.04,
+    ambientIntensity: 0.27,
+    hemisphereSky: '#f4fbff',
+    hemisphereGround: '#70786b',
+    hemisphereIntensity: 1.08,
+    directionalPosition: [-18, 30, 22],
+    directionalColor: '#ffffff',
+    directionalIntensity: 2.3,
+    environmentIntensity: 0.5,
+  }
+}
+
+function GradientSky({ horizon, zenith }: { horizon: string; zenith: string }) {
   const geometry = useMemo(() => {
     const sky = new THREE.SphereGeometry(1, 48, 24)
     const positions = sky.getAttribute('position')
     const colors = new Float32Array(positions.count * 3)
-    const horizon = new THREE.Color('#a9d2e4')
-    const zenith = new THREE.Color('#478fbe')
+    const horizonColor = new THREE.Color(horizon)
+    const zenithColor = new THREE.Color(zenith)
     const color = new THREE.Color()
     for (let index = 0; index < positions.count; index += 1) {
       const blend = THREE.MathUtils.smoothstep(
@@ -42,12 +182,12 @@ function DaySky() {
         -0.05,
         0.72,
       )
-      color.copy(horizon).lerp(zenith, blend)
+      color.copy(horizonColor).lerp(zenithColor, blend)
       color.toArray(colors, index * 3)
     }
     sky.setAttribute('color', new THREE.BufferAttribute(colors, 3))
     return sky
-  }, [])
+  }, [horizon, zenith])
 
   return (
     <mesh geometry={geometry} scale={240} frustumCulled={false}>
@@ -62,21 +202,124 @@ function DaySky() {
   )
 }
 
-function SceneLighting({ isNight }: { isNight: boolean }) {
+function RainField({ groundY, isNight }: { groundY: number; isNight: boolean }) {
+  const geometry = useMemo(() => {
+    const dropCount = 760
+    const positions = new Float32Array(dropCount * 6)
+    for (let index = 0; index < dropCount; index += 1) {
+      const offset = index * 6
+      const x = (Math.random() - 0.5) * 80
+      const y = groundY + 1 + Math.random() * 32
+      const z = (Math.random() - 0.5) * 70
+      const length = 0.45 + Math.random() * 0.7
+      positions[offset] = x
+      positions[offset + 1] = y
+      positions[offset + 2] = z
+      positions[offset + 3] = x + 0.08
+      positions[offset + 4] = y - length
+      positions[offset + 5] = z + 0.03
+    }
+    const rainGeometry = new THREE.BufferGeometry()
+    rainGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, 3),
+    )
+    return rainGeometry
+  }, [groundY])
+
+  useFrame((_, delta) => {
+    const attribute = geometry.getAttribute('position') as THREE.BufferAttribute
+    const positions = attribute.array as Float32Array
+    const fall = delta * 20
+    const wind = delta * 1.3
+    for (let offset = 0; offset < positions.length; offset += 6) {
+      positions[offset] += wind
+      positions[offset + 1] -= fall
+      positions[offset + 3] += wind
+      positions[offset + 4] -= fall
+      if (positions[offset] > 40) {
+        positions[offset] -= 80
+        positions[offset + 3] -= 80
+      }
+      if (positions[offset + 1] < groundY + 0.15) {
+        const x = (Math.random() - 0.5) * 80
+        const y = groundY + 25 + Math.random() * 10
+        const z = (Math.random() - 0.5) * 70
+        const length = 0.45 + Math.random() * 0.7
+        positions[offset] = x
+        positions[offset + 1] = y
+        positions[offset + 2] = z
+        positions[offset + 3] = x + 0.08
+        positions[offset + 4] = y - length
+        positions[offset + 5] = z + 0.03
+      }
+    }
+    attribute.needsUpdate = true
+  })
+
+  return (
+    <lineSegments geometry={geometry} frustumCulled={false} renderOrder={10}>
+      <lineBasicMaterial
+        color="#d8ecff"
+        transparent
+        opacity={isNight ? 0.5 : 0.38}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </lineSegments>
+  )
+}
+
+function WetGround({ groundY, isNight }: { groundY: number; isNight: boolean }) {
+  return (
+    <mesh
+      position={[0, groundY + 0.018, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      receiveShadow
+      renderOrder={2}
+    >
+      <planeGeometry args={[78, 72]} />
+      <meshPhysicalMaterial
+        color={isNight ? '#111b27' : '#34444d'}
+        transparent
+        opacity={isNight ? 0.24 : 0.16}
+        roughness={0.17}
+        metalness={0.08}
+        clearcoat={1}
+        clearcoatRoughness={0.06}
+        envMapIntensity={1.45}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={-1}
+      />
+    </mesh>
+  )
+}
+
+function SceneLighting({
+  isNight,
+  weatherCondition,
+}: {
+  isNight: boolean
+  weatherCondition: WeatherCondition
+}) {
   const { gl } = useThree()
+  const profile = getLightingProfile(isNight, weatherCondition)
+  const artificialLightBoost =
+    weatherCondition === 'rain' ? 1.22 : weatherCondition === 'cloudy' ? 1.08 : 1
 
   useEffect(() => {
-    gl.toneMappingExposure = isNight ? 1.08 : 1.04
-  }, [gl, isNight])
+    gl.toneMappingExposure = profile.exposure
+  }, [gl, profile.exposure])
 
   return (
     <>
-      <color attach="background" args={[isNight ? '#111e38' : '#83bad5']} />
+      <color attach="background" args={[profile.background]} />
       <fog
         attach="fog"
-        args={[isNight ? '#192844' : '#a2c9d8', isNight ? 88 : 130, 245]}
+        args={[profile.fogColor, profile.fogNear, profile.fogFar]}
       />
-      {isNight ? (
+      {isNight && weatherCondition === 'clear' ? (
         <Stars
           radius={180}
           depth={70}
@@ -86,18 +329,20 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           speed={0.25}
         />
       ) : (
-        <DaySky />
+        <GradientSky horizon={profile.horizon} zenith={profile.zenith} />
       )}
-      <ambientLight intensity={isNight ? 0.25 : 0.27} />
+      <ambientLight intensity={profile.ambientIntensity} />
       <hemisphereLight
-        args={
-          isNight ? ['#8299c8', '#202733', 0.78] : ['#f4fbff', '#70786b', 1.08]
-        }
+        args={[
+          profile.hemisphereSky,
+          profile.hemisphereGround,
+          profile.hemisphereIntensity,
+        ]}
       />
       <directionalLight
-        position={isNight ? [18, 24, -12] : [-18, 30, 22]}
-        color={isNight ? '#a9c2ff' : '#ffffff'}
-        intensity={isNight ? 0.92 : 2.3}
+        position={profile.directionalPosition}
+        color={profile.directionalColor}
+        intensity={profile.directionalIntensity}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-38}
@@ -106,7 +351,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
         shadow-camera-bottom={-30}
         shadow-bias={-0.00015}
         shadow-normalBias={0.025}
-        shadow-radius={3}
+        shadow-radius={weatherCondition === 'clear' ? 3 : 5}
       />
       {isNight && (
         <>
@@ -115,7 +360,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
               key={x}
               position={[x, 5.15, 1.5]}
               color="#fff3c4"
-              intensity={22}
+              intensity={22 * artificialLightBoost}
               distance={15}
               decay={2}
             />
@@ -123,7 +368,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           <pointLight
             position={[9.5, 3.9, -5.1]}
             color="#fff0c7"
-            intensity={38}
+            intensity={38 * artificialLightBoost}
             distance={19}
             decay={2}
           />
@@ -132,7 +377,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
               key={`svolta-interior-${x}`}
               position={[x, 2.7, -4.85]}
               color="#ffe7b5"
-              intensity={24}
+              intensity={24 * artificialLightBoost}
               distance={13}
               decay={2}
             />
@@ -140,21 +385,21 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
           <pointLight
             position={[9.5, 2.8, -3.55]}
             color="#ffe3ad"
-            intensity={26}
+            intensity={26 * artificialLightBoost}
             distance={12}
             decay={2}
           />
           <pointLight
             position={[0, 5.75, 5.8]}
             color="#dfe9ff"
-            intensity={20}
+            intensity={20 * artificialLightBoost}
             distance={16}
             decay={2}
           />
           <pointLight
             position={[23.7, 6.45, 10.1]}
             color="#dce8ff"
-            intensity={6}
+            intensity={6 * artificialLightBoost}
             distance={10}
             decay={2}
           />
@@ -162,7 +407,7 @@ function SceneLighting({ isNight }: { isNight: boolean }) {
       )}
       <Environment
         preset={isNight ? 'night' : 'city'}
-        environmentIntensity={isNight ? 0.38 : 0.5}
+        environmentIntensity={profile.environmentIntensity}
       />
     </>
   )
@@ -182,7 +427,9 @@ export function Canvas() {
   const config = useStationSetupStore((state) => state.config)
   const configStatus = useStationSetupStore((state) => state.configStatus)
   const timeOfDay = useViewerStore((state) => state.timeOfDay)
+  const weatherCondition = useViewerStore((state) => state.weatherCondition)
   const isNight = timeOfDay === 'night'
+  const groundY = config.ground?.y ?? 0
   const setSelectedMesh = useStationSetupStore((state) => state.setSelectedMesh)
   const setSelectedMediaPoint = useStationSetupStore(
     (state) => state.setSelectedMediaPoint,
@@ -309,11 +556,14 @@ export function Canvas() {
       gl={{
         antialias: true,
         toneMapping: 4,
-        toneMappingExposure: isNight ? 0.96 : 1.12,
+        toneMappingExposure: 1,
       }}
     >
       <Suspense fallback={null}>
-        <SceneLighting isNight={isNight} />
+        <SceneLighting
+          isNight={isNight}
+          weatherCondition={weatherCondition}
+        />
         <StationModel
           key={station.id}
           adapter={selection.adapter}
@@ -325,11 +575,29 @@ export function Canvas() {
         {(station.mediaPointsConfigured || config.mediaPoints.length > 0) && (
           <MediaPointsLayer points={config.mediaPoints} />
         )}
+        {weatherCondition === 'rain' && (
+          <>
+            <WetGround groundY={groundY} isNight={isNight} />
+            <RainField groundY={groundY} isNight={isNight} />
+          </>
+        )}
         <ContactShadows
-          position={[0, 0.05, 0]}
-          opacity={isNight ? 0.42 : 0.28}
+          position={[0, groundY + 0.05, 0]}
+          opacity={
+            isNight
+              ? weatherCondition === 'rain'
+                ? 0.28
+                : weatherCondition === 'cloudy'
+                  ? 0.34
+                  : 0.42
+              : weatherCondition === 'rain'
+                ? 0.16
+                : weatherCondition === 'cloudy'
+                  ? 0.21
+                  : 0.28
+          }
           scale={65}
-          blur={2.4}
+          blur={weatherCondition === 'clear' ? 2.4 : 3.2}
           far={24}
         />
         <NavigationRig />

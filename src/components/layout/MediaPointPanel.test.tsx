@@ -408,7 +408,7 @@ describe('MediaPointPanel', () => {
       screen.getByText("MESSAGGIO OTTIMIZZATO PER LA LETTURA DELL'UTENTE"),
     ).toBeVisible()
     expect(
-      screen.queryByText('Sostituisci immagine'),
+      within(screen.getByRole('dialog')).queryByText('Sostituisci immagine'),
     ).not.toBeInTheDocument()
 
     const comparisonSlider = screen.getByRole('slider', {

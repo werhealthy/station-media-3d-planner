@@ -17,7 +17,7 @@ export interface StationDefinition {
 export const STATIONS = [
   {
     id: 'low-poly',
-    name: 'Q8 Milano Porta Est',
+    name: 'Q8 Milano Stazione X',
     description: 'Stazione configurata secondo il layout media Q8.',
     modelType: 'procedural',
     badge: 'Demo',

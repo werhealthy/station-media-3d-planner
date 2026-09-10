@@ -89,7 +89,7 @@ describe('MediaPointPanel', () => {
         (item) => item.supportTypeId === '8',
       ),
     ).toBe(false)
-    expect(screen.getByText('9 supporti caricabili')).toBeVisible()
+    expect(screen.getByText('9 supporti media disponibili')).toBeVisible()
   })
 
   it('non mostra il box quota dal riferimento nei dettagli', () => {
@@ -121,7 +121,7 @@ describe('MediaPointPanel', () => {
       screen.getByRole('button', { name: `Inquadra ${point.name}` }),
     )
 
-    expect(screen.getByText('9 supporti caricabili')).toBeVisible()
+    expect(screen.getByText('9 supporti media disponibili')).toBeVisible()
     expect(useViewerStore.getState()).toMatchObject({
       selectedMediaPointId: null,
       focusedMediaPointId: point.id,

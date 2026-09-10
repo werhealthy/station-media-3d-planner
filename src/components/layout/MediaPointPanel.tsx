@@ -137,10 +137,10 @@ export function MediaPointPanel({ points }: { points: ConfigMediaPoint[] }) {
               Media inventory
             </p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              {inventoryPoints.length} supporti caricabili
+              {inventoryPoints.length} supporti media disponibili
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Catalogo Q8 allineato alla distinta dei touchpoint.
+              Specifiche tecniche: last update 14 Settembre
             </p>
             {hiddenMediaPointIds.length > 0 && (
               <button

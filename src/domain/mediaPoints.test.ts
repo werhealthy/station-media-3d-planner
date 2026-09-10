@@ -18,8 +18,9 @@ describe('media point physical layout', () => {
     expect(MEDIA_POINTS.some((item) => item.supportTypeId === '8')).toBe(false)
   })
 
-  it('monta il Pump Leader sulla testata corta con due gambe', () => {
+  it('monta il Pump Leader sulla linea servito con due gambe', () => {
     expect(point('mp-02')).toMatchObject({
+      location: 'Linea servito',
       position: [
         STATION_LAYOUT.islands.pumpX + 2.18,
         0.96,
@@ -27,6 +28,13 @@ describe('media point physical layout', () => {
       ],
       rotation: [0, 90, 0],
       surface: 'Telaio bifacciale a due gambe',
+    })
+  })
+
+  it('descrive il terminale di pagamento come Accettatore DSP', () => {
+    expect(point('mp-05')).toMatchObject({
+      supportTypeId: '11',
+      location: 'Accettatore DSP',
     })
   })
 

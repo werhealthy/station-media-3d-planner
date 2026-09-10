@@ -7,7 +7,7 @@ describe('curated station hotspots', () => {
     expect(HOTSPOTS.map((hotspot) => hotspot.name)).toEqual([
       'Vista esterna',
       'Fronte erogatori',
-      'Ingresso e fondale',
+      'Ingresso e Fondostazione',
     ])
   })
 

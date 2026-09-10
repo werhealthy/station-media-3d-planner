@@ -1,5 +1,7 @@
 import {
   CircleHelp,
+  Cloud,
+  CloudRain,
   Footprints,
   Grid2X2,
   MapPin,
@@ -24,6 +26,8 @@ export function TopBar() {
   const setMode = useViewerStore((s) => s.setNavigationMode)
   const timeOfDay = useViewerStore((s) => s.timeOfDay)
   const setTimeOfDay = useViewerStore((s) => s.setTimeOfDay)
+  const weatherCondition = useViewerStore((s) => s.weatherCondition)
+  const setWeatherCondition = useViewerStore((s) => s.setWeatherCondition)
   const play = usePlaybackStore((s) => s.play)
   const activeRouteId = usePlaybackStore((s) => s.activeRouteId)
   const setActiveRouteId = usePlaybackStore((s) => s.setActiveRouteId)
@@ -126,6 +130,38 @@ export function TopBar() {
                 ? id === 'night'
                   ? 'bg-[#10265f] text-white shadow-sm'
                   : 'bg-amber-300 text-amber-950 shadow-sm'
+                : 'text-slate-500 hover:bg-white hover:text-slate-900'
+            }`}
+          >
+            <Icon size={17} />
+          </button>
+        ))}
+      </div>
+      <div
+        className="flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-1"
+        aria-label="Condizioni meteo"
+      >
+        {(
+          [
+            ['clear', 'Sereno', Sun],
+            ['cloudy', 'Nuvoloso', Cloud],
+            ['rain', 'Pioggia', CloudRain],
+          ] as const
+        ).map(([id, label, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            aria-label={label}
+            aria-pressed={weatherCondition === id}
+            title={label}
+            onClick={() => setWeatherCondition(id)}
+            className={`grid h-9 w-9 place-items-center rounded-lg transition ${
+              weatherCondition === id
+                ? id === 'rain'
+                  ? 'bg-sky-700 text-white shadow-sm'
+                  : id === 'cloudy'
+                    ? 'bg-slate-600 text-white shadow-sm'
+                    : 'bg-amber-200 text-amber-950 shadow-sm'
                 : 'text-slate-500 hover:bg-white hover:text-slate-900'
             }`}
           >

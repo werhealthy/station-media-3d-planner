@@ -3,7 +3,7 @@ test('seleziona un media point e mostra il dettaglio upload', async ({
   page,
 }) => {
   await page.goto('/')
-  await expect(page.getByText('Station Media 3D Planner')).toBeVisible()
+  await expect(page.getByText('3D Media Experience')).toBeVisible()
   await page
     .getByRole('button', { name: /Sovrapompa \/ Cappuccio/ })
     .first()
@@ -28,4 +28,21 @@ test('ordina i supporti secondo la sequenza della journey', async ({
   await expect(inventory.nth(0)).toContainText('Beach Flag')
   await expect(inventory.nth(1)).toContainText('2')
   await expect(inventory.nth(1)).toContainText('Stendardo')
+})
+
+test('cambia le condizioni meteo mantenendo indipendente giorno e notte', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Notte' }).click()
+  await page.getByRole('button', { name: 'Pioggia' }).click()
+
+  await expect(page.getByRole('button', { name: 'Notte' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(page.getByRole('button', { name: 'Pioggia' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 })

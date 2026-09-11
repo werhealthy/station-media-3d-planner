@@ -654,6 +654,13 @@ export function CreativeWorkspace({
                   {replaceControl()}
                   <button
                     type="button"
+                    onClick={() => asset && onApply(asset, display)}
+                    className="ml-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-950"
+                  >
+                    Continua
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setActionStage('generating')}
                     className="ml-2 flex items-center gap-2 rounded-full bg-[#1954c6] px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#123f99]"
                   >
